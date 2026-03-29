@@ -54,7 +54,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
         <select
             value={lead.pipelineStage}
             onChange={(e) => onStatusChange(lead.id, e.target.value)}
-            className="text-sm font-bold bg-slate-100 border-none text-slate-800 py-1 pl-3 pr-8 rounded-full focus:ring-2 focus:ring-purple-500 appearance-none shadow-sm cursor-pointer"
+            className="text-sm font-bold bg-slate-100 border-none text-slate-800 py-1 pl-3 pr-8 rounded-full focus:ring-2 focus:ring-[#853953] appearance-none shadow-sm cursor-pointer"
         >
             <option value="new">New</option>
             <option value="contacted">Contacted</option>
@@ -133,7 +133,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                 <div className="sticky top-0 bg-white/80 backdrop-blur-md px-8 py-4 border-b border-slate-200 z-20 shadow-sm flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-extrabold text-lg">
+                            <div className="h-12 w-12 rounded-full bg-[#853953]/10 flex items-center justify-center text-[#853953] font-extrabold text-lg">
                                 {lead.firstName.charAt(0)}{lead.lastName.charAt(0)}
                             </div>
                             <div>
@@ -141,7 +141,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                     {lead.firstName} {lead.lastName}
                                     {scoreObj?.finalScore && (
                                         <div className="flex items-center gap-1.5 text-xs">
-                                            <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full border border-purple-200">Score: {scoreObj.finalScore}</span>
+                                            <span className="bg-[#853953]/10 text-[#853953] px-2 py-0.5 rounded-full border border-[#853953]/20">Score: {scoreObj.finalScore}</span>
                                             <span className={`px-2 py-0.5 rounded-full border text-[10px] tracking-wider uppercase font-black ${scoreObj.finalScore >= 80 ? 'bg-red-100 border-red-200 text-red-700' : scoreObj.finalScore >= 50 ? 'bg-orange-100 border-orange-200 text-orange-700' : 'bg-blue-100 border-blue-200 text-blue-700'}`}>
                                                 {scoreObj.finalScore >= 80 ? 'HOT' : scoreObj.finalScore >= 50 ? 'WARM' : 'COLD'}
                                             </span>
@@ -149,8 +149,8 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                     )}
                                 </h2>
                                 <div className="text-sm text-slate-500 flex items-center gap-3 mt-1 font-medium">
-                                    <span className="flex items-center gap-1.5 hover:text-purple-600 cursor-pointer"><Phone className="w-3.5 h-3.5" /> {lead.phone}</span>
-                                    <span className="flex items-center gap-1.5 hover:text-purple-600 cursor-pointer"><Mail className="w-3.5 h-3.5" /> {lead.email}</span>
+                                    <span className="flex items-center gap-1.5 hover:text-[#853953] cursor-pointer"><Phone className="w-3.5 h-3.5" /> {lead.phone}</span>
+                                    <span className="flex items-center gap-1.5 hover:text-[#853953] cursor-pointer"><Mail className="w-3.5 h-3.5" /> {lead.email}</span>
                                 </div>
                             </div>
                         </div>
@@ -245,7 +245,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                         } else if (!lead.followUpDate) {
                             insightMsg = 'No follow up scheduled for this lead. Create a task.';
                             Icon = Calendar;
-                            colorClasses = 'bg-purple-50 border-purple-200 text-purple-800';
+                            colorClasses = 'bg-[#853953]/5 border-[#853953]/20 text-[#853953]';
                         }
 
                         return (
@@ -271,16 +271,16 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                 <Mail className="w-5 h-5 mb-2 text-blue-500" />
                                 <span className="text-[10px] font-black uppercase tracking-wider">Send Email</span>
                             </button>
-                            <button onClick={() => setActiveTab('tasks')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 bg-white hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-all shadow-sm">
-                                <Calendar className="w-5 h-5 mb-2 text-purple-500" />
+                            <button onClick={() => setActiveTab('tasks')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 bg-white hover:bg-[#853953]/5 hover:border-[#853953]/20 hover:text-[#853953] transition-all shadow-sm">
+                                <Calendar className="w-5 h-5 mb-2 text-[#853953]" />
                                 <span className="text-[10px] font-black uppercase tracking-wider">Create Task</span>
                             </button>
                             <button onClick={() => setActiveTab('notes')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 bg-white hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 transition-all shadow-sm">
                                 <MessageSquare className="w-5 h-5 mb-2 text-amber-500" />
                                 <span className="text-[10px] font-black uppercase tracking-wider">Add Note</span>
                             </button>
-                            <button onClick={() => setActiveTab('properties')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition-all shadow-sm">
-                                <Home className="w-5 h-5 mb-2 text-indigo-500" />
+                            <button onClick={() => setActiveTab('properties')} className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 bg-white hover:bg-[#853953]/5 hover:border-[#853953]/20 hover:text-[#853953] transition-all shadow-sm">
+                                <Home className="w-5 h-5 mb-2 text-[#853953]" />
                                 <span className="text-[10px] font-black uppercase tracking-wider text-center">Matches</span>
                             </button>
                         </div>
@@ -323,13 +323,13 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                     value={noteText}
                                     onChange={(e) => setNoteText(e.target.value)}
                                     placeholder="Add call notes or general remarks..."
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-purple-400 outline-none min-h-[80px] transition-shadow"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#853953] outline-none min-h-[80px] transition-shadow"
                                 />
                                 {noteText && (
                                     <button 
                                         onClick={() => handleLogCall('note_only')}
                                         disabled={isSaving}
-                                        className="absolute bottom-3 right-3 bg-purple-600 text-white p-1.5 rounded-lg shadow-md hover:bg-purple-700 transition-colors"
+                                        className="absolute bottom-3 right-3 bg-[#853953] text-white p-1.5 rounded-lg shadow-md hover:bg-[#612D53] transition-colors"
                                     >
                                         <Plus className="w-4 h-4" />
                                     </button>
@@ -340,7 +340,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                         {/* CREATE TASK SECTION */}
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-purple-500" /> Create Task
+                                <Calendar className="w-4 h-4 text-[#853953]" /> Create Task
                             </h3>
                             <AnimatePresence>
                                 {creationSuccess && (
@@ -358,7 +358,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                 <select
                                     value={newTask.taskType}
                                     onChange={e => setNewTask(p => ({ ...p, taskType: e.target.value }))}
-                                    className="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-slate-50"
+                                    className="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#853953] bg-slate-50"
                                 >
                                     {['Call', 'Email', 'Follow Up', 'Meeting', 'Viewing', 'Reminder'].map(t => (
                                         <option key={t}>{t}</option>
@@ -369,13 +369,13 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                         type="date"
                                         value={newTask.dueDate}
                                         onChange={e => setNewTask(p => ({ ...p, dueDate: e.target.value }))}
-                                        className="w-full border border-slate-200 rounded-xl px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-slate-50"
+                                        className="w-full border border-slate-200 rounded-xl px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-[#853953] bg-slate-50"
                                     />
                                     <input
                                         type="time"
                                         value={newTask.dueTime}
                                         onChange={e => setNewTask(p => ({ ...p, dueTime: e.target.value }))}
-                                        className="w-full border border-slate-200 rounded-xl px-1 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-slate-50"
+                                        className="w-full border border-slate-200 rounded-xl px-1 py-2 text-sm outline-none focus:ring-2 focus:ring-[#853953] bg-slate-50"
                                     />
                                 </div>
                             </div>
@@ -384,14 +384,14 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                     value={newTask.notes}
                                     onChange={(e) => setNewTask(p => ({ ...p, notes: e.target.value }))}
                                     placeholder="Task notes (optional)"
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-purple-400 outline-none min-h-[40px] transition-shadow resize-none"
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#853953] outline-none min-h-[40px] transition-shadow resize-none"
                                     rows={2}
                                 />
                             </div>
                             <button
                                 onClick={handleCreateTask}
                                 disabled={isCreatingTask || !newTask.dueDate}
-                                className="w-full mt-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-2 rounded-xl text-sm transition-colors"
+                                className="w-full mt-3 bg-[#853953] hover:bg-[#612D53] disabled:opacity-50 text-white font-bold py-2 rounded-xl text-sm transition-colors"
                             >
                                 {isCreatingTask ? 'Creating...' : 'Create Task'}
                             </button>
@@ -433,7 +433,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                 <span className="text-slate-500 font-medium">Last email:</span>
                                 <span className="text-slate-900 font-bold truncate">{latest.subjectLine}</span>
                                 <div className="flex items-center gap-1.5 ml-auto shrink-0">
-                                    {latest.clickedAt && <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 px-2 py-0.5 rounded"><LinkIcon className="w-3 h-3" /> Clicked</span>}
+                                    {latest.clickedAt && <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#853953] bg-[#853953]/10 px-2 py-0.5 rounded"><LinkIcon className="w-3 h-3" /> Clicked</span>}
                                     {latest.openedAt && !latest.clickedAt && <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded"><MailOpen className="w-3 h-3" /> Opened</span>}
                                     {!latest.openedAt && latest.status === 'sent' && <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-200 px-2 py-0.5 rounded"><CheckCircle2 className="w-3 h-3" /> Sent</span>}
                                     {latest.status === 'failed' && <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-100 px-2 py-0.5 rounded"><AlertTriangle className="w-3 h-3" /> Failed</span>}
@@ -448,12 +448,12 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab as any)}
-                                className={`pb-3 text-sm font-bold uppercase tracking-wider transition-colors relative whitespace-nowrap ${activeTab === tab ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`pb-3 text-sm font-bold uppercase tracking-wider transition-colors relative whitespace-nowrap ${activeTab === tab ? 'text-[#853953]' : 'text-slate-400 hover:text-slate-600'}`}
                             >
                                 {tab === 'properties' ? 'Matches' : tab}
-                                {tab === 'conversation' && lead.emailLogs?.length > 0 && <span className="bg-purple-100 text-purple-700 py-0.5 px-2 rounded-full text-[10px] ml-2">{lead.emailLogs.length}</span>}
-                                {tab === 'properties' && lead.propertyMatches?.length > 0 && <span className="bg-purple-100 text-purple-700 py-0.5 px-2 rounded-full text-[10px] ml-2">{lead.propertyMatches.length}</span>}
-                                {activeTab === tab && <motion.div layoutId="drawerTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600" />}
+                                {tab === 'conversation' && lead.emailLogs?.length > 0 && <span className="bg-[#853953]/10 text-[#853953] py-0.5 px-2 rounded-full text-[10px] ml-2">{lead.emailLogs.length}</span>}
+                                {tab === 'properties' && lead.propertyMatches?.length > 0 && <span className="bg-[#853953]/10 text-[#853953] py-0.5 px-2 rounded-full text-[10px] ml-2">{lead.propertyMatches.length}</span>}
+                                {activeTab === tab && <motion.div layoutId="drawerTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#853953]" />}
                             </button>
                         ))}
                     </div>
@@ -471,7 +471,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                 {activeTab === 'overview' && (
                                     <div className="space-y-6">
                                         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Activity className="w-4 h-4 text-purple-500" /> Pipeline Status</h3>
+                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Activity className="w-4 h-4 text-[#853953]" /> Pipeline Status</h3>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                                     <span className="text-[10px] uppercase font-bold text-slate-400">Follow Up Date</span>
@@ -493,8 +493,8 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                         </div>
 
                                         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><BrainCircuit className="w-4 h-4 text-purple-500" /> AI Score & Details</h3>
-                                            <p className="text-sm font-medium text-slate-700 bg-purple-50 p-3 rounded-lg border border-purple-100 mb-4">&ldquo;{reasoning?.reasoningSummary || 'Awaiting AI analysis...'}&rdquo;</p>
+                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><BrainCircuit className="w-4 h-4 text-[#853953]" /> AI Score & Details</h3>
+                                            <p className="text-sm font-medium text-slate-700 bg-[#853953]/5 p-3 rounded-lg border border-[#853953]/10 mb-4">&ldquo;{reasoning?.reasoningSummary || 'Awaiting AI analysis...'}&rdquo;</p>
                                             
                                             <dl className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm border-t border-slate-100 pt-4">
                                                 <div><dt className="text-slate-500 font-medium">Financing</dt><dd className="text-slate-900 font-bold capitalize mt-0.5">{lead.financing?.replace('_', ' ') || 'Unknown'}</dd></div>
@@ -514,7 +514,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                 {activeTab === 'tasks' && (
                                     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
                                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                            <Calendar className="w-4 h-4 text-purple-500" /> Create Task
+                                            <Calendar className="w-4 h-4 text-[#853953]" /> Create Task
                                         </h3>
                                         <AnimatePresence>
                                             {creationSuccess && (
@@ -532,7 +532,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                             <select
                                                 value={newTask.taskType}
                                                 onChange={e => setNewTask(p => ({ ...p, taskType: e.target.value }))}
-                                                className="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-slate-50"
+                                                className="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#853953] bg-slate-50"
                                             >
                                                 {['Call', 'Email', 'Follow up', 'Meeting', 'Viewing', 'Reminder'].map(t => (
                                                     <option key={t}>{t}</option>
@@ -543,13 +543,13 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                                     type="date"
                                                     value={newTask.dueDate}
                                                     onChange={e => setNewTask(p => ({ ...p, dueDate: e.target.value }))}
-                                                    className="w-full border border-slate-200 rounded-xl px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-slate-50"
+                                                    className="w-full border border-slate-200 rounded-xl px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-[#853953] bg-slate-50"
                                                 />
                                                 <input
                                                     type="time"
                                                     value={newTask.dueTime}
                                                     onChange={e => setNewTask(p => ({ ...p, dueTime: e.target.value }))}
-                                                    className="w-full border border-slate-200 rounded-xl px-1 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-slate-50"
+                                                    className="w-full border border-slate-200 rounded-xl px-1 py-2 text-sm outline-none focus:ring-2 focus:ring-[#853953] bg-slate-50"
                                                 />
                                             </div>
                                         </div>
@@ -557,13 +557,13 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                             value={newTask.notes}
                                             onChange={(e) => setNewTask(p => ({ ...p, notes: e.target.value }))}
                                             placeholder="Task notes (optional)"
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-purple-400 outline-none min-h-[40px] transition-shadow resize-none"
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#853953] outline-none min-h-[40px] transition-shadow resize-none"
                                             rows={2}
                                         />
                                         <button
                                             onClick={handleCreateTask}
                                             disabled={isCreatingTask || !newTask.dueDate}
-                                            className="w-full mt-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-2 rounded-xl text-sm transition-colors"
+                                            className="w-full mt-3 bg-[#853953] hover:bg-[#612D53] disabled:opacity-50 text-white font-bold py-2 rounded-xl text-sm transition-colors"
                                         >
                                             {isCreatingTask ? 'Creating...' : 'Create Task'}
                                         </button>
@@ -580,13 +580,13 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                             value={noteText}
                                             onChange={(e) => setNoteText(e.target.value)}
                                             placeholder="Type note details or log a manual interaction here..."
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm focus:ring-2 focus:ring-purple-400 outline-none min-h-[120px] resize-none mb-3"
+                                            className="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#853953] outline-none min-h-[120px] resize-none mb-3"
                                         />
                                         <div className="flex justify-end border-t border-slate-100 pt-3">
                                             <button
                                                 onClick={() => handleLogCall('note_only')}
                                                 disabled={isSaving || !noteText.trim()}
-                                                className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-2 px-6 rounded-xl text-sm transition-colors"
+                                                className="bg-[#853953] hover:bg-[#612D53] disabled:opacity-50 text-white font-bold py-2 px-6 rounded-xl text-sm transition-colors"
                                             >
                                                 {isSaving ? 'Saving...' : 'Save Note'}
                                             </button>
@@ -598,13 +598,13 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                     <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
                                         {/* ACTIVE SEQUENCES BLOCK */}
                                         {lead.sequenceStates && lead.sequenceStates.length > 0 && (
-                                            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-4 mb-6 shadow-sm">
-                                                <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                            <div className="bg-gradient-to-br from-[#853953]/5 to-slate-50 border border-[#853953]/10 rounded-xl p-4 mb-6 shadow-sm">
+                                                <h4 className="text-xs font-bold text-[#853953] uppercase tracking-widest mb-3 flex items-center gap-2">
                                                     <BrainCircuit className="w-4 h-4" /> Active Sequences
                                                 </h4>
                                                 <div className="space-y-3">
                                                     {lead.sequenceStates.map((seq: any, idx: number) => (
-                                                        <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-indigo-100/50 shadow-sm">
+                                                        <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-[#853953]/10 shadow-sm">
                                                             <div className="flex flex-col">
                                                                 <span className="font-bold text-slate-800">{seq.sequence.name}</span>
                                                                 <span className="text-xs font-semibold text-slate-500 mt-1">
@@ -612,7 +612,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center">
-                                                                <span className={`px-2 py-1 text-[10px] font-black uppercase tracking-wider rounded ${seq.status === 'active' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                                <span className={`px-2 py-1 text-[10px] font-black uppercase tracking-wider rounded ${seq.status === 'active' ? 'bg-[#853953]/10 text-[#853953]' : 'bg-slate-100 text-slate-600'}`}>
                                                                     {seq.status}
                                                                 </span>
                                                             </div>
@@ -635,7 +635,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-slate-900">{log.subjectLine}</span>
                                                                 {log.status === 'sent' && !log.openedAt && !log.clickedAt && (
-                                                                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-600 bg-purple-100 px-2 py-0.5 rounded"><CheckCircle2 className="w-3 h-3" /> Sent</span>
+                                                                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#853953] bg-[#853953]/10 px-2 py-0.5 rounded"><CheckCircle2 className="w-3 h-3" /> Sent</span>
                                                                 )}
                                                                 {log.status === 'failed' && (
                                                                     <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-100 px-2 py-0.5 rounded"><AlertTriangle className="w-3 h-3" /> Failed</span>
@@ -650,7 +650,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                                                     <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded"><MailOpen className="w-3 h-3" /> Opened</span>
                                                                 )}
                                                                 {log.replied && (
-                                                                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-600 bg-purple-100 px-2 py-0.5 rounded"><LinkIcon className="w-3 h-3" /> Replied</span>
+                                                                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#853953] bg-[#853953]/10 px-2 py-0.5 rounded"><LinkIcon className="w-3 h-3" /> Replied</span>
                                                                 )}
                                                             </div>
                                                             <div className="flex items-center gap-4 text-xs font-medium text-slate-400">
@@ -661,7 +661,7 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
 
                                                         {/* Resend button for failed or Warm/Cold pending logic (simulation) */}
                                                         {scoreObj?.finalScore < 80 && (
-                                                            <button className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded transition-colors whitespace-nowrap">
+                                                            <button className="text-xs font-bold text-[#853953] bg-[#853953]/5 hover:bg-[#853953]/10 px-3 py-1.5 rounded transition-colors whitespace-nowrap">
                                                                 Resend Email
                                                             </button>
                                                         )}

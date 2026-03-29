@@ -97,16 +97,40 @@ export async function createLead(formData: {
     return { success: true, leadId };
 }
 
-export async function getLeads() {
-    // 1. Check for empty state protection.
-    const count = await prisma.lead.count();
+export async function getLeads(options: { take?: number; skip?: number; query?: string; stage?: string } = {}) {
+    const { take = 20, skip = 0, query, stage } = options;
 
-    if (count === 0) {
-        await seedPlaceholderLeads();
+    const where: any = {};
+    if (stage && stage !== 'All') where.pipelineStage = stage;
+    if (query) {
+        where.OR = [
+            { firstName: { contains: query, mode: 'insensitive' } },
+            { lastName: { contains: query, mode: 'insensitive' } },
+            { email: { contains: query, mode: 'insensitive' } }
+        ];
     }
 
-    // 2. Fetch all leads with relational data
+    // 1. Fetch only necessary leads count and data
+    const totalCount = await prisma.lead.count({ where });
     const leads = await prisma.lead.findMany({
+        where,
+        take,
+        skip,
+        include: {
+            scores: {
+                orderBy: { createdAt: 'desc' },
+                take: 1
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+
+    return { leads, totalCount };
+}
+
+export async function getLeadDetails(leadId: string) {
+    return await prisma.lead.findUnique({
+        where: { id: leadId },
         include: {
             scores: {
                 orderBy: { createdAt: 'desc' },
@@ -129,15 +153,8 @@ export async function getLeads() {
                 include: { sequence: true },
                 orderBy: { nextRunAt: 'asc' }
             }
-        },
-        orderBy: [
-            // Prisma doesn't easily sort by relation computed fields without complex aggregations.
-            // We sort by createdAt mostly, and we will sort by Score on the client side since MVP volume is low.
-            { createdAt: 'desc' }
-        ]
+        }
     });
-
-    return leads;
 }
 
 export async function updateLead(leadId: string, data: { pipelineStage?: string; followUpDate?: string | null; email?: string; phone?: string }) {

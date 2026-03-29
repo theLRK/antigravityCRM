@@ -74,56 +74,64 @@ export default async function DashboardPage() {
 
     const firstName = user.user_metadata?.first_name || 'Agent';
 
-    // ---- FETCH REAL CRM METRICS ----
-    const leads = await prisma.lead.findMany({
-        include: {
-            scores: {
-                orderBy: { createdAt: 'desc' },
-                take: 1,
-                include: {
-                    reasoningBreakdowns: true
-                }
-            }
-        },
-        orderBy: { createdAt: 'desc' }
+    // ---- FETCH REAL CRM METRICS (Optimized) ----
+    const totalLeadsCount = await prisma.lead.count();
+    const activeLeadsCount = await prisma.lead.count({ where: { pipelineStage: { not: 'closed' } } });
+    const closedLeadsCount = await prisma.lead.count({ where: { pipelineStage: 'closed' } });
+    const conversionRate = totalLeadsCount > 0 ? ((closedLeadsCount / totalLeadsCount) * 100).toFixed(1) : '0.0';
+
+    const highIntentCount = await prisma.lead.count({
+        where: {
+            pipelineStage: 'new',
+            scores: { some: { finalScore: { gte: 80 } } }
+        }
     });
 
-    const totalLeadsCount = leads.length;
-    const activeLeads = leads.filter(l => l.pipelineStage !== 'closed');
-    const closedLeads = leads.filter(l => l.pipelineStage === 'closed');
-    const conversionRate = totalLeadsCount > 0 ? ((closedLeads.length / totalLeadsCount) * 100).toFixed(1) : '0.0';
-
     const now = new Date();
-    const urgentUncontacted = activeLeads.filter(l => l.pipelineStage === 'new' && (l.scores?.[0]?.finalScore || 0) >= 80);
-    const overdueFollowUps = activeLeads.filter(l => l.followUpDate && l.followUpDate < now);
-    const otherNewLeads = activeLeads.filter(l => l.pipelineStage === 'new' && (l.scores?.[0]?.finalScore || 0) < 80);
+    const overdueCount = await prisma.lead.count({
+        where: {
+            pipelineStage: { not: 'closed' },
+            followUpDate: { lt: now }
+        }
+    });
 
-    const allPriorities = [
-        ...urgentUncontacted.map(l => ({ ...l, topScore: l.scores?.[0]?.finalScore || 0, priorityType: 'URGENT: HIGH INTENT', priorityLevel: 'high', suggestedAction: l.scores?.[0]?.suggestedAction || 'Call immediately' })),
-        ...overdueFollowUps.map(l => ({ ...l, topScore: l.scores?.[0]?.finalScore || 0, priorityType: 'URGENT: OVERDUE', priorityLevel: 'high', suggestedAction: l.scores?.[0]?.suggestedAction || 'Follow up' })),
-        ...otherNewLeads.map(l => ({ ...l, topScore: l.scores?.[0]?.finalScore || 0, priorityType: 'Needs First Contact', priorityLevel: 'medium', suggestedAction: l.scores?.[0]?.suggestedAction || 'Review lead' }))
-    ];
+    // Fetch only top priorities for the UI component
+    const priorityLeads = await prisma.lead.findMany({
+        where: {
+            OR: [
+                { pipelineStage: 'new', scores: { some: { finalScore: { gte: 80 } } } },
+                { pipelineStage: { not: 'closed' }, followUpDate: { lt: now } }
+            ]
+        },
+        include: {
+            scores: { orderBy: { createdAt: 'desc' }, take: 1, include: { reasoningBreakdowns: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5
+    });
 
-    const seenIds = new Set();
-    const todayPriorities = allPriorities.filter(l => {
-        if (seenIds.has(l.id)) return false;
-        seenIds.add(l.id);
-        return true;
-    }).slice(0, 5);
+    const todayPriorities = priorityLeads.map(l => ({
+        ...l,
+        topScore: l.scores?.[0]?.finalScore || 0,
+        priorityType: l.pipelineStage === 'new' && (l.scores?.[0]?.finalScore || 0) >= 80 ? 'URGENT: HIGH INTENT' : 'URGENT: OVERDUE',
+        priorityLevel: 'high',
+        suggestedAction: l.scores?.[0]?.suggestedAction || 'Needs attention'
+    }));
 
-    // ---- FETCH EMAIL METRICS ----
-    const emailLogs = await prisma.emailLog.findMany();
-    const sentToday = emailLogs.filter(e => {
-        const today = new Date();
-        const sentDate = new Date(e.sentAt);
-        return sentDate.getDate() === today.getDate() && sentDate.getMonth() === today.getMonth() && sentDate.getFullYear() === today.getFullYear();
-    }).length;
+    // ---- FETCH EMAIL METRICS (Optimized) ----
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    
+    const sentToday = await prisma.emailLog.count({
+        where: { sentAt: { gte: todayStart } }
+    });
 
-    const opened = emailLogs.filter((e: any) => e.openedAt).length;
-    const totalSent = emailLogs.filter(e => e.status === 'sent').length;
-    const openRate = totalSent > 0 ? Math.round((opened / totalSent) * 100) : 0;
-    const clicks = emailLogs.filter((e: any) => e.clickedAt).length;
-    const clickRate = totalSent > 0 ? Math.round((clicks / totalSent) * 100) : 0;
+    const totalSent = await prisma.emailLog.count({ where: { status: 'sent' } });
+    const openedCount = await prisma.emailLog.count({ where: { NOT: { openedAt: null } } });
+    const clickedCount = await prisma.emailLog.count({ where: { NOT: { clickedAt: null } } });
+
+    const openRate = totalSent > 0 ? Math.round((openedCount / totalSent) * 100) : 0;
+    const clickRate = totalSent > 0 ? Math.round((clickedCount / totalSent) * 100) : 0;
 
     // ---- ONBOARDING SETUP STATUS ----
     const agentProfile = await prisma.agentProfile.findUnique({ where: { agentId: user.id } });
@@ -133,25 +141,38 @@ export default async function DashboardPage() {
     const hasTemplates = !!(agentProfile?.emailTemplateHotBody);
 
     // ---- CHART DATA TRANSFORMATIONS ----
-    const last7DaysData = Array.from({ length: 7 }, (_, i) => {
+    // (Keeping simple for now, but using count is better than filtering full list)
+    const last7DaysData = await Promise.all(Array.from({ length: 7 }, async (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
-        const dayStr = d.toLocaleDateString('en-US', { weekday: 'short' });
-        const dayDate = d.toISOString().split('T')[0];
-        const dayLeads = leads.filter(l => l.createdAt.toISOString().split('T')[0] === dayDate);
-        return {
-            date: dayStr,
-            total: dayLeads.length,
-            hot: dayLeads.filter(l => (l.scores?.[0]?.finalScore || 0) >= 80).length
-        };
-    });
+        d.setHours(0,0,0,0);
+        const dayEnd = new Date(d);
+        dayEnd.setHours(23,59,59,999);
+        
+        const count = await prisma.lead.count({
+            where: { createdAt: { gte: d, lte: dayEnd } }
+        });
+        const hotCount = await prisma.lead.count({
+            where: { 
+                createdAt: { gte: d, lte: dayEnd },
+                scores: { some: { finalScore: { gte: 80 } } }
+            }
+        });
 
-    const pipelineChartData = [
-        { name: 'New', value: leads.filter(l => l.pipelineStage === 'new').length, color: '#853953' },
-        { name: 'In Progress', value: leads.filter(l => l.pipelineStage === 'contacted' || l.pipelineStage === 'contact').length, color: '#612D53' },
-        { name: 'Booked', value: leads.filter(l => l.pipelineStage === 'booked_showing').length, color: '#2C2C2C' },
-        { name: 'Closed', value: leads.filter(l => l.pipelineStage === 'closed').length, color: '#10b981' }
-    ].filter(d => d.value > 0);
+        return {
+            date: d.toLocaleDateString('en-US', { weekday: 'short' }),
+            total: count,
+            hot: hotCount
+        };
+    }));
+
+    const pipelineStages = ['new', 'contacted', 'booked_showing', 'closed'];
+    const pipelineChartData = await Promise.all(pipelineStages.map(async stage => {
+        const count = await prisma.lead.count({ where: { pipelineStage: stage } });
+        const colors: any = { new: '#853953', contacted: '#612D53', booked_showing: '#2C2C2C', closed: '#10b981' };
+        const labels: any = { new: 'New', contacted: 'In Progress', booked_showing: 'Booked', closed: 'Closed' };
+        return { name: labels[stage], value: count, color: colors[stage] };
+    }));
 
     const setupSteps = [
         {
@@ -245,7 +266,7 @@ export default async function DashboardPage() {
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Leads Scored</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-3xl font-black text-[#2C2C2C] leading-none tracking-tight">{urgentUncontacted.length + overdueFollowUps.length}</p>
+                                <p className="text-3xl font-black text-[#2C2C2C] leading-none tracking-tight">{highIntentCount}</p>
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">High Intent</p>
                             </div>
                             <div className="text-center">
@@ -253,7 +274,7 @@ export default async function DashboardPage() {
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Automations</p>
                             </div>
                             <div className="text-center border-l border-black/5 pl-12 md:pl-20">
-                                <p className="text-3xl font-black text-[#853953] leading-none tracking-tight">{closedLeads.length}</p>
+                                <p className="text-3xl font-black text-[#853953] leading-none tracking-tight">{closedLeadsCount}</p>
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Success Rate</p>
                             </div>
                         </div>
@@ -264,21 +285,21 @@ export default async function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                     <MetricCard
                         title="Active Pipeline"
-                        amount={activeLeads.length.toString()}
-                        change={activeLeads.length > 0 ? '+New' : '0%'}
+                        amount={activeLeadsCount.toString()}
+                        change={activeLeadsCount > 0 ? '+New' : '0%'}
                         trend="up"
                         Icon={Users}
                     />
                     <MetricCard
                         title="Conv. Efficiency"
                         amount={`${conversionRate}%`}
-                        change={closedLeads.length > 0 ? '+1.5%' : '0%'}
+                        change={closedLeadsCount > 0 ? '+1.5%' : '0%'}
                         trend="up"
                         Icon={ArrowLeftRight}
                     />
                     <MetricCard
                         title="Match Precision"
-                        amount={activeLeads.filter(l => (l.scores?.[0]?.finalScore || 0) >= 80).length.toString()}
+                        amount={highIntentCount.toString()}
                         change="Priority"
                         trend="up"
                         Icon={Sparkles}

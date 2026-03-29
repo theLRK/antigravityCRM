@@ -128,7 +128,7 @@ export default async function SignUpPage({
                                 <ArrowRight className="w-5 h-5" />
                             </button>
                             <p className="text-[10px] text-gray-400 font-bold mt-4 text-center px-4 uppercase tracking-widest leading-relaxed">
-                                By signing up, you agree to our <a href="#" className="underline">Terms</a> and <a href="#" className="underline">Privacy Policy</a>.
+                                By signing up, you agree to our <a href="/terms" className="underline hover:text-[#853953] transition-colors">Terms</a> and <a href="/privacy" className="underline hover:text-[#853953] transition-colors">Privacy Policy</a>.
                             </p>
                         </div>
                     </form>

@@ -26,13 +26,20 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
     const supabase = await createClient()
 
+    const fullName = formData.get('fullName') as string || '';
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0] || 'Agent';
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    
     const data = {
         email: formData.get('email') as string,
         password: formData.get('password') as string,
         options: {
             data: {
-                first_name: formData.get('firstName') as string,
-                last_name: formData.get('lastName') as string,
+                first_name: firstName,
+                last_name: lastName,
+                agency_name: formData.get('agencyName') as string,
+                phone: formData.get('phoneNumber') as string,
             }
         }
     }

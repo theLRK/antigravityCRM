@@ -26,7 +26,10 @@ import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
-    const [leads, setLeads] = useState(initialLeads);
+    const [leads, setLeads] = useState(initialLeads.leads || []);
+    const [totalCount, setTotalCount] = useState(initialLeads.totalCount || 0);
+    const [page, setPage] = useState(1);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
@@ -34,34 +37,43 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
     const [selectedLead, setSelectedLead] = useState<any | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [addForm, setAddForm] = useState({
-        firstName: '', lastName: '', email: '', phone: '',
-        source: '', moveTimeline: '', budgetMin: '', budgetMax: '', notes: '', currency: '$', 
-        preferredAreas: '', financing: '', propertyType: '', preApproval: false
-    });
 
-    // Multi-select state
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-    const [showBulkConfirm, setShowBulkConfirm] = useState(false);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-
-    // Toast notification state
+    const [showBulkConfirm, setShowBulkConfirm] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-    const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3500);
-    }, []);
+    const [addForm, setAddForm] = useState({
+        firstName: '', lastName: '', email: '', phone: '',
+        source: '', moveTimeline: '', budgetMin: '', budgetMax: '',
+        notes: '', currency: '$', preferredAreas: '', financing: '',
+        propertyType: '', preApproval: false
+    });
 
-    // Polling for new leads
+    const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    // Polling for new leads - Reduced to 60s
     useEffect(() => {
         const interval = setInterval(() => {
-            getLeads().then((freshLeads) => {
-                setLeads(freshLeads as any);
+            getLeads({ take: page * 20, stage: activeFilter, query: searchQuery }).then((res) => {
+                setLeads(res.leads as any);
+                setTotalCount(res.totalCount);
             });
-        }, 3000);
+        }, 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [page, activeFilter, searchQuery]);
+
+    const handleLoadMore = async () => {
+        setIsLoadingMore(true);
+        const nextPage = page + 1;
+        const res = await getLeads({ take: 20, skip: page * 20, stage: activeFilter, query: searchQuery });
+        setLeads(prev => [...prev, ...res.leads]);
+        setPage(nextPage);
+        setIsLoadingMore(false);
+    };
 
     const handleStatusChange = async (leadId: string, newStatus: string) => {
         startTransition(() => {
@@ -283,25 +295,25 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                     <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Active Leads</h1>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors shadow-sm">
+                        className="flex items-center gap-2 bg-[#853953] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#612D53] transition-colors shadow-sm">
                         <Plus className="w-4 h-4" /> Add Lead
                     </button>
                 </div>
 
                 {/* Soft Usage Gate Banner */}
                 {leads.length >= 25 && (
-                    <div className="mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+                    <div className="mt-2 p-3 bg-[#853953]/5 border border-[#853953]/10 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
                         <div className="flex items-center gap-3">
                             <div className="p-1.5 bg-white rounded-lg shadow-sm">
-                                <Zap className="w-4 h-4 text-indigo-600" />
+                                <Zap className="w-4 h-4 text-[#853953]" />
                             </div>
-                            <p className="text-sm font-medium text-indigo-900">
+                            <p className="text-sm font-medium text-[#2C2C2C]">
                                 You're processing <span className="font-bold">{leads.length} leads</span>. Upgrade to Pro for unlimited leads, AI scoring, and automated engagement.
                             </p>
                         </div>
                         <Link 
                             href="/#pricing" 
-                            className="px-4 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap"
+                            className="px-4 py-1.5 bg-[#853953] text-white text-xs font-bold rounded-lg hover:bg-[#612D53] transition-colors shadow-sm whitespace-nowrap"
                         >
                             View Plans
                         </Link>
@@ -316,7 +328,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                             placeholder="Search by name, email, or phone..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none shadow-sm"
+                            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#853953] focus:border-transparent outline-none shadow-sm"
                         />
                     </div>
 
@@ -340,7 +352,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                             <select
                                 value={sortOption}
                                 onChange={(e) => setSortOption(e.target.value)}
-                                className="appearance-none bg-white border border-slate-300 text-slate-700 py-2 pl-3 pr-8 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-sm"
+                                className="appearance-none bg-white border border-slate-300 text-slate-700 py-2 pl-3 pr-8 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#853953] shadow-sm"
                             >
                                 <option>Highest Score</option>
                                 <option>Lowest Score</option>
@@ -363,7 +375,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                 <th scope="col" className="px-4 py-3 w-10">
                                     <button onClick={toggleSelectAll} className="text-slate-400 hover:text-slate-700 transition-colors">
                                         {selectedIds.size === filteredLeads.length && filteredLeads.length > 0
-                                            ? <CheckSquare className="w-4 h-4 text-purple-600" />
+                                            ? <CheckSquare className="w-4 h-4 text-[#853953]" />
                                             : <Square className="w-4 h-4" />}
                                     </button>
                                 </th>
@@ -383,11 +395,11 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                 const overdue = isOverdue(lead.followUpDate) && lead.pipelineStage !== 'closed';
                                 console.log(lead)
                                 return (
-                                    <tr key={lead.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedIds.has(lead.id) ? 'bg-purple-50/40' : ''}`}>
+                                    <tr key={lead.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedIds.has(lead.id) ? 'bg-[#853953]/5' : ''}`}>
                                         <td className="px-4 py-4">
-                                            <button onClick={() => toggleSelect(lead.id)} className="text-slate-300 hover:text-purple-600 transition-colors">
+                                            <button onClick={() => toggleSelect(lead.id)} className="text-slate-300 hover:text-[#853953] transition-colors">
                                                 {selectedIds.has(lead.id)
-                                                    ? <CheckSquare className="w-4 h-4 text-purple-600" />
+                                                    ? <CheckSquare className="w-4 h-4 text-[#853953]" />
                                                     : <Square className="w-4 h-4" />}
                                             </button>
                                         </td>
@@ -502,6 +514,23 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Load More Button */}
+                {leads.length < totalCount && (
+                    <div className="mt-8 flex justify-center pb-12">
+                        <button
+                            onClick={handleLoadMore}
+                            disabled={isLoadingMore}
+                            className="flex items-center gap-2 px-8 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                        >
+                            {isLoadingMore ? (
+                                <><Loader2 className="w-4 h-4 animate-spin" /> Loading more...</>
+                            ) : (
+                                <>Load More Leads ({totalCount - leads.length} remaining)</>
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Slide-over Detail Drawer */}
@@ -564,7 +593,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider ml-1">Phone Number *</label>
-                                        <div className="phone-wrapper rounded-xl overflow-hidden border border-slate-200 bg-slate-50/50 focus-within:ring-2 focus-within:ring-purple-500 focus-within:bg-white transition-all">
+                                        <div className="phone-wrapper rounded-xl overflow-hidden border border-slate-200 bg-slate-50/50 focus-within:ring-2 focus-within:ring-[#853953] focus-within:bg-white transition-all">
                                             <PhoneInput
                                                 international
                                                 defaultCountry="US"
@@ -594,7 +623,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                         <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider ml-1">Property Type</label>
                                         <select value={addForm.propertyType}
                                             onChange={e => setAddForm(f => ({ ...f, propertyType: e.target.value }))}
-                                            className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white focus:border-transparent outline-none transition-all bg-white">
+                                            className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#853953] focus:bg-white focus:border-transparent outline-none transition-all bg-white">
                                             <option value="">Select type...</option>
                                             <option value="Apartment">Apartment</option>
                                             <option value="Detached House">Detached House</option>
@@ -613,7 +642,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                                 <select
                                                     value={addForm.currency}
                                                     onChange={e => setAddForm(f => ({ ...f, currency: e.target.value }))}
-                                                    className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none transition-all bg-white">
+                                                    className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#853953] focus:bg-white outline-none transition-all bg-white">
                                                     <option value="$">USD ($)</option>
                                                     <option value="₦">NGN (₦)</option>
                                                     <option value="€">EUR (€)</option>
@@ -622,19 +651,19 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                             </div>
                                             <div className="col-span-9 grid grid-cols-2 gap-3">
                                                 <div className="relative group">
-                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold group-focus-within:text-purple-600 transition-colors">{addForm.currency}</span>
+                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold group-focus-within:text-[#853953] transition-colors">{addForm.currency}</span>
                                                     <input
                                                         type="number" min="0" step="1000" value={addForm.budgetMin}
                                                         onChange={e => setAddForm(f => ({ ...f, budgetMin: e.target.value }))}
-                                                        className="w-full border border-slate-200 bg-slate-50/50 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none transition-all"
+                                                        className="w-full border border-slate-200 bg-slate-50/50 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#853953] focus:bg-white outline-none transition-all"
                                                         placeholder="Min" />
                                                 </div>
                                                 <div className="relative group">
-                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold group-focus-within:text-purple-600 transition-colors">{addForm.currency}</span>
+                                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold group-focus-within:text-[#853953] transition-colors">{addForm.currency}</span>
                                                     <input
                                                         type="number" min="0" step="1000" value={addForm.budgetMax}
                                                         onChange={e => setAddForm(f => ({ ...f, budgetMax: e.target.value }))}
-                                                        className="w-full border border-slate-200 bg-slate-50/50 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none transition-all"
+                                                        className="w-full border border-slate-200 bg-slate-50/50 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#853953] focus:bg-white outline-none transition-all"
                                                         placeholder="Max" />
                                                 </div>
                                             </div>
@@ -654,7 +683,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                         <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider ml-1">Purchase Timeline</label>
                                         <select value={addForm.moveTimeline}
                                             onChange={e => setAddForm(f => ({ ...f, moveTimeline: e.target.value }))}
-                                            className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none transition-all bg-white">
+                                            className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#853953] focus:bg-white outline-none transition-all bg-white">
                                             <option value="">Select timeline...</option>
                                             <option value="asap">Immediately / ASAP</option>
                                             <option value="1_month">Within 1 Month</option>
@@ -684,7 +713,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                         <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider ml-1">Additional Notes</label>
                                         <textarea rows={3} value={addForm.notes}
                                             onChange={e => setAddForm(f => ({ ...f, notes: e.target.value }))}
-                                            className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none transition-all resize-none"
+                                            className="w-full border border-slate-200 bg-slate-50/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#853953] focus:bg-white outline-none transition-all resize-none"
                                             placeholder="Capture intent signals, preferred amenities, or any other signals for AI evaluation..." />
                                     </div>
                                 </div>
@@ -707,7 +736,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                     {isSubmitting ? (
                                         <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
                                     ) : (
-                                        <><Sparkles className="w-4 h-4 text-purple-400" /> Save Lead</>
+                                        <><Sparkles className="w-4 h-4 text-emerald-400" /> Save Lead</>
                                     )}
                                 </button>
                             </div>
