@@ -57,7 +57,7 @@
   }
 
   .input-field {
-    @apply w-full rounded-[10px] border border-black/10 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#853953] focus:border-transparent outline-none bg-white;
+    @apply w-full rounded-[10px] border border-black/10 px-4 py-3 text-sm text-[#2C2C2C] placeholder-gray-400 transition-all focus:ring-2 focus:ring-[#853953] focus:border-transparent outline-none bg-white;
     box-shadow: 0 2px 5px rgba(0,0,0,0.02);
   }
 
