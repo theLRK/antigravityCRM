@@ -1,0 +1,52 @@
+{
+    "version": "v1.0",
+    "rules": {
+        "moveTimeline": {
+            "maxPoints": 35,
+            "weights": {
+                "asap": 35,
+                "1_month": 25,
+                "3_months": 12,
+                "6_plus": 3
+            }
+        },
+        "preApproval": {
+            "maxPoints": 25,
+            "weights": {
+                "true": 25,
+                "false": 0
+            }
+        },
+        "budget": {
+            "maxPoints": 20,
+            "weights": {
+                "both": 20,
+                "one": 10,
+                "none": 0
+            }
+        },
+        "preferredAreas": {
+            "maxPoints": 10,
+            "weights": {
+                "specified": 10,
+                "none": 0
+            }
+        },
+        "bedroomsBathrooms": {
+            "maxPoints": 5,
+            "weights": {
+                "both": 5,
+                "one": 2,
+                "none": 0
+            }
+        },
+        "source": {
+            "maxPoints": 5,
+            "weights": {
+                "referral": 5,
+                "website": 3,
+                "social": 1
+            }
+        }
+    }
+}

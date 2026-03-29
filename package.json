@@ -1,0 +1,49 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 next dev",
+    "build": "npx prisma generate && npx cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 next build",
+    "start": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.2",
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.98.0",
+    "@types/styled-components": "^5.1.36",
+    "cheerio": "^1.2.0",
+    "clsx": "^2.1.1",
+    "cross-env": "^7.0.3",
+    "framer-motion": "^12.34.4",
+    "libphonenumber-js": "^1.12.40",
+    "lucide-react": "^0.576.0",
+    "next": "15.1.0",
+    "nodemailer": "^6.9.16",
+    "openai": "^4.82.0",
+    "prisma": "^6.4.1",
+    "qrcode.react": "^4.2.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-phone-number-input": "^3.4.16",
+    "recharts": "^3.8.0",
+    "resend": "^6.9.4",
+    "styled-components": "^6.3.11",
+    "tailwind-merge": "^3.5.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "netlify-cli": "^24.6.2",
+    "playwright": "^1.58.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

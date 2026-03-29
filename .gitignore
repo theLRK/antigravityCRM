@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+dist/
+
+# Environment files - NEVER commit secrets
+.env
+.env.local
+.env.*.local
+
+# Netlify build cache
+.netlify/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Prisma generated client (regenerated at build time)
+# Keep schema.prisma — it is needed
+# node_modules excluded above covers @prisma/client
+
+# Debug/temp files
+push_error.txt
+error.log
+source_code_export.txt
+export_code.js
+backend_error.txt
+build_trace.log
+ascii_build.log

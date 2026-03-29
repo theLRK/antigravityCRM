@@ -1,0 +1,13 @@
+[build]
+  command = "npx prisma generate && next build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions."___netlify-server-handler"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@prisma/client", "openai", "nodemailer", "cheerio"]

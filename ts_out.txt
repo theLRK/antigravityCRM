@@ -1,0 +1,11 @@
+﻿src/app/(protected)/properties/PropertiesClient.tsx(294,50): error TS1127: Invalid character.
+src/app/(protected)/properties/PropertiesClient.tsx(297,36): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/(protected)/properties/PropertiesClient.tsx(297,37): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/app/(protected)/properties/PropertiesClient.tsx(299,35): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/app/(protected)/properties/PropertiesClient.tsx(302,29): error TS1005: ')' expected.
+src/app/(protected)/properties/PropertiesClient.tsx(303,29): error TS2657: JSX expressions must have one parent element.
+src/app/(protected)/properties/PropertiesClient.tsx(360,25): error TS1128: Declaration or statement expected.
+src/app/(protected)/properties/PropertiesClient.tsx(362,17): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/(protected)/properties/PropertiesClient.tsx(362,19): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/app/(protected)/properties/PropertiesClient.tsx(373,9): error TS1005: ')' expected.
+src/app/(protected)/properties/PropertiesClient.tsx(374,5): error TS1109: Expression expected.

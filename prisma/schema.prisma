@@ -1,0 +1,436 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-1.1.x", "rhel-openssl-3.0.x", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Lead {
+  id                   String              @id @default(uuid())
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @default(now()) @updatedAt @map("updated_at")
+  firstName            String              @map("first_name")
+  lastName             String              @map("last_name")
+  email                String
+  phone                String
+  budgetMin            Int?                @map("budget_min")
+  budgetMax            Int?                @map("budget_max")
+  preferredAreas       String?             @map("preferred_areas")
+  bedroomsMin          Int?                @map("bedrooms_min")
+  bathroomsMin         Int?                @map("bathrooms_min")
+  moveTimeline         String?             @map("move_timeline")
+  preApproval          Boolean?            @map("pre_approval")
+  agentExperience      String?             @map("agent_experience")
+  financing            String?             @map("financing")
+  propertyType         String?             @map("property_type")
+  currency             String?             @default("USD") @map("currency")
+  motivation           String?
+  source               String?
+  utmSource            String?             @map("utm_source")
+  utmMedium            String?             @map("utm_medium")
+  utmCampaign          String?             @map("utm_campaign")
+  ipAddress            String?             @map("ip_address")
+  rawPayload           String?             @map("raw_payload")
+  isDuplicate          Boolean             @default(false) @map("is_duplicate")
+  pipelineStage        String              @default("new") @map("pipeline_stage")
+  confidenceScore      Int?                @map("confidence_score")
+  confidenceLevel      String?             @map("confidence_level")
+  followUpDate         DateTime?           @map("follow_up_date")
+  lastContactedAt      DateTime?           @map("last_contacted_at")
+  isUnsubscribed       Boolean             @default(false) @map("is_unsubscribed")
+  formId               String?             @map("form_id")
+  // Location
+  preferredLocationIds String?             @map("preferred_location_ids") // JSON array of Location IDs
+  customLocation       String?             @map("custom_location") // if "Other" was typed
+  // RBAC Assignment
+  assignedAgentId      String?             @map("assigned_agent_id")
+  isUnassigned         Boolean             @default(true) @map("is_unassigned")
+  // Relations
+  activityLogs         ActivityLog[]
+  emailLogs            EmailLog[]
+  sourceForm           LeadCaptureForm?    @relation(fields: [formId], references: [id])
+  scores               Score[]
+  propertyMatches      PropertyMatch[]
+  sequenceStates       LeadSequenceState[]
+  actionOutcomes       ActionOutcome[]
+  callLogs             CallLog[]
+  notes                Note[]
+  scheduledEmails      ScheduledEmail[]
+  Task                 Task[]
+
+  @@map("leads")
+}
+
+model Score {
+  id                  String               @id @default(uuid())
+  leadId              String               @map("lead_id")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  baseScore           Int                  @map("base_score")
+  llmDelta            Int                  @default(0) @map("llm_delta")
+  finalScore          Int                  @map("final_score")
+  likelihoodLabel     String               @map("likelihood_label")
+  confidenceScore     Int                  @map("confidence_score")
+  confidenceLevel     String               @map("confidence_level")
+  llmUsed             Boolean              @default(true) @map("llm_used")
+  llmModel            String?              @map("llm_model")
+  llmLatencyMs        Int?                 @map("llm_latency_ms")
+  scoringVersion      String               @default("v1.0") @map("scoring_version")
+  suggestedAction     String               @map("suggested_action")
+  reasoningBreakdowns ReasoningBreakdown[]
+  lead                Lead                 @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("scores")
+}
+
+model ReasoningBreakdown {
+  id                   String   @id @default(uuid())
+  scoreId              String   @map("score_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+  deterministicFactors String   @map("deterministic_factors")
+  llmReasoning         String?  @map("llm_reasoning")
+  llmSuggestedAction   String?  @map("llm_suggested_action")
+  llmConfidenceNote    String?  @map("llm_confidence_note")
+  llmPromptHash        String?  @map("llm_prompt_hash")
+  reasoningSummary     String   @map("reasoning_summary")
+  score                Score    @relation(fields: [scoreId], references: [id], onDelete: Cascade)
+
+  @@map("reasoning_breakdowns")
+}
+
+model ActivityLog {
+  id           String   @id @default(uuid())
+  occurredAt   DateTime @default(now()) @map("occurred_at")
+  leadId       String?  @map("lead_id")
+  eventType    String   @map("event_type")
+  actor        String   @default("system")
+  metadata     String?
+  isError      Boolean  @default(false) @map("is_error")
+  errorMessage String?  @map("error_message")
+  lead         Lead?    @relation(fields: [leadId], references: [id])
+
+  @@map("activity_log")
+}
+
+model EmailLog {
+  id              String    @id @default(uuid())
+  leadId          String    @map("lead_id")
+  sentAt          DateTime  @default(now()) @map("sent_at")
+  recipientEmail  String    @map("recipient_email")
+  templateId      String    @map("template_id")
+  subjectLine     String?   @map("subject_line")
+  bodyTextPreview String?   @map("body_text_preview")
+  bodyFull        String?   @map("body_full")
+  gmailMessageId  String?   @map("gmail_message_id")
+  gmailThreadId   String?   @map("gmail_thread_id")
+  status          String    @default("sent")
+  opened          Boolean   @default(false)
+  replied         Boolean   @default(false)
+  isManual        Boolean   @default(false) @map("is_manual")
+  templateUsed    String?   @map("template_used")
+  attemptCount    Int       @default(1) @map("attempt_count")
+  lastError       String?   @map("last_error")
+  openedAt        DateTime? @map("opened_at")
+  clickedAt       DateTime? @map("clicked_at")
+  lead            Lead      @relation(fields: [leadId], references: [id])
+
+  @@map("email_log")
+}
+
+model LeadCaptureForm {
+  id                   String   @id @default(uuid())
+  publicId             String   @unique @default(uuid()) @map("public_id")
+  agentId              String   @map("agent_id")
+  title                String   @default("Real Estate Inquiry")
+  description          String?
+  welcomeMessage       String?  @map("welcome_message")
+  successMessage       String?  @default("Thank you! We have received your inquiry and will be in touch shortly.") @map("success_message")
+  isActive             Boolean  @default(true) @map("is_active")
+  currencySymbol       String   @default("$") @map("currency_symbol")
+  customFields         String?  @map("custom_fields")
+  emailSubjectTemplate String?  @default("Thanks for reaching out! - {agent_name}") @map("email_subject_template")
+  emailBodyTemplate    String?  @map("email_body_template")
+  autoSendFirstMessage Boolean  @default(false) @map("auto_send_first_message")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  leads                Lead[]
+
+  @@map("lead_capture_forms")
+}
+
+model AgentProfile {
+  id                       String    @id @default(uuid())
+  agentId                  String    @unique @map("agent_id")
+  name                     String?   @map("name")
+  phone                    String?   @map("phone")
+  company                  String?   @map("company")
+  signature                String?   @map("signature")
+  websiteUrl               String?   @map("website_url")
+  websiteContext           String?   @map("website_context")
+  gmailRefreshToken        String?   @map("gmail_refresh_token")
+  gmailAccessToken         String?   @map("gmail_access_token")
+  gmailTokenExpiry         DateTime? @map("gmail_token_expiry")
+  gmailEmailAddress        String?   @map("gmail_email_address")
+  gmailClientId            String?   @map("gmail_client_id")
+  gmailClientSecret        String?   @map("gmail_client_secret")
+  emailFromName            String?   @map("email_from_name")
+  emailTone                String?   @default("Warm & Trust") @map("email_tone")
+  emailTemplateHotSubject  String?   @map("email_template_hot_subject")
+  emailTemplateHotBody     String?   @map("email_template_hot_body")
+  emailTemplateWarmSubject String?   @map("email_template_warm_subject")
+  emailTemplateWarmBody    String?   @map("email_template_warm_body")
+  emailTemplateColdSubject String?   @map("email_template_cold_subject")
+  emailTemplateColdBody    String?   @map("email_template_cold_body")
+  imageUrl                 String?   @map("image_url")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+  gmailAppPassword         String?   @map("gmail_app_password")
+
+  @@map("agent_profiles")
+}
+
+model Property {
+  id             String   @id @default(uuid())
+  title          String
+  price          Int
+  currency       String   @default("USD")
+  location       String // legacy display name -- keep for backward compat
+  locationId     String?  @map("location_id") // FK to Location model
+  bedrooms       Int
+  bathrooms      Float
+  squareFootage  Int?     @map("square_footage")
+  description    String?
+  images         String // JSON stringified array of URLs
+  propertyType   String   @default("House") @map("property_type")
+  status         String   @default("Available") // Available, Sold, Rented
+  agentId        String   @map("agent_id")
+  amenities      String? // JSON stringified array
+  tags           String? // JSON stringified array
+  geoCoordinates String?  @map("geo_coordinates")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  locationRef Location?       @relation(fields: [locationId], references: [id])
+  matches     PropertyMatch[]
+  notes       PropertyNote[]
+
+  @@map("properties")
+}
+
+model PropertyNote {
+  id         String   @id @default(uuid())
+  propertyId String   @map("property_id")
+  agentId    String   @map("agent_id")
+  agentName  String   @map("agent_name")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_notes")
+}
+
+model PropertyMatch {
+  id           String   @id @default(uuid())
+  leadId       String   @map("lead_id")
+  propertyId   String   @map("property_id")
+  score        Int
+  matchPercent Int?     @map("match_percent")
+  reasoning    String
+  matchReason  String?  @map("match_reason") // human-readable explanation
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  lead     Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, propertyId])
+  @@map("property_matches")
+}
+
+model Sequence {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  steps      SequenceStep[]
+  leadStates LeadSequenceState[]
+
+  @@map("sequences")
+}
+
+model SequenceStep {
+  id          String @id @default(uuid())
+  sequenceId  String @map("sequence_id")
+  stepOrder   Int    @map("step_order")
+  delayInDays Int    @map("delay_in_days")
+  emailType   String @map("email_type") // e.g. "intro", "follow_up", "reminder"
+
+  sequence Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+
+  @@map("sequence_steps")
+}
+
+model LeadSequenceState {
+  id          String   @id @default(uuid())
+  leadId      String   @map("lead_id")
+  sequenceId  String   @map("sequence_id")
+  currentStep Int      @default(0) @map("current_step")
+  nextRunAt   DateTime @map("next_run_at")
+  status      String   @default("active") @map("status") // "active", "paused", "completed"
+
+  lead     Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  sequence Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, sequenceId])
+  @@map("lead_sequence_states")
+}
+
+model ActionOutcome {
+  id           String   @id @default(uuid())
+  leadId       String   @map("lead_id")
+  actionType   String   @map("action_type") // e.g., 'CALL_NOW', 'SEND_EMAIL'
+  outcome      String   @map("outcome") // e.g., 'IGNORED', 'REPLIED', 'ANSWERED'
+  responseTime Int?     @map("response_time") // in seconds/minutes, optional
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([actionType, outcome])
+  @@map("action_outcomes")
+}
+
+model CallLog {
+  id        String   @id @default(uuid())
+  leadId    String   @map("lead_id")
+  agentId   String   @map("agent_id")
+  outcome   String // 'no_answer' | 'spoke_to_lead' | 'left_voicemail'
+  notes     String?
+  nextStep  String?  @map("next_step") // 'follow_up' | 'send_email' | 'schedule_viewing' | 'mark_closed'
+  createdAt DateTime @default(now()) @map("created_at")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("call_logs")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String // 'new_lead' | 'lead_reply' | 'follow_up_overdue' | 'high_intent'
+  message   String
+  read      Boolean  @default(false)
+  leadId    String?  @map("lead_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+// -- RBAC --------------------------------------------------------------------
+model AgentUser {
+  id         String   @id @default(uuid())
+  supabaseId String   @unique @map("supabase_id")
+  role       String   @default("agent") // "admin" | "agent"
+  name       String
+  email      String   @unique
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("agent_users")
+}
+
+// -- COMMUNICATION -----------------------------------------------------------
+model Note {
+  id        String   @id @default(uuid())
+  leadId    String   @map("lead_id")
+  agentId   String   @map("agent_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
+}
+
+// -- TASKS -------------------------------------------------------------------
+model Task {
+  id          String   @id @default(uuid())
+  leadId      String?  @map("lead_id")
+  agentId     String   @map("agent_id")
+  title       String
+  taskType    String   @map("task_type") // Call | Email | Meeting | Follow Up | Viewing | Reminder
+  dueDate     DateTime @map("due_date")
+  dueTime     String?  @map("due_time") // HH:MM format, optional
+  status      String   @default("pending") // pending | completed | overdue
+  notes       String?
+  autoCreated Boolean  @default(false) @map("auto_created")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([agentId, status])
+  @@index([dueDate, status])
+  @@map("tasks")
+}
+
+// -- LOCATION MANAGEMENT -------------------------------------------------------
+model LocationGroup {
+  id        String   @id @default(uuid())
+  name      String   @unique // "Island", "Mainland", "Abuja", "Other"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  locations Location[]
+
+  @@map("location_groups")
+}
+
+model Location {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  groupId         String   @map("group_id")
+  isCustom        Boolean  @default(false) @map("is_custom")
+  createdByLeadId String?  @map("created_by_lead_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  group      LocationGroup @relation(fields: [groupId], references: [id])
+  properties Property[]
+
+  @@map("locations")
+}
+
+// -- EMAIL TEMPLATES ---------------------------------------------------------
+model EmailTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  subject   String
+  body      String
+  agentId   String   @map("agent_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("email_templates")
+}
+
+// -- SCHEDULED EMAILS --------------------------------------------------------
+model ScheduledEmail {
+  id          String   @id @default(uuid())
+  leadId      String   @map("lead_id")
+  agentId     String   @map("agent_id")
+  subject     String
+  body        String
+  scheduledAt DateTime @map("scheduled_at")
+  status      String   @default("scheduled") // scheduled | sent | cancelled
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledAt, status])
+  @@map("scheduled_emails")
+}

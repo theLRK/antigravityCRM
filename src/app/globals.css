@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-brand-gradient: linear-gradient(to right, var(--primary), var(--secondary));
+  --color-border: var(--border);
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --radius-xl: 20px;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+}
+
+@layer base {
+  :root {
+    --background: #F3F4F4;
+    --foreground: #2C2C2C;
+    --primary: #853953;
+    --secondary: #612D53;
+    --border: rgba(0, 0, 0, 0.08);
+    --card: #ffffff;
+    --card-shadow: 0 10px 40px -15px rgba(0, 0, 0, 0.08);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased selection:bg-[#853953]/20 selection:text-[#853953] overflow-x-hidden;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 rounded-[12px] font-bold text-white transition-all duration-200 active:scale-95;
+    background: linear-gradient(to right, #853953, #612D53);
+    box-shadow: 0 4px 15px rgba(133, 57, 83, 0.2);
+  }
+  .btn-primary:hover {
+    @apply scale-[1.03] shadow-xl;
+    background: linear-gradient(to right, #702f45, #522646);
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 rounded-[12px] font-bold text-[#2C2C2C] border-2 border-[#853953]/20 transition-all duration-200 active:scale-95 hover:bg-[#853953]/5;
+  }
+
+  .input-field {
+    @apply w-full rounded-[10px] border border-black/10 px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-[#853953] focus:border-transparent outline-none bg-white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  }
+
+  .card-modern {
+    @apply bg-white rounded-[16px] shadow-sm border border-black/[0.03] transition-all duration-300;
+    box-shadow: var(--card-shadow);
+  }
+  .card-modern:hover {
+    @apply -translate-y-1 shadow-2xl;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
