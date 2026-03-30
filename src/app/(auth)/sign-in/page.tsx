@@ -16,7 +16,7 @@ export default async function SignInPage({
                 <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-white opacity-[0.03] rounded-full -mr-96 -mt-96 blur-3xl pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black opacity-[0.03] rounded-full -ml-32 -mb-32 blur-3xl pointer-events-none" />
 
-                <Logo className="invert brightness-0 relative z-10" />
+                <Logo lightText className="relative z-10" />
 
                 <div className="relative z-10">
                     <h2 className="text-6xl font-black text-white mb-8 tracking-tighter leading-tight">
