@@ -7,7 +7,6 @@ import { EngageTabs } from './components/EngageTabs';
 import { FollowUpsTab } from './components/FollowUpsTab';
 import { ManualEmailTab } from './components/ManualEmailTab';
 import { EmailHistoryTab } from './components/EmailHistoryTab';
-import { EmailSettingsTab } from './components/EmailSettingsTab';
 import { ScheduledEmailsTab } from './components/ScheduledEmailsTab';
 import { 
     sendTestEmailAction, 
@@ -187,20 +186,6 @@ export default async function EngageDashboardPage({ searchParams }: { searchPara
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                             <TaskCalendar />
                         </div>
-                    ),
-                    'settings': agentProfile && (
-                        <EmailSettingsTab 
-                            profile={agentProfile} 
-                            onUpdate={async (formData) => {
-                                'use server'
-                                const name = formData.get('emailFromName') as string;
-                                await prisma.agentProfile.update({
-                                    where: { id: agentProfile.id },
-                                    data: { emailFromName: name }
-                                });
-                                revalidatePath('/engage');
-                            }}
-                        />
                     ),
                     'scheduled': (
                         <ScheduledEmailsTab 

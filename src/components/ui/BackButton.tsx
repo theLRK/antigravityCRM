@@ -1,14 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface BackButtonProps {
-    label?: string;
-    href?: string;
-}
-
-export function BackButton({ label = 'Back', href }: BackButtonProps) {
+export function BackButton({ className, href, label = "Back" }: { className?: string, href?: string, label?: string }) {
     const router = useRouter();
 
     const handleClick = () => {
@@ -22,10 +18,13 @@ export function BackButton({ label = 'Back', href }: BackButtonProps) {
     return (
         <button
             onClick={handleClick}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 mb-6 transition-colors group"
+            className={cn(
+                "flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 rounded-lg transition-colors border border-transparent hover:border-slate-200 active:scale-95 shadow-sm bg-white/50 backdrop-blur-sm mb-4 inline-flex",
+                className
+            )}
         >
-            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            {label}
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">{label}</span>
         </button>
     );
 }

@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const leads = await prisma.lead.findMany({
-            where: { assignedAgentId: user.id },
+            // where: { assignedAgentId: user.id }, // Temporarily removed to allow single-admin to see all leads
+
             select: {
                 id: true,
                 firstName: true,

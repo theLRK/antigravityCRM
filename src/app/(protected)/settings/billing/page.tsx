@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BillingRadio } from '@/components/ui/BillingRadio';
 import { Check, Info } from 'lucide-react';
+import { BackButton } from '@/components/ui/BackButton';
 
 export default function BillingPage() {
     const [selectedPlan, setSelectedPlan] = useState('silver');
@@ -32,6 +33,7 @@ export default function BillingPage() {
 
     return (
         <div className="p-8 max-w-5xl mx-auto w-full animation-fade-in">
+            <BackButton label="Back to Settings" href="/settings" className="mb-6" />
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-extrabold text-slate-900 mb-2">Billing & Plans</h1>

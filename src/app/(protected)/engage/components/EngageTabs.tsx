@@ -24,7 +24,6 @@ const tabs: Tab[] = [
     { id: 'history', label: 'Email History', icon: History },
     { id: 'scheduled', label: 'Scheduled', icon: MousePointer2 },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
-    { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 interface Props {

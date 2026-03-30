@@ -11,6 +11,8 @@ import {
     Globe,
     Shield,
 } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
+
 
 export function Sidebar({ user }: { user: any }) {
     const pathname = usePathname();
@@ -30,14 +32,8 @@ export function Sidebar({ user }: { user: any }) {
         <aside className="w-72 bg-white border-r border-black/5 flex flex-col h-screen sticky top-0 z-40">
             {/* Branding Header */}
             <div className="h-24 flex items-center px-8 border-b border-black/5">
-                <Link href="/dashboard" className="flex items-center gap-3.5 group">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#853953] to-[#612D53] rounded-xl flex items-center justify-center shadow-lg shadow-[#853953]/20 transition-transform group-hover:scale-110">
-                        <div className="w-5 h-5 rounded-sm bg-white/20 rotate-45" />
-                    </div>
-                    <div className="truncate">
-                        <h1 className="font-black text-[#2C2C2C] text-xl tracking-tight leading-none mb-1">Formative</h1>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">AI Intelligence</p>
-                    </div>
+                <Link href="/dashboard" className="group-hover:scale-[1.02] transition-transform origin-left block">
+                    <Logo className="scale-90 origin-left" />
                 </Link>
             </div>
 

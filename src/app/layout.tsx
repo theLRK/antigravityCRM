@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 
 export const metadata: Metadata = {
   title: "Formative | Modern AI Real Estate CRM",
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body className={cn(
         "min-h-screen font-sans antialiased mesh-gradient text-zinc-50"
       )}>
+        <ToastProvider />
         {children}
       </body>
     </html>

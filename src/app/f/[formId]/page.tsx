@@ -24,12 +24,10 @@ export default async function PublicLeadCapturePage({ params }: PageProps) {
     }
 
     // Fetch location groups for the multi-select
-    const groupsRaw = await (prisma as any).$queryRaw<any[]>`SELECT id, name FROM location_groups ORDER BY name ASC`;
-    const locationsRaw = await (prisma as any).$queryRaw<any[]>`SELECT id, name, group_id as "groupId" FROM locations`;
-    const locationGroups = (groupsRaw as any[]).map((g: any) => ({
-        ...g,
-        locations: (locationsRaw as any[]).filter((l: any) => l.groupId === g.id)
-    }));
+    const locationGroups = await prisma.locationGroup.findMany({
+        include: { locations: true },
+        orderBy: { name: 'asc' }
+    });
 
     // Display a specialized "Form Closed" UI if the agent disabled it
     if (!formConfig.isActive) {

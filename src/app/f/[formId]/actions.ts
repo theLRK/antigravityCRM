@@ -68,60 +68,38 @@ export async function submitPublicLead(formId: string, formData: Record<string, 
     }
 
     const leadId = crypto.randomUUID();
-    const preferredLocsJson = JSON.stringify(finalLocationIds);
-    const rawPayloadJson = JSON.stringify(rawPayload);
+    const finalLocationIdsJson = JSON.stringify(finalLocationIds);
 
-    // Using raw SQL because the generated Prisma client is currently stale/locked in dev server
-    await (prisma as any).$executeRawUnsafe(
-        `INSERT INTO leads (
-            id, first_name, last_name, email, phone, budget_min, budget_max, 
-            move_timeline, pre_approval, motivation, source, form_id, 
-            raw_payload, is_duplicate, pipeline_stage, currency, 
-            preferred_location_ids, custom_location, financing, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        leadId, 
-        firstName, lastName, email, phone, 
-        parsedBudgetMin, parsedBudgetMax, 
-        moveTimeline, 
-        financing === 'Pre-approved' ? 1 : 0, 
-        `Financing Status: ${financing}. Property Interest: ${propertyInterest}.`,
-        'Lead Capture Form', 
-        formId,
-        rawPayloadJson,
-        0, // is_duplicate
-        'new',
-        formConfig.currencySymbol || '$',
-        preferredLocsJson,
-        customLocation || null,
-        financing || null,
-        new Date().toISOString(),
-        new Date().toISOString()
-    );
-
-    // Fetch the created lead for orchestrator (using raw to be safe)
-    const lead = (await (prisma as any).$queryRawUnsafe(`SELECT * FROM leads WHERE id = ?`, leadId))[0];
-    // Normalize field names if needed for orchestrator (orchestrator might expect camelCase)
-    const normalizedLead = {
-        ...lead,
-        firstName: lead.first_name,
-        lastName: lead.last_name,
-        budgetMin: lead.budget_min,
-        budgetMax: lead.budget_max,
-        preferredLocationIds: JSON.parse(lead.preferred_location_ids || '[]')
-    };
-
-    // 4. Log the Creation Activity (using raw SQL)
-    await (prisma as any).$executeRawUnsafe(
-        `INSERT INTO activity_log (id, lead_id, event_type, actor, metadata, occurred_at, is_error)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        crypto.randomUUID(),
-        leadId,
-        'lead.created',
-        'public_form',
-        JSON.stringify({ formId }),
-        new Date().toISOString(),
-        0 // is_error false
-    );
+    // 3. Create the Lead locally using Prisma ORM to ensure safety
+    const lead = await prisma.lead.create({
+        data: {
+            id: leadId,
+            firstName,
+            lastName,
+            email,
+            phone,
+            budgetMin: parsedBudgetMin,
+            budgetMax: parsedBudgetMax,
+            moveTimeline,
+            preApproval: financing === 'Pre-approved',
+            source: 'Public Form Wizard',
+            formId: formId,
+            isDuplicate: false,
+            pipelineStage: 'new',
+            currency: formConfig.currencySymbol || '$',
+            preferredAreas: finalLocationIdsJson,
+            customLocation: customLocation || undefined,
+            financing: financing || undefined,
+            rawPayload: JSON.stringify(rawPayload),
+            activityLogs: {
+                create: {
+                    eventType: 'lead.created',
+                    actor: 'public_form',
+                    metadata: JSON.stringify({ formId })
+                }
+            }
+        }
+    });
 
     // 5. Fire exactly into the Scoring Orchestrator chain 
     try {

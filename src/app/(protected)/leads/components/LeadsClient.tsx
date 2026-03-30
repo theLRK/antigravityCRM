@@ -20,7 +20,7 @@ import {
     Zap
 } from 'lucide-react';
 import Link from 'next/link';
-import { getLeads, updateLeadStatus, addLeadNote, deleteLead, createLead } from '../actions';
+import { getLeads, updateLeadStatus, addLeadNote, deleteLead, createLead, getLeadDetails } from '../actions';
 import { LeadDetailDrawer } from './LeadDetailDrawer';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -73,6 +73,20 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
         setLeads(prev => [...prev, ...res.leads]);
         setPage(nextPage);
         setIsLoadingMore(false);
+    };
+
+    const handleSelectLead = async (lead: any) => {
+        // Show loading state by reusing an existing state or directly setting selectedLead and letting drawer show spinner?
+        // Actually, just set an empty skeleton or use a dedicated loading state.
+        // For simplicity, we can set `toast` or just wait smoothly.
+        const loadingId = toast?.message;
+        try {
+            const fullLead = await getLeadDetails(lead.id);
+            if (fullLead) setSelectedLead(fullLead);
+            else showToast('Lead not found', 'error');
+        } catch (e) {
+            showToast('Failed to load full lead profile', 'error');
+        }
     };
 
     const handleStatusChange = async (leadId: string, newStatus: string) => {
@@ -403,7 +417,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                                     : <Square className="w-4 h-4" />}
                                             </button>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => setSelectedLead(lead)}>
+                                        <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => handleSelectLead(lead)}>
                                             <div className="flex items-center">
                                                 <div className="h-10 w-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold relative">
                                                     {lead.firstName.charAt(0)}{lead.lastName.charAt(0)}
@@ -427,7 +441,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => setSelectedLead(lead)}>
+                                        <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => handleSelectLead(lead)}>
                                             <div className="flex flex-col gap-1 items-start">
                                                 {scoreObj ? (
                                                     <>

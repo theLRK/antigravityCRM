@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { BarChart3 } from 'lucide-react';
 import ReportsClient from './ReportsClient';
+import { BackButton } from '@/components/ui/BackButton';
 
 export default async function ReportsPage() {
     const supabase = await createClient();
@@ -11,7 +12,8 @@ export default async function ReportsPage() {
     return (
         <div className="min-h-screen bg-slate-50">
             <div className="max-w-7xl mx-auto px-8 py-10">
-                <div className="mb-8">
+                <BackButton label="Back to Dashboard" href="/dashboard" />
+                <div className="mb-8 mt-2">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-10 h-10 rounded-xl bg-[#853953]/10 flex items-center justify-center">
                             <BarChart3 className="w-5 h-5 text-[#853953]" />

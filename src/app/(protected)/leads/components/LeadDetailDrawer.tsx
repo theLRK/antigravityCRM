@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import LeadTimelineClient from '@/components/ui/leads/LeadTimelineClient';
 import RecommendedPropertiesTab from '@/components/ui/leads/RecommendedPropertiesTab';
 import LeadTasksList from './LeadTasksList';
+import toast from 'react-hot-toast';
 
 export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { lead: any, onClose: () => void, onStatusChange: (id: string, stage: string) => void, onDelete: (id: string) => void }) {
     const [noteText, setNoteText] = useState('');
@@ -36,8 +37,8 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
 
     // Calculate time to first contact
     const calculateTimeToContact = () => {
-        const createEvent = lead.activityLogs.find((a: any) => a.eventType === 'lead.created');
-        const contactEvent = lead.activityLogs.find((a: any) => a.eventType === 'status.changed' && a.metadata?.includes('contacted'));
+        const createEvent = lead.activityLogs?.find((a: any) => a.eventType === 'lead.created');
+        const contactEvent = lead.activityLogs?.find((a: any) => a.eventType === 'status.changed' && a.metadata?.includes('contacted'));
 
         if (createEvent && contactEvent) {
             const diffMs = new Date(contactEvent.occurredAt).getTime() - new Date(createEvent.occurredAt).getTime();
@@ -86,10 +87,14 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
             });
             if (res.ok) {
                 setNoteText('');
+                toast.success('Call logged successfully!');
                 // Refresh or handle update
+            } else {
+                toast.error('Failed to log call.');
             }
         } catch (e) {
             console.error(e);
+            toast.error('An error occurred.');
         } finally {
             setIsSaving(false);
         }
@@ -115,10 +120,14 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
             if (res.ok) {
                 setNewTask({ taskType: 'Call', dueDate: '', dueTime: '', notes: '' });
                 setCreationSuccess(true);
+                toast.success(`Task "${title}" created!`);
                 setTimeout(() => setCreationSuccess(false), 3000);
+            } else {
+                toast.error('Failed to create task.');
             }
         } catch (e) {
             console.error(e);
+            toast.error('An error occurred while creating the task.');
         } finally {
             setIsCreatingTask(false);
         }
