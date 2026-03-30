@@ -32,8 +32,10 @@ export function Sidebar({ user }: { user: any }) {
         <aside className="w-72 bg-white border-r border-black/5 flex flex-col h-screen sticky top-0 z-40">
             {/* Branding Header */}
             <div className="h-24 flex items-center px-8 border-b border-black/5">
-                <Link href="/dashboard" className="group-hover:scale-[1.02] transition-transform origin-left block">
-                    <Logo className="scale-90 origin-left" />
+                <Link href="/dashboard" className="flex items-center group w-full">
+                    <div className="flex-shrink-0 origin-left scale-90 -ml-2">
+                        <Logo />
+                    </div>
                 </Link>
             </div>
 
