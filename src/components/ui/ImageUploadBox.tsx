@@ -18,7 +18,7 @@ export const ImageUploadBox = ({ onChange, selectedFileUrl }: { onChange?: (e: R
           </div>
           <label htmlFor="file" className="footer w-full h-full absolute inset-0 cursor-pointer">
             {!selectedFileUrl && (
-              <div className="absolute bottom-4 flex items-center justify-center w-full gap-2 text-purple-500">
+              <div className="absolute bottom-4 flex items-center justify-center w-full gap-2 text-[#853953]">
                 <svg fill="#3b82f6" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5"><g id="SVGRepo_bgCarrier" strokeWidth={0} /><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round" /><g id="SVGRepo_iconCarrier"><path d="M15.331 6H8.5v20h15V14.154h-8.169z" /><path d="M18.153 6h-.009v5.342H23.5v-.002z" /></g></svg>
                 <p className="text-slate-600 m-0">No file selected</p>
               </div>

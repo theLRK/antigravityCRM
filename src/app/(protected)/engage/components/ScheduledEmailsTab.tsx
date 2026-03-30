@@ -45,7 +45,7 @@ export function ScheduledEmailsTab({ emails, onCancel }: Props) {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-indigo-500" />
+                    <Calendar className="w-5 h-5 text-[#853953]" />
                     Pending Schedule ({emails.length})
                 </h3>
                 <div className="text-xs text-slate-500 flex items-center gap-1">
@@ -69,7 +69,7 @@ export function ScheduledEmailsTab({ emails, onCancel }: Props) {
                             <tr key={email.id} className="hover:bg-slate-50/80 transition-colors group">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs border border-indigo-100">
+                                        <div className="w-8 h-8 rounded-full bg-[#853953]/10 flex items-center justify-center text-[#853953] font-bold text-xs border border-[#853953]/20">
                                             {email.lead.firstName[0]}{email.lead.lastName[0]}
                                         </div>
                                         <div>
@@ -87,7 +87,7 @@ export function ScheduledEmailsTab({ emails, onCancel }: Props) {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2 text-indigo-600 font-medium whitespace-nowrap">
+                                    <div className="flex items-center gap-2 text-[#853953] font-medium whitespace-nowrap">
                                         <Clock className="w-3.5 h-3.5" />
                                         {new Date(email.scheduledAt).toLocaleString()}
                                     </div>

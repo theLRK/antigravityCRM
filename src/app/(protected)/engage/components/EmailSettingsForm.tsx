@@ -33,7 +33,7 @@ export function EmailSettingsForm({ profile }: { profile: any }) {
                 <div className="flex flex-col md:flex-row gap-4">
                     {/* Fake Profile Avatar */}
                     <div className="flex-shrink-0">
-                        <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center border border-indigo-200">
+                        <div className="w-12 h-12 bg-[#853953]/10 text-[#853953] rounded-full flex items-center justify-center border border-[#853953]/20">
                             <span className="font-semibold text-lg">
                                 {(profile.emailFromName || 'A')[0].toUpperCase()}
                             </span>
@@ -54,7 +54,7 @@ export function EmailSettingsForm({ profile }: { profile: any }) {
                                     name="emailFromName"
                                     defaultValue={profile.emailFromName || ''}
                                     placeholder="e.g. Sarah Agent"
-                                    className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                                    className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#853953]/20 focus:border-[#853953]/50 bg-white"
                                     required
                                 />
                             </div>
@@ -90,7 +90,7 @@ export function EmailSettingsForm({ profile }: { profile: any }) {
                 <div className="flex justify-between items-end mb-2">
                     <div>
                         <h3 className="text-sm font-medium text-slate-900 flex items-center gap-1.5">
-                            <Sparkles className="w-4 h-4 text-indigo-500" />
+                            <Sparkles className="w-4 h-4 text-[#853953]" />
                             Primary Email Tone
                         </h3>
                         <p className="text-xs text-slate-500 mt-1">
@@ -104,8 +104,8 @@ export function EmailSettingsForm({ profile }: { profile: any }) {
                         <label
                             key={tone}
                             className={`
-                                relative border p-4 flex flex-col cursor-pointer rounded-lg focus-within:ring-2 focus-within:ring-indigo-500
-                                ${profile.emailTone === tone ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-500' : 'bg-white border-slate-200 hover:bg-slate-50'}
+                                relative border p-4 flex flex-col cursor-pointer rounded-lg focus-within:ring-2 focus-within:ring-[#853953]/20
+                                ${profile.emailTone === tone ? 'bg-[#853953]/5 border-[#853953]/20 ring-1 ring-[#853953]/50' : 'bg-white border-slate-200 hover:bg-slate-50'}
                             `}
                         >
                             <input
@@ -140,7 +140,7 @@ export function EmailSettingsForm({ profile }: { profile: any }) {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-[#853953] hover:bg-[#853953]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#853953]/20 disabled:opacity-50"
                 >
                     {isPending ? 'Saving...' : 'Save Settings'}
                 </button>

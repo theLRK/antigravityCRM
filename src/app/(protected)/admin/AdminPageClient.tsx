@@ -80,13 +80,13 @@ export default function AdminPageClient({ agents, leads, currentAdminId }: Props
                     {[
                         { key: 'unassigned', label: 'Unassigned Leads', icon: AlertCircle, count: unassignedLeads.length, color: 'text-amber-600' },
                         { key: 'leads', label: 'All Leads', icon: Users, count: leads.length, color: 'text-slate-600' },
-                        { key: 'agents', label: 'Agent Management', icon: UserPlus, count: agents.length, color: 'text-indigo-600' },
+                        { key: 'agents', label: 'Agent Management', icon: UserPlus, count: agents.length, color: 'text-[#853953]' },
                     ].map(({ key, label, icon: Icon, count, color }) => (
                         <button
                             key={key}
                             onClick={() => setTab(key as any)}
                             className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                                tab === key ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'text-slate-700 hover:bg-slate-50'
+                                tab === key ? 'bg-[#853953]/5 text-[#853953] border border-[#853953]/20' : 'text-slate-700 hover:bg-slate-50'
                             }`}
                         >
                             <span className="flex items-center gap-2"><Icon className={`w-4 h-4 ${color}`} />{label}</span>
@@ -123,7 +123,7 @@ export default function AdminPageClient({ agents, leads, currentAdminId }: Props
                             {filteredAgents.map(agent => (
                                 <div key={agent.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-700 font-black text-sm">
+                                        <div className="w-9 h-9 rounded-xl bg-[#853953]/10 flex items-center justify-center text-[#853953] font-black text-sm">
                                             {agent.name.charAt(0).toUpperCase()}
                                         </div>
                                         <div>
@@ -133,7 +133,7 @@ export default function AdminPageClient({ agents, leads, currentAdminId }: Props
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${
-                                            agent.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                                            agent.role === 'admin' ? 'bg-[#853953]/10 text-[#853953]' : 'bg-slate-100 text-slate-600'
                                         }`}>
                                             {agent.role}
                                         </span>
@@ -167,7 +167,7 @@ export default function AdminPageClient({ agents, leads, currentAdminId }: Props
                                 return (
                                     <div key={lead.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors">
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700 font-black text-sm shrink-0">
+                                            <div className="w-9 h-9 rounded-xl bg-[#853953]/10 flex items-center justify-center text-[#853953] font-black text-sm shrink-0">
                                                 {lead.firstName.charAt(0)}
                                             </div>
                                             <div className="min-w-0">
@@ -189,7 +189,7 @@ export default function AdminPageClient({ agents, leads, currentAdminId }: Props
                                             {assigning === lead.id ? (
                                                 <div className="flex items-center gap-2">
                                                     <select
-                                                        className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
+                                                        className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-1 focus:ring-[#853953]/20 bg-white"
                                                         value={selectedAgent[lead.id] || ''}
                                                         onChange={e => setSelectedAgent(prev => ({ ...prev, [lead.id]: e.target.value }))}
                                                     >
@@ -201,7 +201,7 @@ export default function AdminPageClient({ agents, leads, currentAdminId }: Props
                                                     <button
                                                         onClick={() => selectedAgent[lead.id] && assignLead(lead.id, selectedAgent[lead.id])}
                                                         disabled={!selectedAgent[lead.id] || isSubmitting}
-                                                        className="text-xs bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg font-bold transition-colors"
+                                                        className="text-xs bg-[#853953] hover:bg-[#853953]/90 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg font-bold transition-colors"
                                                     >
                                                         Assign
                                                     </button>
@@ -210,7 +210,7 @@ export default function AdminPageClient({ agents, leads, currentAdminId }: Props
                                             ) : (
                                                 <button
                                                     onClick={() => setAssigning(lead.id)}
-                                                    className="text-xs text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
+                                                    className="text-xs text-[#853953] hover:text-[#853953]/90 font-bold flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-[#853953]/5 transition-colors"
                                                 >
                                                     <ArrowLeftRight className="w-3 h-3" />
                                                     {assignedAgent ? 'Reassign' : 'Assign'}

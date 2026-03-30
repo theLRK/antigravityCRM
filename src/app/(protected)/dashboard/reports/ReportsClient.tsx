@@ -16,7 +16,7 @@ export default function ReportsClient() {
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600 mb-4" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#853953] mb-4" />
             <p className="font-medium text-sm">Generating reports...</p>
         </div>
     );
@@ -39,7 +39,7 @@ export default function ReportsClient() {
             {/* Top Stat Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+                    <div className="w-12 h-12 rounded-xl bg-[#853953]/10 flex items-center justify-center text-[#853953]">
                         <Users className="w-6 h-6" />
                     </div>
                     <div>
@@ -57,7 +57,7 @@ export default function ReportsClient() {
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                    <div className="w-12 h-12 rounded-xl bg-[#612D53]/10 flex items-center justify-center text-[#612D53]">
                         <Home className="w-6 h-6" />
                     </div>
                     <div>
@@ -98,7 +98,7 @@ export default function ReportsClient() {
                                         <td className="py-4 border-b border-slate-50 pl-6">
                                             <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                                                 <div 
-                                                    className="h-full bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full" 
+                                                    className="h-full bg-gradient-to-r from-[#853953] to-[#612D53] rounded-full" 
                                                     style={{ width: `${Math.round((row.leads / maxLeads) * 100)}%` }} 
                                                 />
                                             </div>

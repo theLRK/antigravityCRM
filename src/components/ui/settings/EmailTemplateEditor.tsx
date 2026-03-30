@@ -35,11 +35,11 @@ export default function EmailTemplateEditor({ initialConnected = false, initialC
     };
 
     return (
-        <div className="mt-8 bg-white shadow-sm ring-1 ring-slate-200 rounded-xl sm:rounded-2xl border-t-4 border-t-indigo-500">
+        <div className="mt-8 bg-white shadow-sm ring-1 ring-slate-200 rounded-xl sm:rounded-2xl border-t-4 border-t-[#853953]">
             <div className="px-4 py-6 sm:p-8">
                 <div>
                     <h2 className="text-xl font-semibold leading-7 text-slate-900 flex items-center gap-2">
-                        <Mail className="w-5 h-5 text-indigo-600" />
+                        <Mail className="w-5 h-5 text-[#853953]" />
                         Automated Welcome Email
                     </h2>
                     <p className="mt-1 text-sm leading-6 text-slate-500">
@@ -50,7 +50,7 @@ export default function EmailTemplateEditor({ initialConnected = false, initialC
                     <div className="mt-6 p-5 bg-slate-50 rounded-xl border border-slate-200 shadow-sm">
                         <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowConfig(!showConfig)}>
                             <div className="flex items-center gap-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-sm ${isConnected ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-500'}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-sm ${isConnected ? 'bg-[#853953]/10 text-[#853953]' : 'bg-slate-200 text-slate-500'}`}>
                                     G
                                 </div>
                                 <div>
@@ -72,7 +72,7 @@ export default function EmailTemplateEditor({ initialConnected = false, initialC
                                         Disconnect
                                     </button>
                                 ) : (
-                                    <div className="text-indigo-600 font-semibold text-sm flex items-center gap-1">
+                                    <div className="text-[#853953] font-semibold text-sm flex items-center gap-1">
                                         Configure {showConfig ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                     </div>
                                 )}
@@ -94,7 +94,7 @@ export default function EmailTemplateEditor({ initialConnected = false, initialC
                                             placeholder="agent@example.com"
                                             value={credentials.email}
                                             onChange={e => setCredentials({ ...credentials, email: e.target.value })}
-                                            className="w-full rounded-lg border-0 px-3.5 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm"
+                                            className="w-full rounded-lg border-0 px-3.5 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-[#853953]/20 sm:text-sm"
                                         />
                                     </div>
                                     <div className="md:col-span-2">
@@ -104,7 +104,7 @@ export default function EmailTemplateEditor({ initialConnected = false, initialC
                                             placeholder="xxx-yyy.apps.googleusercontent.com"
                                             value={credentials.clientId}
                                             onChange={e => setCredentials({ ...credentials, clientId: e.target.value })}
-                                            className="w-full rounded-lg border-0 px-3.5 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm font-mono text-xs"
+                                            className="w-full rounded-lg border-0 px-3.5 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-[#853953]/50 sm:text-sm font-mono text-xs"
                                         />
                                     </div>
                                     <div className="md:col-span-2">
@@ -114,7 +114,7 @@ export default function EmailTemplateEditor({ initialConnected = false, initialC
                                             placeholder="GOCSPX-xxxx"
                                             value={credentials.clientSecret}
                                             onChange={e => setCredentials({ ...credentials, clientSecret: e.target.value })}
-                                            className="w-full rounded-lg border-0 px-3.5 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm font-mono text-xs"
+                                            className="w-full rounded-lg border-0 px-3.5 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-[#853953]/50 sm:text-sm font-mono text-xs"
                                         />
                                     </div>
                                     <div className="md:col-span-2">
@@ -124,10 +124,10 @@ export default function EmailTemplateEditor({ initialConnected = false, initialC
                                             placeholder="1//0eX..."
                                             value={credentials.refreshToken}
                                             onChange={e => setCredentials({ ...credentials, refreshToken: e.target.value })}
-                                            className="w-full rounded-lg border-0 px-3.5 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm font-mono text-xs"
+                                            className="w-full rounded-lg border-0 px-3.5 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-[#853953]/50 sm:text-sm font-mono text-xs"
                                         />
                                         <p className="mt-2 text-xs text-slate-500 leading-relaxed">
-                                            To obtain these keys, create a project in the <a href="https://console.cloud.google.com" target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Google Cloud Console</a>, enable the Gmail API, and authorize it using the <code>https://mail.google.com/</code> scope.
+                                            To obtain these keys, create a project in the <a href="https://console.cloud.google.com" target="_blank" rel="noreferrer" className="text-[#853953] hover:underline">Google Cloud Console</a>, enable the Gmail API, and authorize it using the <code>https://mail.google.com/</code> scope.
                                         </p>
                                     </div>
                                 </div>
@@ -135,7 +135,7 @@ export default function EmailTemplateEditor({ initialConnected = false, initialC
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleConnect(); }}
                                         disabled={isSaving}
-                                        className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg shadow-sm text-sm font-bold hover:bg-indigo-500 disabled:opacity-50 transition-colors flex items-center gap-2"
+                                        className="px-5 py-2.5 bg-[#853953] text-white rounded-lg shadow-sm text-sm font-bold hover:bg-[#853953]/90 disabled:opacity-50 transition-colors flex items-center gap-2"
                                     >
                                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                                         Save Credentials & Connect

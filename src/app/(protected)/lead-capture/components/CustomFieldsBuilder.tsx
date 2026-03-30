@@ -129,7 +129,7 @@ export function CustomFieldsBuilder({ formId, initialFieldsJson }: CustomFieldsB
                                                 type="text"
                                                 value={field.label}
                                                 onChange={(e) => updateField(field.id, { label: e.target.value })}
-                                                className="block w-full border-0 border-b-2 border-slate-200 bg-transparent py-1.5 focus:ring-0 focus:border-indigo-600 sm:text-sm font-medium text-slate-900 px-0 transition-colors"
+                                                className="block w-full border-0 border-b-2 border-slate-200 bg-transparent py-1.5 focus:ring-0 focus:border-[#853953] sm:text-sm font-medium text-slate-900 px-0 transition-colors"
                                                 placeholder="Question title"
                                             />
                                         </div>
@@ -139,7 +139,7 @@ export function CustomFieldsBuilder({ formId, initialFieldsJson }: CustomFieldsB
                                                     type="checkbox"
                                                     checked={field.required}
                                                     onChange={(e) => updateField(field.id, { required: e.target.checked })}
-                                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 h-4 w-4"
+                                                    className="rounded border-slate-300 text-[#853953] focus:ring-[#853953] h-4 w-4"
                                                 />
                                                 <span className="text-xs font-medium text-slate-500">Required</span>
                                             </label>
@@ -156,8 +156,8 @@ export function CustomFieldsBuilder({ formId, initialFieldsJson }: CustomFieldsB
                                         )}
                                         {field.type === 'yes_no' && (
                                             <div className="flex gap-4">
-                                                <label className="flex items-center gap-2 opacity-50"><input type="radio" disabled className="h-4 w-4 text-indigo-600 border-slate-300" /><span className="text-sm">Yes</span></label>
-                                                <label className="flex items-center gap-2 opacity-50"><input type="radio" disabled className="h-4 w-4 text-indigo-600 border-slate-300" /><span className="text-sm">No</span></label>
+                                                <label className="flex items-center gap-2 opacity-50"><input type="radio" disabled className="h-4 w-4 text-[#853953] border-slate-300" /><span className="text-sm">Yes</span></label>
+                                                <label className="flex items-center gap-2 opacity-50"><input type="radio" disabled className="h-4 w-4 text-[#853953] border-slate-300" /><span className="text-sm">No</span></label>
                                             </div>
                                         )}
                                         {(field.type === 'dropdown' || field.type === 'checkbox') && (
@@ -169,14 +169,14 @@ export function CustomFieldsBuilder({ formId, initialFieldsJson }: CustomFieldsB
                                                             type="text"
                                                             value={opt}
                                                             onChange={(e) => updateDropdownOption(field.id, i, e.target.value)}
-                                                            className="block w-full rounded-md border-0 py-1 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-xs"
+                                                            className="block w-full rounded-md border-0 py-1 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-[#853953]/50 sm:text-xs"
                                                         />
                                                         {field.options!.length > 1 && (
                                                             <button onClick={() => removeDropdownOption(field.id, i)} className="text-slate-400 hover:text-red-500 focus:outline-none"><XIcon className="w-4 h-4" /></button>
                                                         )}
                                                     </div>
                                                 ))}
-                                                <button onClick={() => addDropdownOption(field.id)} className="text-xs font-medium text-indigo-600 hover:text-indigo-700 mt-2 block">+ Add another option</button>
+                                                <button onClick={() => addDropdownOption(field.id)} className="text-xs font-medium text-[#853953] hover:text-[#853953]/80 mt-2 block">+ Add another option</button>
                                             </div>
                                         )}
                                     </div>
@@ -204,19 +204,19 @@ export function CustomFieldsBuilder({ formId, initialFieldsJson }: CustomFieldsB
             <div className="pt-6 border-t border-slate-200 border-dashed">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Add Field Template</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <button onClick={() => addField('short_text')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
+                    <button onClick={() => addField('short_text')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-[#853953]/5 hover:text-[#853953] text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
                         <span className="text-xs font-medium">Short Text</span>
                     </button>
-                    <button onClick={() => addField('paragraph')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
+                    <button onClick={() => addField('paragraph')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-[#853953]/5 hover:text-[#853953] text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
                         <span className="text-xs font-medium">Paragraph</span>
                     </button>
-                    <button onClick={() => addField('dropdown')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
+                    <button onClick={() => addField('dropdown')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-[#853953]/5 hover:text-[#853953] text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
                         <span className="text-xs font-medium">Dropdown</span>
                     </button>
-                    <button onClick={() => addField('yes_no')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
+                    <button onClick={() => addField('yes_no')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-[#853953]/5 hover:text-[#853953] text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
                         <span className="text-xs font-medium">Yes / No</span>
                     </button>
-                    <button onClick={() => addField('checkbox')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
+                    <button onClick={() => addField('checkbox')} className="flex flex-col items-center justify-center gap-2 bg-slate-50 hover:bg-[#853953]/5 hover:text-[#853953] text-slate-600 border border-slate-200 rounded-lg p-3 transition-colors group">
                         <span className="text-xs font-medium">Checkboxes</span>
                     </button>
                 </div>
@@ -227,7 +227,7 @@ export function CustomFieldsBuilder({ formId, initialFieldsJson }: CustomFieldsB
                 <button
                     onClick={handleSave}
                     disabled={isPending || fields.length === 0}
-                    className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center rounded-md bg-[#853953] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#853953]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#853953] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     {isSuccess ? <Check className="w-4 h-4 mr-2" /> : null}

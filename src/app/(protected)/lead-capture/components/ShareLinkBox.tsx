@@ -39,7 +39,7 @@ export function ShareLinkBox({ publicId }: { publicId: string }) {
                         type="text"
                         readOnly
                         value={fullUrl}
-                        className="block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-500 bg-slate-50 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        className="block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-500 bg-slate-50 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-[#853953]/50 sm:text-sm sm:leading-6"
                     />
                 </div>
                 <button

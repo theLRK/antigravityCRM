@@ -77,14 +77,14 @@ export default function LeadTasksList({ leadId }: { leadId: string }) {
             {tasks.map(task => {
                 const isOverdue = new Date(`${task.dueDate}T${task.dueTime || '00:00'}`) < new Date() && task.status !== 'Completed';
                 return (
-                    <div key={task.id} className={`flex items-start gap-4 p-4 border rounded-xl transition-all ${task.status === 'Completed' ? 'bg-slate-50/50 border-slate-100 opacity-60' : isOverdue ? 'bg-red-50 border-red-100' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-purple-200'}`}>
-                        <button onClick={() => handleToggleTaskStatus(task.id, task.status)} className={`mt-0.5 shrink-0 transition-colors ${task.status === 'Completed' ? 'text-emerald-500' : 'text-slate-300 hover:text-purple-500'}`}>
+                    <div key={task.id} className={`flex items-start gap-4 p-4 border rounded-xl transition-all ${task.status === 'Completed' ? 'bg-slate-50/50 border-slate-100 opacity-60' : isOverdue ? 'bg-red-50 border-red-100' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-[#853953]/30'}`}>
+                        <button onClick={() => handleToggleTaskStatus(task.id, task.status)} className={`mt-0.5 shrink-0 transition-colors ${task.status === 'Completed' ? 'text-emerald-500' : 'text-slate-300 hover:text-[#853953]'}`}>
                             {task.status === 'Completed' ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
                         </button>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-1">
                                 <h5 className={`font-bold text-sm truncate ${task.status === 'Completed' ? 'text-slate-500 line-through' : 'text-slate-900'}`}>{task.title}</h5>
-                                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider shrink-0 ${task.taskType === 'Call' ? 'bg-emerald-100 text-emerald-700' : task.taskType === 'Email' ? 'bg-blue-100 text-blue-700' : task.taskType === 'Meeting' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}>
+                                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider shrink-0 ${task.taskType === 'Call' ? 'bg-emerald-100 text-emerald-700' : task.taskType === 'Email' ? 'bg-blue-100 text-blue-700' : task.taskType === 'Meeting' ? 'bg-[#853953]/10 text-[#853953]' : 'bg-[#853953]/10 text-[#853953]'}`}>
                                     {task.taskType}
                                 </span>
                             </div>

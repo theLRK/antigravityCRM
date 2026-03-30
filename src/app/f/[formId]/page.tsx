@@ -52,7 +52,7 @@ export default async function PublicLeadCapturePage({ params }: PageProps) {
 
     // Pass the configurations downward to the interactive Client Wizard
     return (
-        <div className="min-h-screen bg-slate-50 selection:bg-indigo-100 selection:text-indigo-900">
+        <div className="min-h-screen bg-slate-50 selection:bg-[#853953]/10 selection:text-[#853953]">
             <PublicFormWizard
                 formId={formConfig.id}
                 title={formConfig.title}

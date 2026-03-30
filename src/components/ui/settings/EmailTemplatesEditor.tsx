@@ -103,7 +103,7 @@ function TemplateCard({ tier, subject, body, onSubjectChange, onBodyChange }: Te
                             <button
                                 key={v}
                                 onClick={() => insertVar('body', v)}
-                                className="text-xs bg-purple-50 text-purple-700 ring-1 ring-purple-200 px-2 py-0.5 rounded-full font-mono hover:bg-purple-100 transition-colors"
+                                className="text-xs bg-[#853953]/10 text-[#853953] ring-1 ring-[#853953]/20 px-2 py-0.5 rounded-full font-mono hover:bg-[#853953]/20 transition-colors"
                             >
                                 {v}
                             </button>
@@ -117,7 +117,7 @@ function TemplateCard({ tier, subject, body, onSubjectChange, onBodyChange }: Te
                             type="text"
                             value={subject}
                             onChange={e => onSubjectChange(e.target.value)}
-                            className="mt-1.5 w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                            className="mt-1.5 w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#853953]/20 focus:border-[#853953]/30 outline-none"
                             placeholder="Enter email subject..."
                         />
                     </div>
@@ -143,7 +143,7 @@ function TemplateCard({ tier, subject, body, onSubjectChange, onBodyChange }: Te
                                 value={body}
                                 onChange={e => onBodyChange(e.target.value)}
                                 rows={7}
-                                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-y font-mono leading-relaxed"
+                                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#853953]/20 focus:border-[#853953]/30 outline-none resize-y font-mono leading-relaxed"
                                 placeholder="Write your email..."
                             />
                         )}
@@ -194,7 +194,7 @@ export default function EmailTemplatesEditor({ initialTemplates }: { initialTemp
                     value={fromName}
                     onChange={e => setFromName(e.target.value)}
                     placeholder="e.g. John Smith — Formative Realty"
-                    className="w-full max-w-md px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                    className="w-full max-w-md px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#853953]/20 focus:border-[#853953]/30 outline-none"
                 />
             </div>
 
@@ -208,7 +208,7 @@ export default function EmailTemplatesEditor({ initialTemplates }: { initialTemp
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-colors shadow-sm disabled:opacity-60"
+                    className="flex items-center gap-2 bg-[#853953] hover:bg-[#612D53] text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-colors shadow-sm disabled:opacity-60"
                 >
                     {isSaving ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>

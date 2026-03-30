@@ -30,8 +30,8 @@ export default async function AdminPage() {
         <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-10">
             <div className="mb-6">
                 <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2.5 bg-indigo-100 rounded-xl">
-                        <Shield className="w-6 h-6 text-indigo-600" />
+                    <div className="p-2.5 bg-[#853953]/10 rounded-xl">
+                        <Shield className="w-6 h-6 text-[#853953]" />
                     </div>
                     <div>
                         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Admin Console</h1>

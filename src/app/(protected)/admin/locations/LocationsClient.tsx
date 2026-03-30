@@ -90,17 +90,17 @@ export default function LocationsClient() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* === LOCATION GROUPS === */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 bg-slate-900 flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-purple-400" />
+                    <div className="px-6 py-4 bg-[#853953] flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-[#853953]/30 invert brightness-200" />
                         <h3 className="text-white font-bold text-sm tracking-wide uppercase">Location Groups</h3>
-                        <span className="ml-auto bg-purple-500/20 text-purple-300 text-xs font-bold px-2 py-0.5 rounded-full">{groups.length}</span>
+                        <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">{groups.length}</span>
                     </div>
                     <div className="p-5 space-y-3">
                         {/* Add group form */}
                         <div className="flex gap-2">
                             <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createGroup()}
-                                placeholder="New group name (e.g. Island)" className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
-                            <button onClick={createGroup} disabled={saving || !newGroupName.trim()} className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-bold disabled:opacity-50 transition-colors">
+                                placeholder="New group name (e.g. Island)" className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#853953]/20" />
+                            <button onClick={createGroup} disabled={saving || !newGroupName.trim()} className="bg-[#853953] hover:bg-[#612D53] text-white px-3 py-2 rounded-lg text-sm font-bold disabled:opacity-50 transition-colors">
                                 <Plus className="w-4 h-4" />
                             </button>
                         </div>
@@ -111,15 +111,15 @@ export default function LocationsClient() {
                                     {editingGroup?.id === g.id ? (
                                         <>
                                             <input value={editingGroup.name} onChange={e => setEditingGroup({ ...editingGroup, name: e.target.value })}
-                                                className="flex-1 bg-white border border-purple-300 rounded-lg px-2 py-1 text-sm focus:outline-none" />
-                                            <button onClick={updateGroup} className="text-purple-600 hover:text-purple-800"><CheckCircle2 className="w-4 h-4" /></button>
+                                                className="flex-1 bg-white border border-[#853953]/30 rounded-lg px-2 py-1 text-sm focus:outline-none" />
+                                            <button onClick={updateGroup} className="text-[#853953] hover:text-[#612D53]"><CheckCircle2 className="w-4 h-4" /></button>
                                             <button onClick={() => setEditingGroup(null)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
                                         </>
                                     ) : (
                                         <>
                                             <span className="flex-1 font-bold text-slate-800 text-sm">{g.name}</span>
                                             <span className="text-xs text-slate-400 font-medium">{g.locations.length} locations</span>
-                                            <button onClick={() => setEditingGroup(g)} className="text-slate-400 hover:text-indigo-600 transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
+                                            <button onClick={() => setEditingGroup(g)} className="text-slate-400 hover:text-[#853953] transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
                                             <button onClick={() => deleteGroup(g.id)} className="text-slate-400 hover:text-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                                         </>
                                     )}
@@ -141,8 +141,8 @@ export default function LocationsClient() {
                         {/* Add location form */}
                         <div className="flex gap-2">
                             <input value={newLocName} onChange={e => setNewLocName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createLocation()}
-                                placeholder="Location name (e.g. Lekki)" className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
-                            <select value={newLocGroup} onChange={e => setNewLocGroup(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
+                                placeholder="Location name (e.g. Lekki)" className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#853953]/20" />
+                            <select value={newLocGroup} onChange={e => setNewLocGroup(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#853953]/20">
                                 <option value="">Group</option>
                                 {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                             </select>
@@ -157,12 +157,12 @@ export default function LocationsClient() {
                                     {editingLoc?.id === loc.id ? (
                                         <>
                                             <input value={editingLoc.name} onChange={e => setEditingLoc({ ...editingLoc, name: e.target.value })}
-                                                className="w-28 bg-white border border-purple-300 rounded px-2 py-1 text-sm" />
+                                                className="w-28 bg-white border border-[#853953]/30 rounded px-2 py-1 text-sm" />
                                             <select value={editingLoc.groupId} onChange={e => setEditingLoc({ ...editingLoc, groupId: e.target.value })}
                                                 className="bg-white border border-slate-200 rounded px-1 py-1 text-xs">
                                                 {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                                             </select>
-                                            <button onClick={updateLocation} className="text-purple-600 hover:text-purple-800 ml-auto"><CheckCircle2 className="w-4 h-4" /></button>
+                                            <button onClick={updateLocation} className="text-[#853953] hover:text-[#612D53] ml-auto"><CheckCircle2 className="w-4 h-4" /></button>
                                             <button onClick={() => setEditingLoc(null)} className="text-slate-400"><X className="w-4 h-4" /></button>
                                         </>
                                     ) : (
@@ -170,7 +170,7 @@ export default function LocationsClient() {
                                             <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                                             <span className="font-semibold text-slate-800 text-sm flex-1">{loc.name}</span>
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full">{loc.group.name}</span>
-                                            <button onClick={() => setEditingLoc(loc)} className="text-slate-400 hover:text-indigo-600"><Pencil className="w-3.5 h-3.5" /></button>
+                                            <button onClick={() => setEditingLoc(loc)} className="text-slate-400 hover:text-[#853953]"><Pencil className="w-3.5 h-3.5" /></button>
                                             <button onClick={() => deleteLocation(loc.id)} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                                         </>
                                     )}

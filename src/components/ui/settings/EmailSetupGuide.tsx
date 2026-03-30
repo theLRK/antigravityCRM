@@ -7,7 +7,7 @@ export default function EmailSetupGuide() {
             {/* How to get App Password */}
             <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
                 <div className="px-4 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
-                    <Key className="w-4 h-4 text-purple-600" />
+                    <Key className="w-4 h-4 text-[#853953]" />
                     <h3 className="text-sm font-bold text-slate-800">How to get a Gmail App Password</h3>
                 </div>
                 <div className="px-4 py-4">
@@ -20,13 +20,13 @@ export default function EmailSetupGuide() {
                             { step: '5', text: 'Copy the 16-character code', sub: 'Paste into the App Password field ←', href: null }
                         ].map(({ step, text, sub, href }) => (
                             <li key={step} className="flex items-start gap-3">
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-xs font-bold flex items-center justify-center mt-0.5">
+                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#853953]/10 text-[#853953] text-xs font-bold flex items-center justify-center mt-0.5">
                                     {step}
                                 </span>
                                 <div className="min-w-0">
                                     {href ? (
                                         <a href={href} target="_blank" rel="noopener noreferrer"
-                                            className="text-sm font-semibold text-slate-800 hover:text-purple-700 inline-flex items-center gap-1">
+                                            className="text-sm font-semibold text-slate-800 hover:text-[#853953] inline-flex items-center gap-1">
                                             {text} <ExternalLink className="w-3 h-3" />
                                         </a>
                                     ) : (

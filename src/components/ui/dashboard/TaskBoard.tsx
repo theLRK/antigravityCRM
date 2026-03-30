@@ -120,7 +120,7 @@ export default function TaskBoard() {
                 </div>
                 <button
                     onClick={() => setShowNew(v => !v)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#853953] bg-[#853953]/10 hover:bg-[#853953]/20 px-3 py-1.5 rounded-lg transition-colors"
                 >
                     <Plus className="w-3.5 h-3.5" /> New Task
                 </button>
@@ -128,7 +128,7 @@ export default function TaskBoard() {
 
             {/* New Task Form */}
             {showNew && (
-                <div className="bg-white border border-purple-200 rounded-2xl p-5 shadow-sm space-y-3">
+                <div className="bg-white border border-[#853953]/30 rounded-2xl p-5 shadow-sm space-y-3">
                     <div className="flex justify-between items-center mb-1">
                         <p className="font-bold text-slate-900 text-sm">Create Task</p>
                         <button onClick={() => setShowNew(false)}><X className="w-4 h-4 text-slate-400" /></button>
@@ -143,13 +143,13 @@ export default function TaskBoard() {
                         placeholder="Task title (e.g., Call Sarah Johnson)"
                         value={newTask.title}
                         onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#853953]/20"
                     />
                     <div className="grid grid-cols-2 gap-3">
                         <select
                             value={newTask.taskType}
                             onChange={e => setNewTask(p => ({ ...p, taskType: e.target.value }))}
-                            className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+                            className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#853953]/20 bg-white"
                         >
                             {['Call', 'Email', 'Follow Up', 'Meeting', 'Viewing', 'Reminder'].map(t => (
                                 <option key={t}>{t}</option>
@@ -160,13 +160,13 @@ export default function TaskBoard() {
                                 type="date"
                                 value={newTask.dueDate}
                                 onChange={e => setNewTask(p => ({ ...p, dueDate: e.target.value }))}
-                                className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                                className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#853953]/20"
                             />
                             <input
                                 type="time"
                                 value={newTask.dueTime}
                                 onChange={e => setNewTask(p => ({ ...p, dueTime: e.target.value }))}
-                                className="border border-slate-200 rounded-xl px-2 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-400"
+                                className="border border-slate-200 rounded-xl px-2 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#853953]/20"
                             />
                         </div>
                     </div>
@@ -180,7 +180,7 @@ export default function TaskBoard() {
                             onChange={e => { setSearchLead(e.target.value); setShowLeadDropdown(true); setNewTask(p => ({...p, leadId: ''})); }}
                             onFocus={() => setShowLeadDropdown(true)}
                             onBlur={() => setTimeout(() => setShowLeadDropdown(false), 200)}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+                            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#853953]/20 bg-white"
                         />
                         {showLeadDropdown && (
                             <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
@@ -212,12 +212,12 @@ export default function TaskBoard() {
                         value={newTask.notes}
                         onChange={e => setNewTask(p => ({ ...p, notes: e.target.value }))}
                         rows={2}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-400 resize-none"
+                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#853953]/20 resize-none"
                     />
                     <button
                         onClick={createTask}
                         disabled={submitting || !newTask.title || !newTask.dueDate}
-                        className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+                        className="w-full bg-[#853953] hover:bg-[#853953]/90 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
                     >
                         {submitting ? 'Creating...' : 'Create Task'}
                     </button>
@@ -281,7 +281,7 @@ function TaskCard({ task, variant, onComplete, onSnoozed }: {
                 {task.lead && (
                     <a
                         href={`/leads?id=${task.lead.id}`}
-                        className="flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 px-2.5 py-1.5 rounded-lg transition-colors"
+                        className="flex items-center gap-1 text-[11px] font-bold text-[#853953] bg-[#853953]/10 hover:bg-[#853953]/20 px-2.5 py-1.5 rounded-lg transition-colors"
                     >
                         <ArrowRight className="w-3 h-3" /> Lead
                     </a>

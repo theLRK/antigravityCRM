@@ -85,20 +85,20 @@ export default async function SettingsPage() {
                             <h2 className="text-xl font-semibold leading-7 text-slate-900">Quick Navigation</h2>
                             <p className="mt-1 text-sm leading-6 text-slate-500">Jump to a specific settings section.</p>
                             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Link href="/account" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-colors group">
-                                    <p className="font-semibold text-slate-900 group-hover:text-indigo-700">Account Profile</p>
+                                <Link href="/account" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-[#853953]/30 hover:bg-[#853953]/5 transition-colors group">
+                                    <p className="font-semibold text-slate-900 group-hover:text-[#853953]">Account Profile</p>
                                     <p className="text-xs text-slate-500">Update your name, phone, and profile photo</p>
                                 </Link>
-                                <Link href="/settings/email" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-colors group">
-                                    <p className="font-semibold text-slate-900 group-hover:text-indigo-700">Email Connection</p>
+                                <Link href="/settings/email" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-[#853953]/30 hover:bg-[#853953]/5 transition-colors group">
+                                    <p className="font-semibold text-slate-900 group-hover:text-[#853953]">Email Connection</p>
                                     <p className="text-xs text-slate-500">Connect your Gmail account for automated sends</p>
                                 </Link>
-                                <Link href="/settings/email-templates" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-colors group">
-                                    <p className="font-semibold text-slate-900 group-hover:text-indigo-700">Email Templates</p>
+                                <Link href="/settings/email-templates" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-[#853953]/30 hover:bg-[#853953]/5 transition-colors group">
+                                    <p className="font-semibold text-slate-900 group-hover:text-[#853953]">Email Templates</p>
                                     <p className="text-xs text-slate-500">Customize your HOT, WARM, and COLD templates</p>
                                 </Link>
-                                <Link href="/engage" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition-colors group">
-                                    <p className="font-semibold text-slate-900 group-hover:text-indigo-700">Engage Dashboard</p>
+                                <Link href="/engage" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-[#853953]/30 hover:bg-[#853953]/5 transition-colors group">
+                                    <p className="font-semibold text-slate-900 group-hover:text-[#853953]">Engage Dashboard</p>
                                     <p className="text-xs text-slate-500">View email performance metrics and test dispatch</p>
                                 </Link>
                             </div>

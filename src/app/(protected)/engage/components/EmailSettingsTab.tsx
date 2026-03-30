@@ -20,7 +20,7 @@ export function EmailSettingsTab({ profile, onUpdate }: Props) {
         <div className="max-w-2xl space-y-8">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                    <div className="p-2 bg-[#853953]/10 text-[#853953] rounded-lg">
                         <AtSign className="w-5 h-5" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900">Sender Identity</h3>
@@ -31,7 +31,7 @@ export function EmailSettingsTab({ profile, onUpdate }: Props) {
                         <label className="text-sm font-semibold text-slate-700">Display Name</label>
                         <input 
                             name="emailFromName"
-                            className="w-full h-11 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            className="w-full h-11 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#853953]/20 outline-none transition-all"
                             defaultValue={profile.emailFromName || ''}
                             placeholder="e.g. Samuel from Formative"
                         />
@@ -42,7 +42,7 @@ export function EmailSettingsTab({ profile, onUpdate }: Props) {
                         <label className="text-sm font-semibold text-slate-700">Communication Tone</label>
                         <select 
                             name="emailTone"
-                            className="w-full h-11 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="w-full h-11 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#853953]/20 outline-none"
                             defaultValue={profile.emailTone || 'Warm & Trust'}
                         >
                             <option>Warm & Trust</option>
@@ -59,7 +59,7 @@ export function EmailSettingsTab({ profile, onUpdate }: Props) {
                         </div>
                         <button 
                             type="submit"
-                            className="bg-indigo-600 hover:bg-stone-800 text-white px-6 py-2 rounded-lg font-bold transition-all shadow-md active:scale-95 flex items-center gap-2"
+                            className="bg-[#853953] hover:bg-[#612D53] text-white px-6 py-2 rounded-lg font-bold transition-all shadow-md active:scale-95 flex items-center gap-2"
                         >
                             <Check className="w-4 h-4" />
                             Save Configuration
@@ -77,7 +77,7 @@ export function EmailSettingsTab({ profile, onUpdate }: Props) {
                 </div>
                 
                 <textarea 
-                    className="w-full h-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                    className="w-full h-32 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#853953]/20 outline-none resize-none"
                     placeholder="Samuel\nFormative Properties\n+234 XXX XXX XXXX"
                     defaultValue={profile.signature || ''}
                 />

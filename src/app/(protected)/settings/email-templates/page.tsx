@@ -22,8 +22,8 @@ export default async function EmailTemplatesPage() {
         <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-10">
             <BackButton label="Back to Settings" href="/settings" />
             <div className="mb-8 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-purple-600" />
+                <div className="w-10 h-10 rounded-xl bg-[#853953]/10 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-[#853953]" />
                 </div>
                 <div>
                     <h1 className="text-2xl font-extrabold text-slate-900">Email Templates</h1>
@@ -41,7 +41,7 @@ export default async function EmailTemplatesPage() {
                         <Link href="/settings/email" className="text-slate-600 hover:bg-slate-50 group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
                             Email Connection
                         </Link>
-                        <Link href="/settings/email-templates" className="bg-purple-50 text-purple-700 group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <Link href="/settings/email-templates" className="bg-[#853953]/10 text-[#853953] group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                             Email Templates
                         </Link>
                     </nav>

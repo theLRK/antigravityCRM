@@ -141,8 +141,8 @@ export default function EmailConnectionCard({
             {/* Credential Form */}
             <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
                 <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                        <Mail className="w-5 h-5 text-purple-600" />
+                    <div className="w-10 h-10 rounded-xl bg-[#853953]/10 flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-[#853953]" />
                     </div>
                     <div>
                         <h3 className="text-base font-bold text-slate-900">Email Sending Account</h3>
@@ -161,7 +161,7 @@ export default function EmailConnectionCard({
                             value={fromName}
                             onChange={e => setFromName(e.target.value)}
                             placeholder="e.g. John Smith — Formative Realty"
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#853953] focus:border-transparent outline-none"
                         />
                         <p className="text-xs text-slate-400 mt-1">This is what leads will see as the "From" name in their inbox.</p>
                     </div>
@@ -176,7 +176,7 @@ export default function EmailConnectionCard({
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             placeholder="you@gmail.com"
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#853953] focus:border-transparent outline-none"
                         />
                     </div>
 
@@ -191,7 +191,7 @@ export default function EmailConnectionCard({
                                 value={appPassword}
                                 onChange={e => setAppPassword(e.target.value)}
                                 placeholder={isConnected ? '••••••••••••••••  (leave blank to keep current)' : 'xxxx xxxx xxxx xxxx'}
-                                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 pr-10 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-mono"
+                                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 pr-10 text-sm focus:ring-2 focus:ring-[#853953]/20 focus:border-transparent outline-none font-mono"
                             />
                             <button
                                 type="button"
@@ -223,7 +223,7 @@ export default function EmailConnectionCard({
                         <button
                             onClick={handleSave}
                             disabled={isSaving || !email}
-                            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 bg-[#853953] hover:bg-[#853953]/90 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><Save className="w-4 h-4" /> Save & Connect</>}
                         </button>

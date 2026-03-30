@@ -24,7 +24,7 @@ export default function BillingPage() {
             name: 'Platinum',
             price: '$199',
             features: ['Enterprise AI Reasoning', 'Unlimited Leads', '24/7 Dedicated Support', 'White-labeled CRM', 'Custom Integrations', 'Dedicated Account Manager'],
-            color: 'text-purple-600',
+            color: 'text-[#853953]',
         }
     };
 
@@ -40,7 +40,7 @@ export default function BillingPage() {
 
             <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm relative overflow-hidden">
                 {/* Decorative background blur */}
-                <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-500/10 blur-3xl rounded-full pointer-events-none"></div>
+                <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#853953]/10 blur-3xl rounded-full pointer-events-none"></div>
 
                 <div className="relative z-10 flex flex-col md:flex-row gap-12 items-start">
 
@@ -62,7 +62,7 @@ export default function BillingPage() {
                                     <p className="text-sm font-bold text-slate-900">•••• •••• •••• 4242</p>
                                     <p className="text-xs text-slate-500">Expires 12/28</p>
                                 </div>
-                                <button className="text-sm font-bold text-purple-600 hover:text-purple-700">Update</button>
+                                <button className="text-sm font-bold text-[#853953] hover:text-[#853953]/90">Update</button>
                             </div>
                         </div>
                     </div>
@@ -76,7 +76,7 @@ export default function BillingPage() {
                         <div className="relative z-10">
                             <div className="mb-2">
                                 <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/10 ${selectedPlan === 'silver' ? 'text-slate-300' :
-                                        selectedPlan === 'gold' ? 'text-yellow-300' : 'text-purple-300'
+                                        selectedPlan === 'gold' ? 'text-yellow-300' : 'text-[#853953]'
                                     }`}>
                                     {current.name} Plan
                                 </span>
@@ -101,7 +101,7 @@ export default function BillingPage() {
                                 ))}
                             </ul>
 
-                            <button className={`w-full py-4 rounded-xl font-bold text-sm transition-all shadow-lg ${selectedPlan === 'platinum' ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-purple-500/25' :
+                            <button className={`w-full py-4 rounded-xl font-bold text-sm transition-all shadow-lg ${selectedPlan === 'platinum' ? 'bg-[#853953] hover:bg-[#853953]/90 text-white shadow-[#853953]/25' :
                                     selectedPlan === 'gold' ? 'bg-yellow-500 hover:bg-yellow-600 text-yellow-950 shadow-yellow-500/25' :
                                         'bg-white hover:bg-slate-100 text-slate-900'
                                 }`}>

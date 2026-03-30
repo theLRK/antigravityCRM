@@ -67,7 +67,7 @@ export default function RecommendedPropertiesTab({ leadId, leadEmail, leadFirstN
                 let imgUrl = '';
                 try { const imgs = JSON.parse(match.property.images); imgUrl = imgs[0] || ''; } catch {}
                 return (
-                    <div key={match.property.id} className="bg-white border border-slate-200 rounded-xl p-4 flex gap-4 hover:border-purple-200 hover:shadow-sm transition-all">
+                    <div key={match.property.id} className="bg-white border border-slate-200 rounded-xl p-4 flex gap-4 hover:border-[#853953]/30 hover:shadow-sm transition-all">
                         {imgUrl ? (
                             <img src={imgUrl} alt={match.property.title} className="w-20 h-16 object-cover rounded-lg shrink-0" />
                         ) : (
@@ -89,7 +89,7 @@ export default function RecommendedPropertiesTab({ leadId, leadEmail, leadFirstN
                             <button
                                 onClick={() => sendProperty(match)}
                                 disabled={isSent || isSending}
-                                className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${isSent ? 'bg-emerald-100 text-emerald-700 cursor-default' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
+                                className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${isSent ? 'bg-emerald-100 text-emerald-700 cursor-default' : 'bg-[#853953] hover:bg-[#853953]/90 text-white'}`}
                             >
                                 {isSending ? <Loader2 className="w-3 h-3 animate-spin" /> : isSent ? '✓ Sent' : <><Send className="w-3 h-3" /> Send to Lead</>}
                             </button>

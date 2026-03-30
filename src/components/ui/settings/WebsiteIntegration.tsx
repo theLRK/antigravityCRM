@@ -33,11 +33,11 @@ export default function WebsiteIntegration({ initialUrl }: { initialUrl?: string
     };
 
     return (
-        <div className="mt-8 bg-white shadow-sm ring-1 ring-slate-200 rounded-xl sm:rounded-2xl border-t-4 border-t-cyan-500">
+        <div className="mt-8 bg-white shadow-sm ring-1 ring-slate-200 rounded-xl sm:rounded-2xl border-t-4 border-t-[#853953]">
             <div className="px-4 py-6 sm:p-8">
                 <div>
                     <h2 className="text-xl font-semibold leading-7 text-slate-900 flex items-center gap-2">
-                        <Globe className="w-5 h-5 text-cyan-600" />
+                        <Globe className="w-5 h-5 text-[#853953]" />
                         Website Integration
                     </h2>
                     <p className="mt-1 text-sm leading-6 text-slate-500">
@@ -53,13 +53,13 @@ export default function WebsiteIntegration({ initialUrl }: { initialUrl?: string
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
                             placeholder="https://www.your-real-estate-site.com"
-                            className="min-w-0 flex-auto rounded-md border-0 px-3.5 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            className="min-w-0 flex-auto rounded-md border-0 px-3.5 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[#853953]/20 sm:text-sm sm:leading-6"
                         />
                         <button
                             type="button"
                             onClick={handleSync}
                             disabled={isLoading}
-                            className="flex-none flex items-center gap-2 rounded-md bg-cyan-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 disabled:opacity-50 transition-colors"
+                            className="flex-none flex items-center gap-2 rounded-md bg-[#853953] px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#853953]/90 disabled:opacity-50 transition-colors"
                         >
                             {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Sync Website"}
                         </button>

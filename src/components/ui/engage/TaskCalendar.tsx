@@ -8,8 +8,8 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const TYPE_ICON: Record<string, any> = { Call: Phone, Email: Mail, Follow_Up: CalIcon, Meeting: CalIcon, Viewing: CalIcon, Reminder: Clock };
-const TYPE_COLOR: Record<string, string> = { Call: 'bg-green-100 text-green-700', Email: 'bg-blue-100 text-blue-700', 'Follow Up': 'bg-orange-100 text-orange-700', Meeting: 'bg-purple-100 text-purple-700', Viewing: 'bg-slate-800 text-white', Reminder: 'bg-slate-100 text-slate-600' };
-const TYPE_DOT_COLOR: Record<string, string> = { Call: 'bg-green-500', Email: 'bg-blue-500', 'Follow Up': 'bg-orange-500', Meeting: 'bg-purple-500', Viewing: 'bg-slate-800', Reminder: 'bg-slate-400' };
+const TYPE_COLOR: Record<string, string> = { Call: 'bg-green-100 text-green-700', Email: 'bg-blue-100 text-blue-700', 'Follow Up': 'bg-orange-100 text-orange-700', Meeting: 'bg-[#853953]/10 text-[#853953]', Viewing: 'bg-slate-800 text-white', Reminder: 'bg-slate-100 text-slate-600' };
+const TYPE_DOT_COLOR: Record<string, string> = { Call: 'bg-green-500', Email: 'bg-blue-500', 'Follow Up': 'bg-orange-500', Meeting: 'bg-[#853953]', Viewing: 'bg-slate-800', Reminder: 'bg-slate-400' };
 
 function isSameDay(a: Date, b: Date) {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -101,9 +101,9 @@ export default function TaskCalendar() {
                             <button key={idx} onClick={() => setSelectedDay(date)}
                                 className={`min-h-[60px] p-2 border-b border-r border-slate-100 text-left transition-colors hover:bg-slate-50 relative
                                     ${!current ? 'opacity-30' : ''}
-                                    ${isSelected ? 'bg-purple-50' : ''}
+                                    ${isSelected ? 'bg-[#853953]/5' : ''}
                                 `}>
-                                <span className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-purple-600 text-white' : 'text-slate-700'}`}>
+                                <span className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-[#853953] text-white' : 'text-slate-700'}`}>
                                     {date.getDate()}
                                 </span>
                                 {dayTasks.length > 0 && (
@@ -130,15 +130,15 @@ export default function TaskCalendar() {
                         <p className="font-extrabold text-slate-900 mt-0.5">{selectedTasks.length} task{selectedTasks.length !== 1 ? 's' : ''}</p>
                     </div>
                     <button onClick={() => setShowNewTask(!showNewTask)}
-                        className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+                        className="flex items-center gap-1.5 bg-[#853953] hover:bg-[#853953]/90 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
                         <Plus className="w-3.5 h-3.5" /> New
                     </button>
                 </div>
 
                 {showNewTask && (
-                    <div className="p-4 border-b border-slate-100 space-y-2 bg-purple-50/50">
+                    <div className="p-4 border-b border-slate-100 space-y-2 bg-[#853953]/5">
                         <input placeholder="Task title" value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })}
-                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#853953]/20" />
                         
                         {/* Searchable Lead Select */}
                         <div className="relative">
@@ -149,7 +149,7 @@ export default function TaskCalendar() {
                                 onChange={e => { setSearchLead(e.target.value); setShowLeadDropdown(true); setNewTask(p => ({...p, leadId: ''})); }}
                                 onFocus={() => setShowLeadDropdown(true)}
                                 onBlur={() => setTimeout(() => setShowLeadDropdown(false), 200)}
-                                className={`w-full bg-white border ${!newTask.leadId ? 'border-red-300 ring-1 ring-red-100' : 'border-slate-200'} rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400`}
+                                className={`w-full bg-white border ${!newTask.leadId ? 'border-red-300 ring-1 ring-red-100' : 'border-slate-200'} rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#853953]/20`}
                             />
                             {showLeadDropdown && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
@@ -183,7 +183,7 @@ export default function TaskCalendar() {
                             className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none" />
                         <div className="flex gap-2">
                             <button onClick={() => setShowNewTask(false)} className="flex-1 text-xs font-bold text-slate-500 hover:text-slate-800 py-1.5 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
-                            <button onClick={createTask} disabled={!newTask.title || !newTask.leadId} className="flex-1 text-xs font-bold bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white py-1.5 rounded-lg transition-colors">Create</button>
+                            <button onClick={createTask} disabled={!newTask.title || !newTask.leadId} className="flex-1 text-xs font-bold bg-[#853953] hover:bg-[#853953]/90 disabled:opacity-50 text-white py-1.5 rounded-lg transition-colors">Create</button>
                         </div>
                     </div>
                 )}

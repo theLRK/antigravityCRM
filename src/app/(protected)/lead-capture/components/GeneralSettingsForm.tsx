@@ -65,7 +65,7 @@ export function GeneralSettingsForm({
                 <button
                     type="button"
                     onClick={() => setIsActive(!isActive)}
-                    className={`${isActive ? 'bg-indigo-600' : 'bg-slate-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2`}
+                    className={`${isActive ? 'bg-[#853953]' : 'bg-slate-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#853953] focus:ring-offset-2`}
                     role="switch"
                     aria-checked={isActive}
                 >
@@ -84,7 +84,7 @@ export function GeneralSettingsForm({
                 <button
                     type="button"
                     onClick={() => setAutoSendFirstMessage(!autoSendFirstMessage)}
-                    className={`${autoSendFirstMessage ? 'bg-indigo-600' : 'bg-slate-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2`}
+                    className={`${autoSendFirstMessage ? 'bg-[#853953]' : 'bg-slate-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#853953] focus:ring-offset-2`}
                     role="switch"
                     aria-checked={autoSendFirstMessage}
                 >
@@ -98,32 +98,32 @@ export function GeneralSettingsForm({
             <div>
                 <label htmlFor="title" className="block text-sm font-medium leading-6 text-slate-900">Form Title</label>
                 <div className="mt-2">
-                    <input type="text" name="title" id="title" defaultValue={title} required className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                    <input type="text" name="title" id="title" defaultValue={title} required className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[#853953]/50 sm:text-sm sm:leading-6" />
                 </div>
             </div>
             <div>
                 <label htmlFor="description" className="block text-sm font-medium leading-6 text-slate-900">Short Description</label>
                 <div className="mt-2">
-                    <textarea id="description" name="description" rows={2} defaultValue={description} className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                    <textarea id="description" name="description" rows={2} defaultValue={description} className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[#853953]/50 sm:text-sm sm:leading-6" />
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label htmlFor="welcomeMessage" className="block text-sm font-medium leading-6 text-slate-900">Welcome Message</label>
                     <div className="mt-2">
-                        <input type="text" name="welcomeMessage" id="welcomeMessage" defaultValue={welcomeMessage} className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                        <input type="text" name="welcomeMessage" id="welcomeMessage" defaultValue={welcomeMessage} className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[#853953]/50 sm:text-sm sm:leading-6" />
                     </div>
                 </div>
                 <div>
                     <label htmlFor="successMessage" className="block text-sm font-medium leading-6 text-slate-900">Confirmation Message</label>
                     <div className="mt-2">
-                        <input type="text" name="successMessage" id="successMessage" defaultValue={successMessage} className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+                        <input type="text" name="successMessage" id="successMessage" defaultValue={successMessage} className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[#853953]/50 sm:text-sm sm:leading-6" />
                     </div>
                 </div>
                 <div>
                     <label htmlFor="currencySymbol" className="block text-sm font-medium leading-6 text-slate-900">Currency Settings</label>
                     <div className="mt-2">
-                        <select name="currencySymbol" id="currencySymbol" defaultValue={currencySymbol || '$'} className="block w-full rounded-md border-0 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                        <select name="currencySymbol" id="currencySymbol" defaultValue={currencySymbol || '$'} className="block w-full rounded-md border-0 py-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-[#853953]/50 sm:text-sm sm:leading-6">
                             <option value="$">US Dollar ($)</option>
                             <option value="€">Euro (€)</option>
                             <option value="£">British Pound (£)</option>
@@ -139,7 +139,7 @@ export function GeneralSettingsForm({
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center rounded-md bg-[#853953] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#853953]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#853953] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     {isSuccess ? <Check className="w-4 h-4 mr-2" /> : null}

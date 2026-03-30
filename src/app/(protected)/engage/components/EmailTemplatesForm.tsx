@@ -128,12 +128,12 @@ export function EmailTemplatesForm({ profile }: { profile: any }) {
                             type="text"
                             value={templates[activeTab].subject}
                             onChange={(e) => setTemplates(prev => ({ ...prev, [activeTab]: { ...prev[activeTab], subject: e.target.value } }))}
-                            className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                            className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#853953]/20 focus:border-[#853953]/50 bg-white"
                         />
                     </div>
 
                     {/* Toolbar & Body */}
-                    <div className="flex-1 flex flex-col border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500">
+                    <div className="flex-1 flex flex-col border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#853953]/20 focus-within:border-[#853953]/50">
                         <div className="bg-slate-50 border-b border-slate-200 px-3 py-2 flex items-center justify-between">
                             <div className="relative">
                                 <button
@@ -141,7 +141,7 @@ export function EmailTemplatesForm({ profile }: { profile: any }) {
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                     className="text-xs font-medium flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded shadow-sm hover:bg-slate-50 text-slate-700"
                                 >
-                                    <span className="text-indigo-600 font-bold">&#123;&#123;</span> Insert Variable <ChevronDown className="w-3 h-3 text-slate-400" />
+                                    <span className="text-[#853953] font-bold">&#123;&#123;</span> Insert Variable <ChevronDown className="w-3 h-3 text-slate-400" />
                                 </button>
 
                                 <AnimatePresence>
@@ -158,7 +158,7 @@ export function EmailTemplatesForm({ profile }: { profile: any }) {
                                                     onClick={() => insertVariable(v.tag)}
                                                     className="w-full text-left px-4 py-2 hover:bg-slate-50 text-sm flex flex-col group"
                                                 >
-                                                    <span className="font-mono text-indigo-600 text-xs">{v.tag}</span>
+                                                    <span className="font-mono text-[#853953] text-xs">{v.tag}</span>
                                                     <span className="text-slate-500 text-xs">{v.desc}</span>
                                                 </button>
                                             ))}
@@ -195,7 +195,7 @@ export function EmailTemplatesForm({ profile }: { profile: any }) {
                         <button
                             onClick={handleSave}
                             disabled={isPending}
-                            className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                            className="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-[#853953] hover:bg-[#853953]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#853953]/20 disabled:opacity-50"
                         >
                             {isPending ? 'Saving...' : 'Save Template'}
                         </button>

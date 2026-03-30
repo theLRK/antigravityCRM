@@ -20,8 +20,8 @@ export default async function AccountPage() {
             <BackButton label="Back to Settings" href="/settings" />
             <div className="mb-10">
                 <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                        <User className="w-5 h-5 text-indigo-600" />
+                    <div className="w-10 h-10 bg-[#853953]/10 rounded-xl flex items-center justify-center">
+                        <User className="w-5 h-5 text-[#853953]" />
                     </div>
                     <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Agent Profile</h1>
                 </div>

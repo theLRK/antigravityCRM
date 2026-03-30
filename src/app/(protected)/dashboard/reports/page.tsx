@@ -13,8 +13,8 @@ export default async function ReportsPage() {
             <div className="max-w-7xl mx-auto px-8 py-10">
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-                            <BarChart3 className="w-5 h-5 text-indigo-600" />
+                        <div className="w-10 h-10 rounded-xl bg-[#853953]/10 flex items-center justify-center">
+                            <BarChart3 className="w-5 h-5 text-[#853953]" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-extrabold text-slate-900">Analytics & Reports</h1>

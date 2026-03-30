@@ -203,7 +203,7 @@ export function ManualEmailTab({ properties, onSend }: Props) {
                                     <User className="w-4 h-4" /> Select Lead
                                 </label>
                                 <select 
-                                    className="w-full h-10 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full h-10 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#853953]/20 outline-none"
                                     value={selectedLeadId}
                                     onChange={(e) => setSelectedLeadId(e.target.value)}
                                     required
@@ -219,7 +219,7 @@ export function ManualEmailTab({ properties, onSend }: Props) {
                                     <Building2 className="w-4 h-4" /> Select Property (Optional)
                                 </label>
                                 <select 
-                                    className="w-full h-10 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    className="w-full h-10 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#853953]/20 outline-none"
                                     value={selectedPropertyId}
                                     onChange={(e) => setSelectedPropertyId(e.target.value)}
                                 >
@@ -236,7 +236,7 @@ export function ManualEmailTab({ properties, onSend }: Props) {
                                 <Sparkles className="w-4 h-4" /> Email Type
                             </label>
                             <select 
-                                className="w-full h-10 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full h-10 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#853953]/20 outline-none"
                                 value={selectedTemplateName}
                                 onChange={(e) => handleTemplateChange(e.target.value)}
                             >
@@ -259,7 +259,7 @@ export function ManualEmailTab({ properties, onSend }: Props) {
                             </label>
                             <input 
                                 type="text"
-                                className="w-full h-10 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full h-10 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#853953]/20 outline-none"
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
                                 placeholder="Email subject..."

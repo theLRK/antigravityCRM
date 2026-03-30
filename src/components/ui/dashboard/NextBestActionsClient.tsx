@@ -55,14 +55,14 @@ export default function NextBestActionsClient() {
                 return {
                     label: 'Send Properties',
                     icon: <Mail className="w-4 h-4 mr-2" />,
-                    color: 'bg-[#853953] hover:bg-[#702f45] text-white',
+                    color: 'bg-[#853953] hover:bg-[#853953]/90 text-white',
                     href: `/leads?drawer=${leadId}`,
                 };
             case 'SEND_REENGAGEMENT_EMAIL':
                 return {
                     label: 'Re-engage',
                     icon: <Zap className="w-4 h-4 mr-2" />,
-                    color: 'bg-[#612D53] hover:bg-[#522646] text-white',
+                    color: 'bg-[#853953]/80 hover:bg-[#853953]/90 text-white',
                     href: `/leads?drawer=${leadId}`,
                 };
             case 'SEND_FOLLOW_UP_EMAIL':
@@ -70,7 +70,7 @@ export default function NextBestActionsClient() {
                 return {
                     label: 'Start Sequence',
                     icon: <Mail className="w-4 h-4 mr-2" />,
-                    color: 'bg-[#853953] hover:bg-[#702f45] text-white',
+                    color: 'bg-[#853953] hover:bg-[#853953]/90 text-white',
                     href: `/leads?drawer=${leadId}`,
                 };
             default:
@@ -132,7 +132,7 @@ export default function NextBestActionsClient() {
                                         </span>
                                     </div>
                                     <div className="flex items-start gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                                        <Sparkles className="w-3.5 h-3.5 text-purple-500 shrink-0 mt-0.5" />
+                                        <Sparkles className="w-3.5 h-3.5 text-[#853953] shrink-0 mt-0.5" />
                                         <p className="text-sm text-slate-700 font-medium leading-snug">{item.actionData.reason}</p>
                                     </div>
                                     {/* AI Hint — shown for cold leads */}

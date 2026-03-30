@@ -20,9 +20,9 @@ function formatTime(ts: string) {
 }
 
 const eventConfig: Record<string, { icon: string; label: string; color: string }> = {
-    lead_created:       { icon: '⭐', label: 'Lead Created',       color: 'bg-indigo-100 text-indigo-700' },
-    email_sent:         { icon: '📧', label: 'Email Sent',         color: 'bg-purple-100 text-purple-700' },
-    email_sent_manual:  { icon: '📨', label: 'Manual Email',       color: 'bg-violet-100 text-violet-700' },
+    lead_created:       { icon: '⭐', label: 'Lead Created',       color: 'bg-[#853953]/10 text-[#853953]' },
+    email_sent:         { icon: '📧', label: 'Email Sent',         color: 'bg-[#853953]/10 text-[#853953]' },
+    email_sent_manual:  { icon: '📨', label: 'Manual Email',       color: 'bg-[#853953]/10 text-[#853953]' },
     call_logged:        { icon: '📞', label: 'Call Logged',        color: 'bg-blue-100 text-blue-700' },
     note_added:         { icon: '📝', label: 'Note Added',         color: 'bg-slate-100 text-slate-700' },
     task_created:       { icon: '📋', label: 'Task Created',       color: 'bg-amber-100 text-amber-700' },
@@ -80,13 +80,13 @@ export default function LeadTimelineClient({ leadId }: { leadId: string }) {
                     onChange={e => setNoteText(e.target.value)}
                     placeholder="Write a note about this lead..."
                     rows={3}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-purple-400 resize-none text-slate-700 placeholder-slate-400"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#853953]/20 resize-none text-slate-700 placeholder-slate-400"
                 />
                 <div className="flex justify-end mt-2">
                     <button
                         onClick={addNote}
                         disabled={!noteText.trim() || savingNote}
-                        className="flex items-center gap-2 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 px-4 py-2 rounded-lg transition-colors"
+                        className="flex items-center gap-2 text-sm font-bold text-white bg-[#853953] hover:bg-[#853953]/90 disabled:opacity-50 px-4 py-2 rounded-lg transition-colors"
                     >
                         {savingNote ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         Save Note

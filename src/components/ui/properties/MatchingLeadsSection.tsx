@@ -59,7 +59,7 @@ export default function MatchingLeadsSection({ property }: { property: any }) {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-bold text-slate-900 border-b-2 border-purple-500 pb-1 inline-block">Matching Buyers</h3>
+                    <h3 className="text-lg font-bold text-slate-900 border-b-2 border-[#853953] pb-1 inline-block">Matching Buyers</h3>
                     <p className="text-slate-500 text-sm mt-1">{matches.length} leads algorithmically match {property.title}'s criteria.</p>
                 </div>
                 {selectedLeads.length > 0 && (
@@ -81,7 +81,7 @@ export default function MatchingLeadsSection({ property }: { property: any }) {
                     <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                         <tr>
                             <th className="p-4 w-12 text-center">
-                                <input type="checkbox" checked={selectedLeads.length === matches.length && matches.length > 0} onChange={toggleAll} className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 cursor-pointer" />
+                                <input type="checkbox" checked={selectedLeads.length === matches.length && matches.length > 0} onChange={toggleAll} className="w-4 h-4 rounded text-[#853953] focus:ring-[#853953] border-slate-300 cursor-pointer" />
                             </th>
                             <th className="p-4">Lead Name</th>
                             <th className="p-4">Budget Max</th>
@@ -92,9 +92,9 @@ export default function MatchingLeadsSection({ property }: { property: any }) {
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium pb-2 text-slate-700">
                         {matches.map(({ lead, percent }) => (
-                            <tr key={lead.id} className={`hover:bg-slate-50 transition-colors ${selectedLeads.includes(lead.id) ? 'bg-purple-50/30' : ''}`}>
+                            <tr key={lead.id} className={`hover:bg-slate-50 transition-colors ${selectedLeads.includes(lead.id) ? 'bg-[#853953]/5' : ''}`}>
                                 <td className="p-4 text-center">
-                                    <input type="checkbox" checked={selectedLeads.includes(lead.id)} onChange={() => toggleSelect(lead.id)} className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 cursor-pointer" />
+                                    <input type="checkbox" checked={selectedLeads.includes(lead.id)} onChange={() => toggleSelect(lead.id)} className="w-4 h-4 rounded text-[#853953] focus:ring-[#853953] border-slate-300 cursor-pointer" />
                                 </td>
                                 <td className="p-4">
                                     <div className="font-extrabold text-slate-900">{lead.firstName} {lead.lastName}</div>
@@ -107,13 +107,13 @@ export default function MatchingLeadsSection({ property }: { property: any }) {
                                     {lead.moveTimeline ? <span className="flex items-center gap-1.5 opacity-80"><Calendar className="w-3.5 h-3.5" /> {lead.moveTimeline}</span> : '-'}
                                 </td>
                                 <td className="p-4">
-                                    <span className={`px-2.5 py-1 rounded-full text-xs font-black ${percent >= 80 ? 'bg-emerald-100 text-emerald-700' : percent >= 60 ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-black ${percent >= 80 ? 'bg-emerald-100 text-emerald-700' : percent >= 60 ? 'bg-[#853953]/10 text-[#853953]' : 'bg-amber-100 text-amber-700'}`}>
                                         {percent}%
                                     </span>
                                 </td>
                                 <td className="p-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        <a href={`/leads?id=${lead.id}`} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-indigo-600 rounded-lg group transition-colors" title="View Lead Profile">
+                                        <a href={`/leads?id=${lead.id}`} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-[#853953] rounded-lg group transition-colors" title="View Lead Profile">
                                             <Presentation className="w-4 h-4" />
                                         </a>
                                         <a href={`/engage?leadId=${lead.id}`} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-amber-600 rounded-lg group transition-colors" title="Draft Email in Engage">
@@ -138,7 +138,7 @@ export default function MatchingLeadsSection({ property }: { property: any }) {
                                                 if (res.ok) alert("Task created successfully!");
                                             }}
                                             title="Create Task" 
-                                            className="p-2 hover:bg-slate-100 text-slate-400 hover:text-purple-600 rounded-lg group transition-colors"
+                                            className="p-2 hover:bg-slate-100 text-slate-400 hover:text-[#853953] rounded-lg group transition-colors"
                                         >
                                             <Plus className="w-4 h-4" />
                                         </button>

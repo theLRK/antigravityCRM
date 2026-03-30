@@ -41,7 +41,7 @@ export function EmailHistoryTab({ logs }: Props) {
                     <input 
                         type="text" 
                         placeholder="Search by lead or subject..."
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-[#853953]/20 outline-none"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -84,7 +84,7 @@ export function EmailHistoryTab({ logs }: Props) {
                                 <td className="px-6 py-4 text-right">
                                     <button 
                                         onClick={() => setSelectedLog(log)}
-                                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                        className="p-2 text-slate-400 hover:text-[#853953] hover:bg-[#853953]/10 rounded-lg transition-colors"
                                     >
                                         <Eye className="w-4 h-4" />
                                     </button>

@@ -34,7 +34,7 @@ export default async function LeadCapturePage() {
                     <div className="bg-white shadow-sm ring-1 ring-slate-200 rounded-2xl overflow-hidden">
                         <div className="border-b border-slate-200 bg-slate-50/50 px-6 py-4 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-slate-900 flex items-center">
-                                <Edit className="w-5 h-5 mr-2 text-indigo-500" />
+                                <Edit className="w-5 h-5 mr-2 text-[#853953]" />
                                 General Content
                             </h3>
                             <div className="flex items-center">
@@ -61,7 +61,7 @@ export default async function LeadCapturePage() {
                     <div className="bg-white shadow-sm ring-1 ring-slate-200 rounded-2xl overflow-hidden">
                         <div className="border-b border-slate-200 bg-slate-50/50 px-6 py-4 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-slate-900 flex items-center">
-                                <Settings2 className="w-5 h-5 mr-2 text-indigo-500" />
+                                <Settings2 className="w-5 h-5 mr-2 text-[#853953]" />
                                 Form Schema Builder
                             </h3>
                         </div>
