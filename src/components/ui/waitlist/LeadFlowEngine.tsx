@@ -81,8 +81,21 @@ export function LeadFlowEngine() {
   const [currentLeadIndex, setCurrentLeadIndex] = useState(0);
   const [step, setStep] = useState<"incoming" | "scoring" | "prioritizing" | "nurturing" | "routing" | "outcome">("incoming");
   const [liveScore, setLiveScore] = useState(0);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   const activeLead = LEADS_DATA[currentLeadIndex];
+
+  // Mouse move handler for premium 3D tilt
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left - rect.width / 2) / 35; // extremely subtle division
+    const y = (e.clientY - rect.top - rect.height / 2) / 35;
+    setMousePos({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    setMousePos({ x: 0, y: 0 });
+  };
 
   // Animation Loop Controller
   useEffect(() => {
@@ -153,7 +166,15 @@ export function LeadFlowEngine() {
   return (
     <div className="w-full select-none">
       {/* Desktop Version */}
-      <div className="hidden md:block relative w-full h-[580px] overflow-hidden rounded-[24px] bg-white border border-black/5 p-6 shadow-[0_12px_40px_-15px_rgba(0,0,0,0.05)]">
+      <div 
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          transform: `perspective(1000px) rotateX(${-mousePos.y}deg) rotateY(${mousePos.x}deg) translateY(${mousePos.y * 0.15}px) translateX(${mousePos.x * 0.15}px)`,
+          transition: "transform 0.1s ease-out"
+        }}
+        className="hidden md:block relative w-full h-[580px] overflow-hidden rounded-[24px] bg-white border border-black/5 p-6 shadow-[0_12px_40px_-15px_rgba(0,0,0,0.05)]"
+      >
         
         {/* Subtle Ambient Background Gradients */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#853953]/5 rounded-full blur-[80px]" />
