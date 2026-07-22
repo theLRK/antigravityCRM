@@ -117,8 +117,8 @@ export async function dispatchWelcomeEmail(leadId: string, scheduledDelay: boole
             return;
         }
 
-        // Look up agent credentials — use form's agentId if bound
-        const agentId = lead.sourceForm?.agentId ?? undefined;
+        // Look up agent credentials — prioritize lead owner, fallback to form's agentId
+        const agentId = lead.assignedAgentId ?? lead.sourceForm?.agentId ?? undefined;
 
         // Load agent profile for template overrides
         const agentProfile = agentId
@@ -300,7 +300,7 @@ export async function dispatchAIEmail(
 
     if (!lead) return false;
 
-    const agentId = lead.sourceForm?.agentId ?? undefined;
+    const agentId = lead.assignedAgentId ?? lead.sourceForm?.agentId ?? undefined;
 
     if (isDraft) {
         try {

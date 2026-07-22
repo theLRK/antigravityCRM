@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createClient } from '@/utils/supabase/server';
 
 // GET /api/dashboard/location-insights
 export async function GET() {
     try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
         const [leads, properties, allLocations] = await Promise.all([
-            prisma.lead.findMany({ select: { preferredLocationIds: true, createdAt: true } }),
-            prisma.property.findMany({ select: { locationId: true, status: true } }),
+            prisma.lead.findMany({ 
+                where: { assignedAgentId: user.id },
+                select: { preferredLocationIds: true, createdAt: true } 
+            }),
+            prisma.property.findMany({ 
+                where: { agentId: user.id },
+                select: { locationId: true, status: true } 
+            }),
             (prisma as any).location.findMany({ include: { group: true } })
         ]);
 

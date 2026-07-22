@@ -20,6 +20,7 @@ import {
     Zap
 } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { getLeads, updateLeadStatus, addLeadNote, deleteLead, createLead, getLeadDetails } from '../actions';
 import { LeadDetailDrawer } from './LeadDetailDrawer';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
@@ -378,172 +379,203 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Leads List Table Area */}
+            </div>            {/* Leads List Table Area */}
             <div className="flex-1 overflow-auto p-6">
-                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                    <table className="min-w-full divide-y divide-slate-200">
-                        <thead className="bg-slate-50">
-                            <tr>
-                                <th scope="col" className="px-4 py-3 w-10">
-                                    <button onClick={toggleSelectAll} className="text-slate-400 hover:text-slate-700 transition-colors">
-                                        {selectedIds.size === filteredLeads.length && filteredLeads.length > 0
-                                            ? <CheckSquare className="w-4 h-4 text-[#853953]" />
-                                            : <Square className="w-4 h-4" />}
-                                    </button>
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Lead</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Score</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Timeline / Financing</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Follow Up</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Suggested Action</th>
-                                <th scope="col" className="relative px-6 py-3"><span className="sr-only">Quick Actions</span></th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-slate-200">
-                            {filteredLeads.map((lead) => {
-                                const scoreObj = lead.scores?.[0];
-                                const finalScore = scoreObj?.finalScore || 0;
-                                const overdue = isOverdue(lead.followUpDate) && lead.pipelineStage !== 'closed';
-                                console.log(lead)
-                                return (
-                                    <tr key={lead.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedIds.has(lead.id) ? 'bg-[#853953]/5' : ''}`}>
-                                        <td className="px-4 py-4">
-                                            <button onClick={() => toggleSelect(lead.id)} className="text-slate-300 hover:text-[#853953] transition-colors">
-                                                {selectedIds.has(lead.id)
+                {leads.length === 0 && searchQuery === '' && activeFilter === 'All' ? (
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4 }}
+                        className="max-w-2xl mx-auto my-12 bg-white border border-slate-200 rounded-3xl p-10 text-center shadow-md flex flex-col items-center"
+                    >
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#853953] to-[#612D53] flex items-center justify-center text-white mb-6 shadow-xl shadow-[#853953]/10">
+                            <Sparkles className="w-8 h-8 animate-pulse" />
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Capture your first lead</h2>
+                        <p className="text-slate-500 font-medium text-sm leading-relaxed max-w-md mb-8">
+                            Formative tracks your clients, scores their intent using AI, recommends matching properties, and schedules follow-up tasks automatically.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="flex items-center justify-center gap-2 px-6 py-3 bg-[#853953] text-white rounded-xl text-sm font-bold hover:bg-[#612D53] transition-all active:scale-95 shadow-lg shadow-[#853953]/10"
+                            >
+                                <Plus className="w-4 h-4" /> Add Lead Manually
+                            </button>
+                            <Link
+                                href="/lead-capture"
+                                className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+                            >
+                                <Zap className="w-4 h-4 text-[#853953]" /> Set Up Capture Form
+                            </Link>
+                        </div>
+                    </motion.div>
+                ) : (
+                    <>
+                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                            <table className="min-w-full divide-y divide-slate-200">
+                                <thead className="bg-slate-50">
+                                    <tr>
+                                        <th scope="col" className="px-4 py-3 w-10">
+                                            <button onClick={toggleSelectAll} className="text-slate-400 hover:text-slate-700 transition-colors">
+                                                {selectedIds.size === filteredLeads.length && filteredLeads.length > 0
                                                     ? <CheckSquare className="w-4 h-4 text-[#853953]" />
                                                     : <Square className="w-4 h-4" />}
                                             </button>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => handleSelectLead(lead)}>
-                                            <div className="flex items-center">
-                                                <div className="h-10 w-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold relative">
-                                                    {lead.firstName.charAt(0)}{lead.lastName.charAt(0)}
-                                                    {((lead.pipelineStage === 'new' && finalScore >= 80) || overdue) && (
-                                                       <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
-                                                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                           <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
-                                                       </span>
-                                                    )}
-                                                </div>
-                                                <div className="ml-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-sm font-bold text-slate-900 group-hover:text-[#853953]">{lead.firstName} {lead.lastName}</span>
-                                                        {((lead.pipelineStage === 'new' && finalScore >= 80) || overdue) && (
-                                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 tracking-wider uppercase border border-red-200">Action Needed</span>
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Lead</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Score</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Timeline / Financing</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Follow Up</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Suggested Action</th>
+                                        <th scope="col" className="relative px-6 py-3"><span className="sr-only">Quick Actions</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-slate-200">
+                                    {filteredLeads.map((lead) => {
+                                        const scoreObj = lead.scores?.[0];
+                                        const finalScore = scoreObj?.finalScore || 0;
+                                        const overdue = isOverdue(lead.followUpDate) && lead.pipelineStage !== 'closed';
+                                        console.log(lead)
+                                        return (
+                                            <tr key={lead.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedIds.has(lead.id) ? 'bg-[#853953]/5' : ''}`}>
+                                                <td className="px-4 py-4">
+                                                    <button onClick={() => toggleSelect(lead.id)} className="text-slate-300 hover:text-[#853953] transition-colors">
+                                                        {selectedIds.has(lead.id)
+                                                            ? <CheckSquare className="w-4 h-4 text-[#853953]" />
+                                                            : <Square className="w-4 h-4" />}
+                                                    </button>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => handleSelectLead(lead)}>
+                                                    <div className="flex items-center">
+                                                        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold relative">
+                                                            {lead.firstName.charAt(0)}{lead.lastName.charAt(0)}
+                                                            {((lead.pipelineStage === 'new' && finalScore >= 80) || overdue) && (
+                                                               <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                                                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                                   <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                                                               </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm font-bold text-slate-900 group-hover:text-[#853953]">{lead.firstName} {lead.lastName}</span>
+                                                                {((lead.pipelineStage === 'new' && finalScore >= 80) || overdue) && (
+                                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 tracking-wider uppercase border border-red-200">Action Needed</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                                                                <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {lead.phone}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => handleSelectLead(lead)}>
+                                                    <div className="flex flex-col gap-1 items-start">
+                                                        {scoreObj ? (
+                                                            <>
+                                                                <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-bold ring-1 ring-inset ${getScoreColor(finalScore)} w-14 justify-center`}>
+                                                                    {finalScore} pts
+                                                                </span>
+                                                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                                                    {scoreObj.confidenceLevel || 'N/A'} Conf.
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold text-[#853953] bg-[#853953]/5 ring-1 ring-inset ring-[#853953]/20 whitespace-nowrap">
+                                                                <Loader2 className="w-3 h-3 animate-spin"/> Processing
+                                                            </span>
                                                         )}
                                                     </div>
-                                                    <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-                                                        <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {lead.phone}</span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <select
+                                                        value={lead.pipelineStage}
+                                                        onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                                                        className="text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-700 py-1.5 pl-2 pr-6 rounded focus:ring-1 focus:ring-[#853953] shadow-sm cursor-pointer"
+                                                    >
+                                                        <option value="new">New</option>
+                                                        <option value="contacted">Contacted</option>
+                                                        <option value="booked_showing">Booked Showing</option>
+                                                        <option value="closed">Closed</option>
+                                                    </select>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => setSelectedLead(lead)}>
+                                                    <div className="text-sm text-slate-900 font-medium">{lead.moveTimeline || 'Unknown'}</div>
+                                                    <div className="text-xs text-slate-500 mt-0.5 capitalize">{lead.financing ? lead.financing.replace('_', ' ') : 'Unknown'}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => setSelectedLead(lead)}>
+                                                    <div className={`text-sm font-semibold flex items-center gap-1.5 ${overdue ? 'text-red-600' : 'text-slate-600'}`}>
+                                                        {overdue && <AlertCircle className="w-4 h-4" />}
+                                                        {lead.followUpDate ? new Date(lead.followUpDate).toLocaleDateString() : 'None setup'}
                                                     </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => handleSelectLead(lead)}>
-                                            <div className="flex flex-col gap-1 items-start">
-                                                {scoreObj ? (
-                                                    <>
-                                                        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-bold ring-1 ring-inset ${getScoreColor(finalScore)} w-14 justify-center`}>
-                                                            {finalScore} pts
-                                                        </span>
-                                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                                                            {scoreObj.confidenceLevel || 'N/A'} Conf.
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold text-[#853953] bg-[#853953]/5 ring-1 ring-inset ring-[#853953]/20 whitespace-nowrap">
-                                                        <Loader2 className="w-3 h-3 animate-spin"/> Processing
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <select
-                                                value={lead.pipelineStage}
-                                                onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                                                className="text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-700 py-1.5 pl-2 pr-6 rounded focus:ring-1 focus:ring-[#853953] shadow-sm cursor-pointer"
-                                            >
-                                                <option value="new">New</option>
-                                                <option value="contacted">Contacted</option>
-                                                <option value="booked_showing">Booked Showing</option>
-                                                <option value="closed">Closed</option>
-                                            </select>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => setSelectedLead(lead)}>
-                                            <div className="text-sm text-slate-900 font-medium">{lead.moveTimeline || 'Unknown'}</div>
-                                            <div className="text-xs text-slate-500 mt-0.5 capitalize">{lead.financing ? lead.financing.replace('_', ' ') : 'Unknown'}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => setSelectedLead(lead)}>
-                                            <div className={`text-sm font-semibold flex items-center gap-1.5 ${overdue ? 'text-red-600' : 'text-slate-600'}`}>
-                                                {overdue && <AlertCircle className="w-4 h-4" />}
-                                                {lead.followUpDate ? new Date(lead.followUpDate).toLocaleDateString() : 'None setup'}
-                                            </div>
-                                            <div className="text-xs text-slate-400 mt-0.5">Source: {lead.source || 'Organic'}</div>
-                                        </td>
-                                        <td className="px-6 py-4 cursor-pointer" onClick={() => setSelectedLead(lead)}>
-                                            <div className="text-sm text-slate-700 line-clamp-2 max-w-xs font-medium">
-                                                {scoreObj?.suggestedAction || 'Review lead details'}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    title="Mark Contacted"
-                                                    onClick={() => handleStatusChange(lead.id, 'contacted')}
-                                                    className="p-1.5 text-slate-400 hover:text-[#853953] hover:bg-[#853953]/5 rounded"
-                                                >
-                                                    <CheckCircle2 className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    title="Book Showing"
-                                                    onClick={() => handleStatusChange(lead.id, 'booked_showing')}
-                                                    className="p-1.5 text-slate-400 hover:text-[#853953] hover:bg-[#853953]/5 rounded"
-                                                >
-                                                    <CalendarCheck className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    title="Add Note (Quick)"
-                                                    onClick={(e) => {
-                                                        const note = prompt('Add a quick note:');
-                                                        if (note) addLeadNote(lead.id, note);
-                                                    }}
-                                                    className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded"
-                                                >
-                                                    <MessageSquare className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                            {filteredLeads.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
-                                        No leads found matching your criteria.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                                    <div className="text-xs text-slate-400 mt-0.5">Source: {lead.source || 'Organic'}</div>
+                                                </td>
+                                                <td className="px-6 py-4 cursor-pointer" onClick={() => setSelectedLead(lead)}>
+                                                    <div className="text-sm text-slate-700 line-clamp-2 max-w-xs font-medium">
+                                                        {scoreObj?.suggestedAction || 'Review lead details'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            title="Mark Contacted"
+                                                            onClick={() => handleStatusChange(lead.id, 'contacted')}
+                                                            className="p-1.5 text-slate-400 hover:text-[#853953] hover:bg-[#853953]/5 rounded"
+                                                        >
+                                                            <CheckCircle2 className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            title="Book Showing"
+                                                            onClick={() => handleStatusChange(lead.id, 'booked_showing')}
+                                                            className="p-1.5 text-slate-400 hover:text-[#853953] hover:bg-[#853953]/5 rounded"
+                                                        >
+                                                            <CalendarCheck className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            title="Add Note (Quick)"
+                                                            onClick={(e) => {
+                                                                const note = prompt('Add a quick note:');
+                                                                if (note) addLeadNote(lead.id, note);
+                                                            }}
+                                                            className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded"
+                                                        >
+                                                            <MessageSquare className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {filteredLeads.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
+                                                No leads found matching your criteria.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
 
-                {/* Load More Button */}
-                {leads.length < totalCount && (
-                    <div className="mt-8 flex justify-center pb-12">
-                        <button
-                            onClick={handleLoadMore}
-                            disabled={isLoadingMore}
-                            className="flex items-center gap-2 px-8 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-50"
-                        >
-                            {isLoadingMore ? (
-                                <><Loader2 className="w-4 h-4 animate-spin" /> Loading more...</>
-                            ) : (
-                                <>Load More Leads ({totalCount - leads.length} remaining)</>
-                            )}
-                        </button>
-                    </div>
+                        {/* Load More Button */}
+                        {leads.length < totalCount && (
+                            <div className="mt-8 flex justify-center pb-12">
+                                <button
+                                    onClick={handleLoadMore}
+                                    disabled={isLoadingMore}
+                                    className="flex items-center gap-2 px-8 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                                >
+                                    {isLoadingMore ? (
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> Loading more...</>
+                                    ) : (
+                                        <>Load More Leads ({totalCount - leads.length} remaining)</>
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

@@ -15,21 +15,17 @@ export async function GET(req: NextRequest) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        // Map Supabase User to local AgentUser
-        const agent = await prisma.agentUser.findUnique({ where: { supabaseId: user.id } });
-        if (!agent) return NextResponse.json({ error: 'Agent profile not found locally' }, { status: 404 });
-
         const { searchParams } = new URL(req.url);
         const status = searchParams.get('status');
         const leadId = searchParams.get('leadId');
 
-        const where: any = { agentId: agent.id };
+        const where: any = { agentId: user.id };
         if (status) where.status = status;
         if (leadId) where.leadId = leadId;
 
         // Auto-mark overdue tasks
         await prisma.task.updateMany({
-            where: { agentId: agent.id, status: 'pending', dueDate: { lt: new Date() } },
+            where: { agentId: user.id, status: 'pending', dueDate: { lt: new Date() } },
             data: { status: 'overdue' }
         });
 
@@ -71,10 +67,6 @@ export async function POST(req: NextRequest) {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (!user || authError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        // Map Supabase User to local AgentUser
-        const agent = await prisma.agentUser.findUnique({ where: { supabaseId: user.id } });
-        if (!agent) return NextResponse.json({ error: 'Agent profile not found locally' }, { status: 404 });
-
         const body = await req.json();
         const { leadId, title, taskType, dueDate, notes, autoCreated } = body;
 
@@ -85,7 +77,7 @@ export async function POST(req: NextRequest) {
         const task = await prisma.task.create({
             data: {
                 leadId: leadId || null,
-                agentId: agent.id,
+                agentId: user.id,
                 title,
                 taskType,
                 dueDate: new Date(dueDate),

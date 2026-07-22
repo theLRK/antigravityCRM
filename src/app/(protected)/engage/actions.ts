@@ -102,8 +102,23 @@ export async function updateEmailTemplate(tier: 'hot' | 'warm' | 'cold', subject
 }
 
 export async function sendTestEmailAction(tier: 'hot' | 'warm' | 'cold', leadId?: string) {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) { return cookieStore.get(name)?.value; },
+            },
+        }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
     if (leadId) {
-        const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+        const lead = await prisma.lead.findFirst({
+            where: { id: leadId, assignedAgentId: user.id }
+        });
         if (lead) {
             // Send Actual Email
             try {
@@ -145,7 +160,7 @@ export async function sendTestEmailAction(tier: 'hot' | 'warm' | 'cold', leadId?
             await prisma.task.create({
                 data: {
                     leadId,
-                    agentId: lead.assignedAgentId || 'system',
+                    agentId: user.id,
                     title: `Follow up with ${lead.firstName} about property updates`,
                     taskType: 'Follow up',
                     dueDate: followUpDate,
@@ -217,6 +232,25 @@ export async function markTaskComplete(taskId: string) {
 }
 
 export async function markTaskDoneAction(taskId: string) {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) { return cookieStore.get(name)?.value; },
+            },
+        }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Verify task ownership
+    const existing = await prisma.task.findFirst({
+        where: { id: taskId, agentId: user.id }
+    });
+    if (!existing) throw new Error("Task not found or unauthorized");
+
     const task = await prisma.task.update({
         where: { id: taskId },
         data: { status: 'completed' }
@@ -238,6 +272,25 @@ export async function markTaskDoneAction(taskId: string) {
 }
 
 export async function rescheduleTaskAction(taskId: string, newDate: Date) {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) { return cookieStore.get(name)?.value; },
+            },
+        }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Verify task ownership
+    const existing = await prisma.task.findFirst({
+        where: { id: taskId, agentId: user.id }
+    });
+    if (!existing) throw new Error("Task not found or unauthorized");
+
     await prisma.task.update({
         where: { id: taskId },
         data: { dueDate: newDate, status: 'pending' }

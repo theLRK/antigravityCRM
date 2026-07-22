@@ -11,7 +11,7 @@ export async function runPropertyMatchingForLead(leadId: string) {
         if (!lead) throw new Error("Lead not found");
 
         const properties = await prisma.property.findMany({
-            where: { status: 'Available' }
+            where: { status: 'Available', agentId: lead.assignedAgentId || '' }
         });
         if (properties.length === 0) {
             console.log(`[PropertyMatcher] No available properties to match against.`);
@@ -170,7 +170,7 @@ export async function runMatchingForProperty(propertyId: string) {
 
         // Get active leads (e.g. not closed or unsubscribed)
         const leads = await prisma.lead.findMany({
-            where: { isUnsubscribed: false, pipelineStage: { notIn: ['closed', 'lost'] } }
+            where: { isUnsubscribed: false, pipelineStage: { notIn: ['closed', 'lost'] }, assignedAgentId: property.agentId }
         });
 
         if (leads.length === 0) return;

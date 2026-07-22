@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { createClient } from '@/utils/supabase/server';
 import OpenAI from 'openai';
 
 
@@ -104,12 +105,20 @@ export async function getProperties(filters?: {
     maxPrice?: number;
     beds?: number;
 }) {
-    const where: any = {};
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const where: any = { agentId: user.id };
 
     if (filters?.search) {
-        where.OR = [
-            { title: { contains: filters.search } },
-            { location: { contains: filters.search } }
+        where.AND = [
+            {
+                OR: [
+                    { title: { contains: filters.search, mode: 'insensitive' } },
+                    { location: { contains: filters.search, mode: 'insensitive' } }
+                ]
+            }
         ];
     }
     if (filters?.status && filters.status !== 'All') {
@@ -125,20 +134,6 @@ export async function getProperties(filters?: {
     }
 
     try {
-        // Seed placeholder properties if catalog is empty
-        const count = await prisma.property.count();
-        if (count === 0) {
-            const placeholders = [
-                { title: '4BR Modern Family Home in Westside', price: 785000, currency: 'USD', location: 'Westside, Los Angeles, CA', bedrooms: 4, bathrooms: 3, squareFootage: 2400, description: "Stunning modern home with open-plan living, chef's kitchen, and large backyard.", images: JSON.stringify(['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800']), propertyType: 'House', status: 'Available', agentId: 'system', amenities: JSON.stringify(['Garage', 'Pool', 'Garden', 'Smart Home']), tags: JSON.stringify(['family', 'schools', 'modern']) },
-                { title: 'Luxury Downtown Condo \u2013 City Views', price: 520000, currency: 'USD', location: 'Downtown, Miami, FL', bedrooms: 2, bathrooms: 2, squareFootage: 1200, description: 'Premium high-rise condo with floor-to-ceiling windows, concierge service, rooftop pool, and panoramic city skyline views.', images: JSON.stringify(['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=800']), propertyType: 'Condo', status: 'Available', agentId: 'system', amenities: JSON.stringify(['Concierge', 'Rooftop Pool', 'Gym', 'Valet Parking']), tags: JSON.stringify(['luxury', 'city', 'investment']) },
-                { title: 'Charming 3BR Starter Home \u2013 Oak Park', price: 340000, currency: 'USD', location: 'Oak Park, Chicago, IL', bedrooms: 3, bathrooms: 2, squareFootage: 1550, description: 'Well-maintained single-family home on a quiet tree-lined street. Updated kitchen, hardwood floors, and cozy backyard patio.', images: JSON.stringify(['https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&q=80&w=800']), propertyType: 'House', status: 'Available', agentId: 'system', amenities: JSON.stringify(['Backyard', 'Updated Kitchen', 'Hardwood Floors', 'Basement']), tags: JSON.stringify(['starter', 'family-friendly', 'quiet']) }
-            ];
-            for (const p of placeholders) {
-                await prisma.property.create({ data: p });
-            }
-            console.log('[Properties] Seeded 3 placeholder properties.');
-        }
-
         const properties = await prisma.property.findMany({
             where,
             orderBy: { createdAt: 'desc' },
@@ -172,6 +167,10 @@ export async function createProperty(data: {
     agentId?: string;
     amenities?: string[];
 }) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
     try {
         const property = await prisma.property.create({
             data: {
@@ -187,7 +186,7 @@ export async function createProperty(data: {
                 images: JSON.stringify(data.images || []),
                 propertyType: data.propertyType || 'House',
                 status: data.status || 'Available',
-                agentId: data.agentId || 'system',
+                agentId: user.id,
                 amenities: JSON.stringify(data.amenities || []),
             }
         });
@@ -215,6 +214,15 @@ export async function updateProperty(id: string, data: Partial<{
     status: string;
     amenities: string[];
 }>) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const existing = await prisma.property.findFirst({
+        where: { id, agentId: user.id }
+    });
+    if (!existing) throw new Error("Property not found or unauthorized");
+
     try {
         const updateData: any = { ...data };
         if (data.images) updateData.images = JSON.stringify(data.images);
@@ -234,6 +242,15 @@ export async function updateProperty(id: string, data: Partial<{
 }
 
 export async function deleteProperty(id: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const existing = await prisma.property.findFirst({
+        where: { id, agentId: user.id }
+    });
+    if (!existing) throw new Error("Property not found or unauthorized");
+
     try {
         await prisma.property.delete({
             where: { id }

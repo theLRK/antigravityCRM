@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: Request) {
     try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
         const url = new URL(request.url);
         const limitParam = url.searchParams.get('limit');
         const take = limitParam ? parseInt(limitParam, 10) : 10;
 
         // Fetch activity logs
         const activities = await prisma.activityLog.findMany({
+            where: {
+                lead: {
+                    assignedAgentId: user.id
+                }
+            },
             take,
             orderBy: { occurredAt: 'desc' },
             include: { lead: { select: { firstName: true, lastName: true, id: true } } }
@@ -16,6 +26,11 @@ export async function GET(request: Request) {
 
         // Fetch email logs
         const emails = await prisma.emailLog.findMany({
+            where: {
+                lead: {
+                    assignedAgentId: user.id
+                }
+            },
             take,
             orderBy: { sentAt: 'desc' },
             include: { lead: { select: { firstName: true, lastName: true, id: true } } }

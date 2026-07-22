@@ -8,6 +8,7 @@
   --color-brand-gradient: linear-gradient(to right, var(--primary), var(--secondary));
   --color-border: var(--border);
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
   --radius-xl: 20px;
   --radius-lg: 16px;
   --radius-md: 12px;

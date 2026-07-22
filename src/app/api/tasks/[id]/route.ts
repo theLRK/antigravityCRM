@@ -19,7 +19,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         const body = await req.json();
         
         // Find existing task to check if we are completing it and if it has a leadId
-        const existingTask = await (prisma as any).task.findUnique({ where: { id } });
+        const existingTask = await (prisma as any).task.findFirst({
+            where: { id, agentId: user.id }
+        });
+        if (!existingTask) {
+            return NextResponse.json({ error: 'Task not found or unauthorized' }, { status: 404 });
+        }
 
         const task = await (prisma as any).task.update({
             where: { id },
@@ -60,6 +65,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         );
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+        // Verify task ownership
+        const existingTask = await (prisma as any).task.findFirst({
+            where: { id, agentId: user.id }
+        });
+        if (!existingTask) {
+            return NextResponse.json({ error: 'Task not found or unauthorized' }, { status: 404 });
+        }
 
         await (prisma as any).task.delete({ where: { id } });
         return NextResponse.json({ success: true });

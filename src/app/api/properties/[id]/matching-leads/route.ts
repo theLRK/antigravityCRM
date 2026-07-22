@@ -53,12 +53,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const [property, leads, allLocations] = await Promise.all([
-            prisma.property.findUnique({ where: { id } }),
-            prisma.lead.findMany({ where: { pipelineStage: { not: 'closed' } }, take: 200 }),
+            prisma.property.findFirst({ where: { id, agentId: user.id } }),
+            prisma.lead.findMany({ where: { pipelineStage: { not: 'closed' }, assignedAgentId: user.id }, take: 200 }),
             (prisma as any).location.findMany({ include: { group: true } })
         ]);
 
-        if (!property) return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+        if (!property) return NextResponse.json({ error: 'Property not found or unauthorized' }, { status: 404 });
 
         const locationMap = new Map<string, any>();
         allLocations.forEach((l: any) => locationMap.set(l.id, l));

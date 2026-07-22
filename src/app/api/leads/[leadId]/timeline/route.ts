@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ lead
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const [lead, emails, calls, notes, tasks, activities] = await Promise.all([
-            prisma.lead.findUnique({ where: { id: leadId }, select: { createdAt: true, firstName: true, lastName: true, source: true } }),
+            prisma.lead.findFirst({ where: { id: leadId, assignedAgentId: user.id }, select: { createdAt: true, firstName: true, lastName: true, source: true } }),
             (prisma as any).emailLog.findMany({ where: { leadId }, orderBy: { sentAt: 'asc' } }),
             prisma.callLog.findMany({ where: { leadId }, orderBy: { createdAt: 'asc' } }),
             (prisma as any).note.findMany({ where: { leadId }, orderBy: { createdAt: 'asc' } }),
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ lead
             prisma.activityLog.findMany({ where: { leadId }, orderBy: { occurredAt: 'asc' }, take: 20 }),
         ]);
 
-        if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+        if (!lead) return NextResponse.json({ error: 'Lead not found or unauthorized' }, { status: 404 });
 
         type TimelineEvent = {
             id: string;

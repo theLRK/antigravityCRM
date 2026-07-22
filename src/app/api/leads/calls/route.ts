@@ -8,9 +8,6 @@ export async function POST(req: Request) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        const agent = await prisma.agentUser.findUnique({ where: { supabaseId: user.id } });
-        if (!agent) return NextResponse.json({ error: 'Agent profile not found locally' }, { status: 404 });
-
         const body = await req.json();
         const { leadId, outcome, notes, nextStep } = body;
 
@@ -18,10 +15,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing leadId or outcome' }, { status: 400 });
         }
 
+        // Verify lead ownership
+        const lead = await prisma.lead.findFirst({
+            where: { id: leadId, assignedAgentId: user.id }
+        });
+        if (!lead) return NextResponse.json({ error: 'Lead not found or unauthorized' }, { status: 404 });
+
         const callLog = await prisma.callLog.create({
             data: {
                 leadId,
-                agentId: agent.id,
+                agentId: user.id,
                 outcome,
                 notes,
                 nextStep

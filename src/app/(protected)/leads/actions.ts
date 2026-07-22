@@ -23,6 +23,10 @@ export async function createLead(formData: {
     propertyType?: string;
     preApproval?: boolean;
 }) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
     const leadId = uuidv4();
 
     await prisma.lead.create({
@@ -42,6 +46,8 @@ export async function createLead(formData: {
             propertyType: formData.propertyType ?? undefined,
             preApproval: formData.preApproval ?? undefined,
             pipelineStage: 'new',
+            assignedAgentId: user.id,
+            isUnassigned: false,
             activityLogs: {
                 create: {
                     eventType: 'lead.created',
@@ -98,15 +104,23 @@ export async function createLead(formData: {
 }
 
 export async function getLeads(options: { take?: number; skip?: number; query?: string; stage?: string } = {}) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
     const { take = 20, skip = 0, query, stage } = options;
 
-    const where: any = {};
+    const where: any = { assignedAgentId: user.id };
     if (stage && stage !== 'All') where.pipelineStage = stage;
     if (query) {
-        where.OR = [
-            { firstName: { contains: query, mode: 'insensitive' } },
-            { lastName: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } }
+        where.AND = [
+            {
+                OR: [
+                    { firstName: { contains: query, mode: 'insensitive' } },
+                    { lastName: { contains: query, mode: 'insensitive' } },
+                    { email: { contains: query, mode: 'insensitive' } }
+                ]
+            }
         ];
     }
 
@@ -129,8 +143,12 @@ export async function getLeads(options: { take?: number; skip?: number; query?: 
 }
 
 export async function getLeadDetails(leadId: string) {
-    return await prisma.lead.findUnique({
-        where: { id: leadId },
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    return await prisma.lead.findFirst({
+        where: { id: leadId, assignedAgentId: user.id },
         include: {
             scores: {
                 orderBy: { createdAt: 'desc' },
@@ -158,6 +176,16 @@ export async function getLeadDetails(leadId: string) {
 }
 
 export async function updateLead(leadId: string, data: { pipelineStage?: string; followUpDate?: string | null; email?: string; phone?: string }) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Verify ownership
+    const existing = await prisma.lead.findFirst({
+        where: { id: leadId, assignedAgentId: user.id }
+    });
+    if (!existing) throw new Error("Lead not found or unauthorized");
+
     const updateData: any = {};
     if (data.pipelineStage) updateData.pipelineStage = data.pipelineStage;
     if (data.followUpDate !== undefined) updateData.followUpDate = data.followUpDate ? new Date(data.followUpDate) : null;
@@ -190,25 +218,16 @@ export async function updateLead(leadId: string, data: { pipelineStage?: string;
         });
 
         // 2. Automatically create a Task if a follow-up date is set
-        // Find the agent assigned to this lead (or use the current user)
-        // For simplicity, we'll try to find the agent who just updated it
-        const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const agent = await prisma.agentUser.findUnique({ where: { supabaseId: user.id } });
-            if (agent) {
-                await prisma.task.create({
-                    data: {
-                        leadId,
-                        agentId: agent.id,
-                        title: `Follow up with ${lead.firstName}`,
-                        taskType: 'Follow Up',
-                        dueDate: new Date(data.followUpDate),
-                        notes: 'Automated follow-up task created from lead update.'
-                    }
-                });
+        await prisma.task.create({
+            data: {
+                leadId,
+                agentId: user.id,
+                title: `Follow up with ${lead.firstName}`,
+                taskType: 'Follow Up',
+                dueDate: new Date(data.followUpDate),
+                notes: 'Automated follow-up task created from lead update.'
             }
-        }
+        });
     }
 
     revalidatePath('/leads');
@@ -345,6 +364,16 @@ async function seedPlaceholderLeads() {
 }
 
 export async function deleteLead(leadId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Verify ownership
+    const existing = await prisma.lead.findFirst({
+        where: { id: leadId, assignedAgentId: user.id }
+    });
+    if (!existing) throw new Error("Lead not found or unauthorized");
+
     // Manually delete logs without Cascade triggers
     await prisma.activityLog.deleteMany({ where: { leadId } });
     await prisma.emailLog.deleteMany({ where: { leadId } });

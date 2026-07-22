@@ -25,8 +25,10 @@ export default async function EngageDashboardPage({ searchParams }: { searchPara
     const { data: { user } } = await supabase.auth.getUser();
 
     let preselectedLead = null;
-    if (leadId) {
-        preselectedLead = await prisma.lead.findUnique({ where: { id: leadId } });
+    if (leadId && user) {
+        preselectedLead = await prisma.lead.findFirst({
+            where: { id: leadId, assignedAgentId: user.id }
+        });
     }
 
     // --- Live Metrics ---
@@ -93,7 +95,10 @@ export default async function EngageDashboardPage({ searchParams }: { searchPara
         orderBy: { dueDate: 'asc' }
     });
 
-    const properties = await prisma.property.findMany({ take: 20 });
+    const properties = await prisma.property.findMany({
+        where: { agentId: user?.id },
+        take: 20
+    });
     
     const emailLogs = await prisma.emailLog.findMany({
         where: user ? { lead: { assignedAgentId: user.id } } : {},
@@ -102,9 +107,9 @@ export default async function EngageDashboardPage({ searchParams }: { searchPara
         take: 50
     });
 
-    const agentProfile = await prisma.agentProfile.findUnique({
-        where: { agentId: user?.id || 'system' }
-    });
+    const agentProfile = user?.id
+        ? await prisma.agentProfile.findUnique({ where: { agentId: user.id } })
+        : null;
 
     const scheduledEmails = await getScheduledEmailsAction();
 

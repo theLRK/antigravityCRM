@@ -16,6 +16,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ lea
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+        // Verify lead ownership
+        const lead = await prisma.lead.findFirst({
+            where: { id: leadId, assignedAgentId: user.id }
+        });
+        if (!lead) return NextResponse.json({ error: 'Lead not found or unauthorized' }, { status: 404 });
+
         const { content } = await req.json();
         if (!content?.trim()) return NextResponse.json({ error: 'Note content is required' }, { status: 400 });
 
@@ -55,6 +61,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ lead
         );
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+        // Verify lead ownership
+        const lead = await prisma.lead.findFirst({
+            where: { id: leadId, assignedAgentId: user.id }
+        });
+        if (!lead) return NextResponse.json({ error: 'Lead not found or unauthorized' }, { status: 404 });
 
         const notes = await (prisma as any).note.findMany({
             where: { leadId },

@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createClient } from '@/utils/supabase/server';
 import { computeNextBestAction, NextBestAction } from '@/modules/actions/engine';
 
 
 export async function GET(request: Request) {
     try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
         // Fetch leads that are NOT closed (i.e. new, contacted, showing, negotiation)
         const activeLeads = await prisma.lead.findMany({
             where: {
+                assignedAgentId: user.id,
                 pipelineStage: {
                     in: ['new', 'contacted', 'showing', 'negotiation']
                 }

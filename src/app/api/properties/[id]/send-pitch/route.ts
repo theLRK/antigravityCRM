@@ -1,27 +1,31 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 import { sendDynamicPropertyEmail } from '@/utils/resend';
-
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
         const body = await req.json();
-        const { leadIds, agentId } = body; // Assume agentId is passed or we fetch current
+        const { leadIds } = body;
 
         if (!leadIds || leadIds.length === 0) {
             return NextResponse.json({ error: "No leads selected" }, { status: 400 });
         }
 
-        const property = await prisma.property.findUnique({
-            where: { id },
+        const property = await prisma.property.findFirst({
+            where: { id, agentId: user.id },
             include: { locationRef: true }
         });
 
-        if (!property) return NextResponse.json({ error: "Property not found" }, { status: 404 });
+        if (!property) return NextResponse.json({ error: "Property not found or unauthorized" }, { status: 404 });
 
         // Fetch Agent Profile for details
-        const activeAgentId = agentId || 'system';
+        const activeAgentId = user.id;
         const agentProfile = await prisma.agentProfile.findUnique({
             where: { agentId: activeAgentId }
         });
@@ -32,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         followUpDate.setDate(now.getDate() + 2); // Follow up in 2 days
 
         for (const leadId of leadIds) {
-            const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+            const lead = await prisma.lead.findFirst({ where: { id: leadId, assignedAgentId: user.id } });
             if (!lead) continue;
 
             // 0. Send Actual Email via Resend

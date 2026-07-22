@@ -6,6 +6,7 @@ import { ResearchSection } from '@/components/ui/waitlist/ResearchSection';
 import { ValueSection } from '@/components/ui/waitlist/ValueSection';
 import { CredibilitySection } from '@/components/ui/waitlist/CredibilitySection';
 import { CTASection } from '@/components/ui/waitlist/CTASection';
+import { FeaturesSection } from '@/components/ui/waitlist/FeaturesSection';
 
 export default function Home() {
   return (
@@ -17,6 +18,8 @@ export default function Home() {
       
       <CredibilitySection />
       
+      <FeaturesSection />
+
       <ProblemSection />
       
       <ResearchSection />

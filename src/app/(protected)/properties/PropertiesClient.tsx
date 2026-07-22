@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Plus, MapPin, Bed, Bath, Trash2, Home, X, Filter, Edit, Edit2, BedDouble, MoreVertical, FileText, Globe, CheckCircle, Share, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { StyledInput } from '@/components/ui/StyledInput';
 import { ImageUploadBox } from '@/components/ui/ImageUploadBox';
 import { AnimatedTooltip } from '@/components/ui/AnimatedTooltip';
@@ -287,168 +288,193 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
                 </div>
             </div>
             
-            {/* Advanced Filters */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 shadow-sm">
-                <div className="relative lg:col-span-2">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input 
-                        type="text" 
-                        placeholder="Search Title or Address..." 
-                        className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#853953] outline-none h-full"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <select value={locFilter} onChange={e => setLocFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white">
-                    <option value="All">All Locations</option>
-                    {(locationGroups || []).map((g: any) => (
-                        <optgroup key={g.id} label={g.name}>
-                            {g.locations.map((loc: any) => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
-                        </optgroup>
-                    ))}
-                </select>
-                <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white">
-                    <option value="All">All Types</option>
-                    <option value="House">House</option>
-                    <option value="Apartment">Apartment</option>
-                    <option value="Duplex">Duplex</option>
-                    <option value="Penthouse">Penthouse</option>
-                    <option value="Condo">Condo</option>
-                </select>
-                <select value={bedsFilter} onChange={e => setBedsFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white">
-                    <option value="All">Beds: Any</option>
-                    <option value="1">1 Bed</option>
-                    <option value="2">2 Beds</option>
-                    <option value="3">3 Beds</option>
-                    <option value="4+">4+ Beds</option>
-                </select>
-                <select value={demandFilter} onChange={e => setDemandFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white">
-                    <option value="All">Demand: Any</option>
-                    <option value="High Demand">High Demand</option>
-                    <option value="Medium Demand">Medium Demand</option>
-                    <option value="Low Demand">Low Demand</option>
-                </select>
-                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white lg:col-span-full xl:col-span-1">
-                    <option value="All">Status: All</option>
-                    <option value="Available">Available</option>
-                    <option value="Reserved">Reserved</option>
-                    <option value="Under Negotiation">Under Negotiation</option>
-                    <option value="Sold">Sold</option>
-                </select>
-            </div>
+            {properties.length === 0 ? (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4 }}
+                    className="max-w-2xl mx-auto my-12 bg-white border border-slate-200 rounded-3xl p-10 text-center shadow-md flex flex-col items-center"
+                >
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#853953] to-[#612D53] flex items-center justify-center text-white mb-6 shadow-xl shadow-[#853953]/10">
+                        <Home className="w-8 h-8 animate-pulse" />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Add your first property</h2>
+                    <p className="text-slate-500 font-medium text-sm leading-relaxed max-w-md mb-8">
+                        Formative automatically matches property profiles, budgets, and location preferences with your lead database, giving you real-time scoring and recommendation matches.
+                    </p>
+                    <button
+                        onClick={() => { setIsAdding(true); }}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-[#853953] text-white rounded-xl text-sm font-bold hover:bg-[#612D53] transition-all active:scale-95 shadow-lg shadow-[#853953]/10"
+                    >
+                        <Plus className="w-4 h-4" /> Add Property
+                    </button>
+                </motion.div>
+            ) : (
+                <>
+                    {/* Advanced Filters */}
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 shadow-sm">
+                        <div className="relative lg:col-span-2">
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input 
+                                type="text" 
+                                placeholder="Search Title or Address..." 
+                                className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-[#853953] outline-none h-full"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <select value={locFilter} onChange={e => setLocFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white">
+                            <option value="All">All Locations</option>
+                            {(locationGroups || []).map((g: any) => (
+                                <optgroup key={g.id} label={g.name}>
+                                    {g.locations.map((loc: any) => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
+                                </optgroup>
+                            ))}
+                        </select>
+                        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white">
+                            <option value="All">All Types</option>
+                            <option value="House">House</option>
+                            <option value="Apartment">Apartment</option>
+                            <option value="Duplex">Duplex</option>
+                            <option value="Penthouse">Penthouse</option>
+                            <option value="Condo">Condo</option>
+                        </select>
+                        <select value={bedsFilter} onChange={e => setBedsFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white">
+                            <option value="All">Beds: Any</option>
+                            <option value="1">1 Bed</option>
+                            <option value="2">2 Beds</option>
+                            <option value="3">3 Beds</option>
+                            <option value="4+">4+ Beds</option>
+                        </select>
+                        <select value={demandFilter} onChange={e => setDemandFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white">
+                            <option value="All">Demand: Any</option>
+                            <option value="High Demand">High Demand</option>
+                            <option value="Medium Demand">Medium Demand</option>
+                            <option value="Low Demand">Low Demand</option>
+                        </select>
+                        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-[#853953] bg-white lg:col-span-full xl:col-span-1">
+                            <option value="All">Status: All</option>
+                            <option value="Available">Available</option>
+                            <option value="Reserved">Reserved</option>
+                            <option value="Under Negotiation">Under Negotiation</option>
+                            <option value="Sold">Sold</option>
+                        </select>
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredProps.map(p => {
-                    const images = p.images ? JSON.parse(p.images) : [];
-                    const heroImg = images.length > 0 ? images[0] : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=400&h=300';
-                    const matchCount = p.matches?.length || 0;
-                    const demand = getDemandLevel(matchCount);
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {filteredProps.map(p => {
+                            const images = p.images ? JSON.parse(p.images) : [];
+                            const heroImg = images.length > 0 ? images[0] : 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=400&h=300';
+                            const matchCount = p.matches?.length || 0;
+                            const demand = getDemandLevel(matchCount);
 
-                    return (
-                        <div key={p.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative flex flex-col h-full group overflow-visible">
-                            {/* Card Image Wrapper */}
-                            <div className="h-48 bg-slate-100 relative overflow-hidden rounded-t-3xl shrink-0">
-                                <img src={heroImg} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                                
-                                {/* Badges */}
-                                <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                                    <span className={`backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${demand.color} ${demand.text}`}>
-                                        {demand.label}
-                                    </span>
-                                </div>
-                            </div>
+                            return (
+                                <div key={p.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative flex flex-col h-full group overflow-visible">
+                                    {/* Card Image Wrapper */}
+                                    <div className="h-48 bg-slate-100 relative overflow-hidden rounded-t-3xl shrink-0">
+                                        <img src={heroImg} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                                        
+                                        {/* Badges */}
+                                        <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                                            <span className={`backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${demand.color} ${demand.text}`}>
+                                                {demand.label}
+                                            </span>
+                                        </div>
+                                    </div>
 
-                            {/* Moved Dropdown outside of overflow-hidden image wrapper */}
-                            <div className="absolute top-4 right-4 z-40">
-                                <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === p.id ? null : p.id); }} className="p-2 bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 rounded-lg shadow-sm">
-                                    <MoreVertical className="w-4 h-4" />
-                                </button>
-                                {activeMenuId === p.id && (
-                                    <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-[100] transform origin-top-right transition-all max-h-[400px] overflow-y-auto scrollbar-hide">
-                                        <button onClick={() => { openEdit(p); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium">
-                                            <Edit2 className="w-4 h-4 text-slate-400" /> Edit Listing
+                                    {/* Moved Dropdown outside of overflow-hidden image wrapper */}
+                                    <div className="absolute top-4 right-4 z-40">
+                                        <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === p.id ? null : p.id); }} className="p-2 bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 rounded-lg shadow-sm">
+                                            <MoreVertical className="w-4 h-4" />
                                         </button>
-                                        <button onClick={() => { setViewingMatchesOf(p); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium">
-                                            <Share className="w-4 h-4 text-slate-400" /> Send To Leads
-                                        </button>
-                                        <button onClick={() => { setViewingNotesOf(p); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium">
-                                            <FileText className="w-4 h-4 text-slate-400" /> Internal Notes
-                                        </button>
-                                        <div className="border-t border-slate-100 my-2"></div>
-                                        <div className="px-4 py-1">
-                                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 mt-1">Status</div>
-                                            <div className="flex flex-col gap-0.5">
-                                                {['Available', 'Reserved', 'Under Negotiation', 'Sold'].map(st => (
-                                                    <button key={st} onClick={() => handleStatusChange(p.id, st)} className={`w-full text-left px-4 py-2 text-xs font-bold rounded-md hover:bg-slate-100 transition-colors ${p.status === st ? 'bg-[#853953]/5 text-[#853953]' : 'text-slate-600'}`}>
-                                                        {st}
-                                                    </button>
-                                                ))}
+                                        {activeMenuId === p.id && (
+                                            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-[100] transform origin-top-right transition-all max-h-[400px] overflow-y-auto scrollbar-hide">
+                                                <button onClick={() => { openEdit(p); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium">
+                                                    <Edit2 className="w-4 h-4 text-slate-400" /> Edit Listing
+                                                </button>
+                                                <button onClick={() => { setViewingMatchesOf(p); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium">
+                                                    <Share className="w-4 h-4 text-slate-400" /> Send To Leads
+                                                </button>
+                                                <button onClick={() => { setViewingNotesOf(p); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium">
+                                                    <FileText className="w-4 h-4 text-slate-400" /> Internal Notes
+                                                </button>
+                                                <div className="border-t border-slate-100 my-2"></div>
+                                                <div className="px-4 py-1">
+                                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 mt-1">Status</div>
+                                                    <div className="flex flex-col gap-0.5">
+                                                        {['Available', 'Reserved', 'Under Negotiation', 'Sold'].map(st => (
+                                                            <button key={st} onClick={() => handleStatusChange(p.id, st)} className={`w-full text-left px-4 py-2 text-xs font-bold rounded-md hover:bg-slate-100 transition-colors ${p.status === st ? 'bg-[#853953]/5 text-[#853953]' : 'text-slate-600'}`}>
+                                                                {st}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="border-t border-slate-100 my-1"></div>
+                                                <button onClick={(e) => { e.stopPropagation(); setIsDeletingId(p.id); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+                                                    <Trash2 className="w-4 h-4 text-rose-500" /> Delete Property
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Card Content Wrapper */}
+                                    <div className="p-6 flex-1 flex flex-col">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <h3 className="font-extrabold text-lg text-slate-900 leading-tight line-clamp-2">{p.title}</h3>
+                                            <span className="font-black text-[#853953] bg-[#853953]/5 px-2 py-1 rounded-lg text-sm shrink-0 ml-3">
+                                                {convertPrice(p.price)}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-4">
+                                            <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                            <span className="truncate">{p.location}</span>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mt-auto">
+                                            <span className="flex items-center bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"><BedDouble className="w-3.5 h-3.5 mr-1.5 text-[#853953]" /> {p.bedrooms} Beds</span>
+                                            <span className="flex items-center bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"><Bath className="w-3.5 h-3.5 mr-1.5 text-[#853953]" /> {p.bathrooms} Baths</span>
+                                            <span className="flex items-center bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 ml-auto whitespace-nowrap">
+                                                <div className={`w-2 h-2 rounded-full mr-2 ${p.status === 'Available' ? 'bg-emerald-500' : p.status === 'Sold' ? 'bg-rose-500' : 'bg-amber-500'} animate-pulse`} />
+                                                {p.status}
+                                            </span>
+                                        </div>
+                                        
+                                        {/* Matches Button (Standard layout) */}
+                                        <div className="mt-5 pt-4 border-t border-slate-100">
+                                            <button onClick={() => setViewingMatchesOf(p)} className="flex items-center justify-between w-full p-3 rounded-xl bg-[#853953]/5 hover:bg-[#853953]/10 border-[#853953]/10 hover:border-[#853953]/20 transition-all group/btn">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-[#612D53] animate-pulse" />
+                                                    <span className="text-sm font-extrabold text-[#612D53]">{matchCount} Matching Leads</span>
+                                                </div>
+                                                <ChevronRight className="w-4 h-4 text-[#853953] group-hover/btn:text-[#612D53] group-hover/btn:translate-x-0.5 transition-all" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {/* Delete Overlay */}
+                                    {isDeletingId === p.id && (
+                                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center animation-fade-in rounded-3xl">
+                                            <Trash2 className="w-10 h-10 text-rose-500 mb-3" />
+                                            <h4 className="font-bold text-slate-900 mb-1">Delete Property?</h4>
+                                            <p className="text-sm text-slate-500 mb-6 font-medium">This wipes it and all existing leads matches permanently.</p>
+                                            <div className="flex gap-3 w-full">
+                                                <button onClick={() => setIsDeletingId(null)} className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-colors">Cancel</button>
+                                                <button onClick={() => handleDelete(p.id)} className="flex-1 px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg transition-colors shadow-sm">Delete</button>
                                             </div>
                                         </div>
-                                        <div className="border-t border-slate-100 my-1"></div>
-                                        <button onClick={(e) => { e.stopPropagation(); setIsDeletingId(p.id); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-2">
-                                            <Trash2 className="w-4 h-4 text-rose-500" /> Delete Property
-                                        </button>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
+                            );
+                        })}
+                        {filteredProps.length === 0 && (
+                            <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
+                                <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4 border border-slate-100"><Home className="w-8 h-8 text-slate-300" /></div>
+                                <h3 className="text-lg font-bold text-slate-900">No properties match your filters</h3>
+                                <p className="text-slate-500 font-medium">Try adjusting criteria above or add a new property.</p>
                             </div>
-
-                            {/* Card Content Wrapper */}
-                            <div className="p-6 flex-1 flex flex-col">
-                                <div className="flex items-start justify-between mb-2">
-                                    <h3 className="font-extrabold text-lg text-slate-900 leading-tight line-clamp-2">{p.title}</h3>
-                                    <span className="font-black text-[#853953] bg-[#853953]/5 px-2 py-1 rounded-lg text-sm shrink-0 ml-3">
-                                        {convertPrice(p.price)}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-4">
-                                    <MapPin className="w-3.5 h-3.5 shrink-0" />
-                                    <span className="truncate">{p.location}</span>
-                                </div>
-                                
-                                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mt-auto">
-                                    <span className="flex items-center bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"><BedDouble className="w-3.5 h-3.5 mr-1.5 text-[#853953]" /> {p.bedrooms} Beds</span>
-                                    <span className="flex items-center bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100"><Bath className="w-3.5 h-3.5 mr-1.5 text-[#853953]" /> {p.bathrooms} Baths</span>
-                                    <span className="flex items-center bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 ml-auto whitespace-nowrap">
-                                        <div className={`w-2 h-2 rounded-full mr-2 ${p.status === 'Available' ? 'bg-emerald-500' : p.status === 'Sold' ? 'bg-rose-500' : 'bg-amber-500'} animate-pulse`} />
-                                        {p.status}
-                                    </span>
-                                </div>
-                                
-                                {/* Matches Button (Standard layout) */}
-                                <div className="mt-5 pt-4 border-t border-slate-100">
-                                    <button onClick={() => setViewingMatchesOf(p)} className="flex items-center justify-between w-full p-3 rounded-xl bg-[#853953]/5 hover:bg-[#853953]/10 border-[#853953]/10 hover:border-[#853953]/20 transition-all group/btn">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-[#612D53] animate-pulse" />
-                                            <span className="text-sm font-extrabold text-[#612D53]">{matchCount} Matching Leads</span>
-                                        </div>
-                                        <ChevronRight className="w-4 h-4 text-[#853953] group-hover/btn:text-[#612D53] group-hover/btn:translate-x-0.5 transition-all" />
-                                    </button>
-                                </div>
-                            </div>
-                            {/* Delete Overlay */}
-                            {isDeletingId === p.id && (
-                                <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center animation-fade-in rounded-3xl">
-                                    <Trash2 className="w-10 h-10 text-rose-500 mb-3" />
-                                    <h4 className="font-bold text-slate-900 mb-1">Delete Property?</h4>
-                                    <p className="text-sm text-slate-500 mb-6 font-medium">This wipes it and all existing leads matches permanently.</p>
-                                    <div className="flex gap-3 w-full">
-                                        <button onClick={() => setIsDeletingId(null)} className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-colors">Cancel</button>
-                                        <button onClick={() => handleDelete(p.id)} className="flex-1 px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg transition-colors shadow-sm">Delete</button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-                {filteredProps.length === 0 && (
-                    <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
-                        <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4 border border-slate-100"><Home className="w-8 h-8 text-slate-300" /></div>
-                        <h3 className="text-lg font-bold text-slate-900">No properties match your filters</h3>
-                        <p className="text-slate-500 font-medium">Try adjusting criteria above or add a new property.</p>
+                        )}
                     </div>
-                )}
-            </div>
+                </>
+            )}
 
             {viewingMatchesOf && (
                 <>

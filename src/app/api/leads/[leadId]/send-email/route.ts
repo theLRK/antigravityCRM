@@ -21,11 +21,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ lea
         if (!subject || !body) return NextResponse.json({ error: 'Subject and body required' }, { status: 400 });
 
         const [lead, profile] = await Promise.all([
-            prisma.lead.findUnique({ where: { id: leadId } }),
+            prisma.lead.findFirst({ where: { id: leadId, assignedAgentId: user.id } }),
             prisma.agentProfile.findUnique({ where: { agentId: user.id } })
         ]);
 
-        if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+        if (!lead) return NextResponse.json({ error: 'Lead not found or unauthorized' }, { status: 404 });
 
         // Replace template variables
         const resolvedBody = body

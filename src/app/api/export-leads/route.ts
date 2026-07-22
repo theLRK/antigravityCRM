@@ -16,6 +16,7 @@ export async function GET(request: Request) {
 
     try {
         const leads = await prisma.lead.findMany({
+            where: { assignedAgentId: user.id },
             include: {
                 scores: {
                     orderBy: { createdAt: 'desc' },

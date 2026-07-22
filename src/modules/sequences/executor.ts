@@ -10,8 +10,13 @@ const openai = new OpenAI({
 export async function executeSequenceStep(lead: Lead, sequence: Sequence, step: SequenceStep) {
     console.log(`[Executor] Processing Step ${step.stepOrder} for Lead ${lead.id}`);
 
-    // Fetch deep context for AI
-    const agentProfile = await prisma.agentProfile.findFirst();
+    const agentProfile = await prisma.agentProfile.findUnique({ 
+        where: { agentId: lead.assignedAgentId ?? undefined } 
+    });
+    if (!agentProfile) {
+        console.warn(`[Executor] Skipping sequence step: No agent profile found for lead ${lead.id}`);
+        return;
+    }
     
     // We get the property matches so the AI can reference them
     const matches = await prisma.propertyMatch.findMany({

@@ -30,6 +30,7 @@ import ActivityFeedClient from '@/components/ui/dashboard/ActivityFeedClient';
 import NotificationDropdown from '@/components/ui/dashboard/NotificationDropdown';
 import TaskBoard from '@/components/ui/dashboard/TaskBoard';
 import LocationInsightsCard from '@/components/ui/dashboard/LocationInsightsCard';
+import EmptyStatePipeline from '@/components/ui/dashboard/EmptyStatePipeline';
 import Link from 'next/link';
 
 
@@ -75,13 +76,14 @@ export default async function DashboardPage() {
     const firstName = user.user_metadata?.first_name || 'Agent';
 
     // ---- FETCH REAL CRM METRICS (Optimized) ----
-    const totalLeadsCount = await prisma.lead.count();
-    const activeLeadsCount = await prisma.lead.count({ where: { pipelineStage: { not: 'closed' } } });
-    const closedLeadsCount = await prisma.lead.count({ where: { pipelineStage: 'closed' } });
+    const totalLeadsCount = await prisma.lead.count({ where: { assignedAgentId: user.id } });
+    const activeLeadsCount = await prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: { not: 'closed' } } });
+    const closedLeadsCount = await prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: 'closed' } });
     const conversionRate = totalLeadsCount > 0 ? ((closedLeadsCount / totalLeadsCount) * 100).toFixed(1) : '0.0';
 
     const highIntentCount = await prisma.lead.count({
         where: {
+            assignedAgentId: user.id,
             pipelineStage: 'new',
             scores: { some: { finalScore: { gte: 80 } } }
         }
@@ -90,6 +92,7 @@ export default async function DashboardPage() {
     const now = new Date();
     const overdueCount = await prisma.lead.count({
         where: {
+            assignedAgentId: user.id,
             pipelineStage: { not: 'closed' },
             followUpDate: { lt: now }
         }
@@ -98,6 +101,7 @@ export default async function DashboardPage() {
     // Fetch only top priorities for the UI component
     const priorityLeads = await prisma.lead.findMany({
         where: {
+            assignedAgentId: user.id,
             OR: [
                 { pipelineStage: 'new', scores: { some: { finalScore: { gte: 80 } } } },
                 { pipelineStage: { not: 'closed' }, followUpDate: { lt: now } }
@@ -123,12 +127,15 @@ export default async function DashboardPage() {
     todayStart.setHours(0, 0, 0, 0);
     
     const sentToday = await prisma.emailLog.count({
-        where: { sentAt: { gte: todayStart } }
+        where: { 
+            sentAt: { gte: todayStart },
+            lead: { assignedAgentId: user.id }
+        }
     });
 
-    const totalSent = await prisma.emailLog.count({ where: { status: 'sent' } });
-    const openedCount = await prisma.emailLog.count({ where: { NOT: { openedAt: null } } });
-    const clickedCount = await prisma.emailLog.count({ where: { NOT: { clickedAt: null } } });
+    const totalSent = await prisma.emailLog.count({ where: { status: 'sent', lead: { assignedAgentId: user.id } } });
+    const openedCount = await prisma.emailLog.count({ where: { NOT: { openedAt: null }, lead: { assignedAgentId: user.id } } });
+    const clickedCount = await prisma.emailLog.count({ where: { NOT: { clickedAt: null }, lead: { assignedAgentId: user.id } } });
 
     const openRate = totalSent > 0 ? Math.round((openedCount / totalSent) * 100) : 0;
     const clickRate = totalSent > 0 ? Math.round((clickedCount / totalSent) * 100) : 0;
@@ -136,7 +143,7 @@ export default async function DashboardPage() {
     // ---- ONBOARDING SETUP STATUS ----
     const agentProfile = await prisma.agentProfile.findUnique({ where: { agentId: user.id } });
     const emailConnected = !!(agentProfile?.gmailEmailAddress && (agentProfile as any)?.gmailAppPassword);
-    const captureFormExists = await prisma.leadCaptureForm.count({ where: {} }) > 0;
+    const captureFormExists = await prisma.leadCaptureForm.count({ where: { agentId: user.id } }) > 0;
     const hasFirstLead = totalLeadsCount > 0;
     const hasTemplates = !!(agentProfile?.emailTemplateHotBody);
 
@@ -150,10 +157,11 @@ export default async function DashboardPage() {
         dayEnd.setHours(23,59,59,999);
         
         const count = await prisma.lead.count({
-            where: { createdAt: { gte: d, lte: dayEnd } }
+            where: { assignedAgentId: user.id, createdAt: { gte: d, lte: dayEnd } }
         });
         const hotCount = await prisma.lead.count({
             where: { 
+                assignedAgentId: user.id,
                 createdAt: { gte: d, lte: dayEnd },
                 scores: { some: { finalScore: { gte: 80 } } }
             }
@@ -168,7 +176,7 @@ export default async function DashboardPage() {
 
     const pipelineStages = ['new', 'contacted', 'booked_showing', 'closed'];
     const pipelineChartData = await Promise.all(pipelineStages.map(async stage => {
-        const count = await prisma.lead.count({ where: { pipelineStage: stage } });
+        const count = await prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: stage } });
         const colors: any = { new: '#853953', contacted: '#612D53', booked_showing: '#2C2C2C', closed: '#10b981' };
         const labels: any = { new: 'New', contacted: 'In Progress', booked_showing: 'Booked', closed: 'Closed' };
         return { name: labels[stage], value: count, color: colors[stage] };
@@ -349,36 +357,40 @@ export default async function DashboardPage() {
                         </h2>
 
                         <div className="space-y-6">
-                            {todayPriorities.slice(0, 3).map((lead: any, idx: number) => (
-                                <div key={`${lead.id}-${idx}`} className="bg-gradient-to-br from-[#853953] to-[#612D53] rounded-3xl p-8 text-white shadow-xl shadow-[#853953]/20 relative overflow-hidden group hover:scale-[1.02] transition-all">
-                                    <div className="absolute inset-0 bg-white opacity-[0.03] rotate-45 translate-x-12 -translate-y-12" />
-                                    <div className="relative z-10">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="px-2.5 py-1 bg-white/10 rounded-lg backdrop-blur-md border border-white/20 text-white font-black text-[10px]">
-                                                PRIORITY 0{idx + 1}
+                            {todayPriorities.length === 0 ? (
+                                <EmptyStatePipeline />
+                            ) : (
+                                todayPriorities.slice(0, 3).map((lead: any, idx: number) => (
+                                    <div key={`${lead.id}-${idx}`} className="bg-gradient-to-br from-[#853953] to-[#612D53] rounded-3xl p-8 text-white shadow-xl shadow-[#853953]/20 relative overflow-hidden group hover:scale-[1.02] transition-all">
+                                        <div className="absolute inset-0 bg-white opacity-[0.03] rotate-45 translate-x-12 -translate-y-12" />
+                                        <div className="relative z-10">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="px-2.5 py-1 bg-white/10 rounded-lg backdrop-blur-md border border-white/20 text-white font-black text-[10px]">
+                                                    PRIORITY 0{idx + 1}
+                                                </div>
+                                                <span className="text-[10px] font-black tracking-widest uppercase text-white/60">Pattern Analysis</span>
                                             </div>
-                                            <span className="text-[10px] font-black tracking-widest uppercase text-white/60">Pattern Analysis</span>
-                                        </div>
-                                        <h3 className="text-2xl font-black mb-4 leading-tight tracking-tight">
-                                            {lead.firstName} hit {lead.topScore} points
-                                        </h3>
-                                        <p className="text-white/80 text-sm mb-8 font-medium leading-relaxed opacity-90 line-clamp-3 italic">
-                                            "{lead.scores?.[0]?.reasoningBreakdowns?.[0]?.reasoningSummary || 'AI analysis suggest immediate follow up.'}"
-                                        </p>
+                                            <h3 className="text-2xl font-black mb-4 leading-tight tracking-tight">
+                                                {lead.firstName} hit {lead.topScore} points
+                                            </h3>
+                                            <p className="text-white/80 text-sm mb-8 font-medium leading-relaxed opacity-90 line-clamp-3 italic">
+                                                &ldquo;{lead.scores?.[0]?.reasoningBreakdowns?.[0]?.reasoningSummary || 'AI analysis suggests immediate follow up.'}&rdquo;
+                                            </p>
 
-                                        <div className="bg-black/10 backdrop-blur-xl rounded-2xl p-5 border border-white/10 flex items-center justify-between">
-                                            <div>
-                                                <p className="text-[10px] text-white/50 font-black tracking-widest mb-1 uppercase">Timeline</p>
-                                                <p className="text-lg font-black tracking-tight text-white">{lead.moveTimeline}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-[10px] text-white/50 font-black tracking-widest mb-1 uppercase">Prop. Match</p>
-                                                <p className="text-xl font-black text-emerald-300">{lead.scores?.[0]?.confidenceScore || 0}%</p>
+                                            <div className="bg-black/10 backdrop-blur-xl rounded-2xl p-5 border border-white/10 flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-[10px] text-white/50 font-black tracking-widest mb-1 uppercase">Timeline</p>
+                                                    <p className="text-lg font-black tracking-tight text-white">{lead.moveTimeline}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[10px] text-white/50 font-black tracking-widest mb-1 uppercase">Prop. Match</p>
+                                                    <p className="text-xl font-black text-emerald-300">{lead.scores?.[0]?.confidenceScore || 0}%</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
 
                         {/* Email Engagement Widget */}

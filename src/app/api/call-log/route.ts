@@ -15,6 +15,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'leadId and outcome are required' }, { status: 400 });
         }
 
+        // Verify lead ownership
+        const lead = await prisma.lead.findFirst({
+            where: { id: leadId, assignedAgentId: user.id }
+        });
+        if (!lead) return NextResponse.json({ error: 'Lead not found or unauthorized' }, { status: 404 });
+
         // 1. Save the call log
         const callLog = await prisma.callLog.create({
             data: {
@@ -54,7 +60,6 @@ export async function POST(request: Request) {
         });
 
         // 5. Auto-create follow-up task
-        const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { firstName: true, lastName: true } });
         if (lead && (outcome === 'spoke_to_lead' || outcome === 'left_voicemail')) {
             const followUpDate = new Date();
             followUpDate.setDate(followUpDate.getDate() + (outcome === 'spoke_to_lead' ? 2 : 1));
@@ -79,9 +84,19 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
     try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
         const url = new URL(request.url);
         const leadId = url.searchParams.get('leadId');
         if (!leadId) return NextResponse.json({ error: 'leadId required' }, { status: 400 });
+
+        // Verify lead ownership
+        const lead = await prisma.lead.findFirst({
+            where: { id: leadId, assignedAgentId: user.id }
+        });
+        if (!lead) return NextResponse.json({ error: 'Lead not found or unauthorized' }, { status: 404 });
 
         const logs = await prisma.callLog.findMany({
             where: { leadId },
