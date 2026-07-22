@@ -100,7 +100,22 @@ export default function OnboardingWizard({
             console.error('Onboarding save error:', e);
         }
         setSaving(false);
-        router.refresh();
+        window.location.href = '/dashboard';
+    };
+
+    const handleSetupGmail = async () => {
+        setSaving(true);
+        try {
+            await fetch('/api/onboarding/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...data, avatarUrl: userAvatar || '' }),
+            });
+        } catch (e) {
+            console.error('Onboarding save error:', e);
+        }
+        setSaving(false);
+        window.location.href = '/settings/email';
     };
 
     const steps = [
@@ -310,12 +325,14 @@ export default function OnboardingWizard({
                             <p className="text-xs text-gray-400 font-medium">Send automated emails from your own address</p>
                         </div>
                     </div>
-                    <a
-                        href="/settings/email"
-                        className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-[#853953] to-[#612D53] text-white rounded-xl font-black text-sm shadow-lg shadow-[#853953]/20 hover:opacity-90 transition-all"
+                    <button
+                        type="button"
+                        onClick={handleSetupGmail}
+                        disabled={saving}
+                        className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-[#853953] to-[#612D53] text-white rounded-xl font-black text-sm shadow-lg shadow-[#853953]/20 hover:opacity-90 transition-all cursor-pointer disabled:opacity-70"
                     >
-                        Set Up Gmail <ChevronRight className="w-4 h-4" />
-                    </a>
+                        {saving ? 'Saving...' : 'Set Up Gmail in Settings'} <ChevronRight className="w-4 h-4" />
+                    </button>
                 </div>
                 <div className="text-center text-xs text-gray-400 font-semibold">
                     You can also do this later from Settings

@@ -3,6 +3,7 @@
 import * as cheerio from 'cheerio';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
+import { sendTestEmail } from '@/modules/email/dispatcher';
 
 export async function syncWebsiteContent(url: string) {
     try {
@@ -195,6 +196,17 @@ export async function saveEmailTemplates(templates: {
     } catch (e: any) {
         console.error("Failed to save email templates", e.message);
         return { success: false, error: e.message };
+    }
+}
+
+export async function sendTestEmailAction() {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { success: false, message: 'Unauthorized' };
+        return await sendTestEmail(user.id);
+    } catch (e: any) {
+        return { success: false, message: e.message || 'Failed to send test email' };
     }
 }
 

@@ -5,7 +5,7 @@ import {
     Mail, Eye, EyeOff, CheckCircle, AlertCircle,
     Loader2, Save, Send, Trash2, Info
 } from 'lucide-react';
-import { saveEmailCredentials, disconnectGmail } from '@/app/(protected)/settings/actions';
+import { saveEmailCredentials, disconnectGmail, sendTestEmailAction } from '@/app/(protected)/settings/actions';
 
 interface Props {
     userId: string;
@@ -69,15 +69,10 @@ export default function EmailConnectionCard({
         setIsTesting(true);
         setTestResult(null);
         try {
-            const res = await fetch('http://localhost:4000/api/auth/gmail/test-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ agentId: userId })
-            });
-            const data = await res.json();
+            const data = await sendTestEmailAction();
             setTestResult(data);
-        } catch {
-            setTestResult({ success: false, message: 'Could not reach the backend. Make sure the server is running.' });
+        } catch (err: any) {
+            setTestResult({ success: false, message: err?.message || 'Could not send test email.' });
         } finally {
             setIsTesting(false);
         }
