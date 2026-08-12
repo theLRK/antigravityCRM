@@ -50,35 +50,38 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        // Also upsert AgentUser to match role context requirements
-        await prisma.agentUser.upsert({
-            where: { supabaseId: user.id },
-            create: {
-                supabaseId: user.id,
-                name: fullName || user.email?.split('@')[0] || 'Agent',
-                email: user.email || '',
-                role: 'agent',
-                isActive: true
-            },
-            update: {
-                name: fullName || undefined,
-                email: user.email || undefined,
+        // Also upsert AgentUser to match role context requirements (safe isolated try/catch)
+        try {
+            await prisma.agentUser.upsert({
+                where: { supabaseId: user.id },
+                create: {
+                    supabaseId: user.id,
+                    name: fullName || user.email?.split('@')[0] || 'Agent',
+                    email: user.email || '',
+                    role: 'agent',
+                    isActive: true
+                },
+                update: {
+                    name: fullName || undefined,
+                    email: user.email || undefined,
+                }
+            });
+        } catch (agentUserErr) {
+            console.warn('[Onboarding] Non-critical AgentUser upsert warning:', agentUserErr);
+        }
+
+        // Also update user metadata in Supabase Auth for display name & onboarding flag
+        await supabase.auth.updateUser({
+            data: {
+                first_name: firstName || undefined,
+                last_name: lastName || undefined,
+                onboarding_complete: true,
             }
         });
 
-        // Also update user metadata in Supabase Auth for display name
-        if (firstName) {
-            await supabase.auth.updateUser({
-                data: {
-                    first_name: firstName,
-                    last_name: lastName || undefined,
-                }
-            });
-        }
-
         return NextResponse.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Onboarding complete error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 });
     }
 }

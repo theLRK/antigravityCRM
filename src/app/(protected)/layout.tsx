@@ -16,24 +16,25 @@ export default async function DashboardLayout({
         redirect('/sign-in');
     }
 
-    // Check if user has completed onboarding — default to true (show wizard) on any error
-    let isNewUser = true;
-    try {
-        const agentProfile = await (prisma.agentProfile as any).findUnique({
-            where: { agentId: user!.id },
-            select: { onboardingComplete: true }
-        });
-        isNewUser = !agentProfile || !agentProfile.onboardingComplete;
-    } catch (err) {
-        console.error('[Layout] Onboarding check failed, showing wizard by default:', err);
-        isNewUser = true;
-    }
-
-
-    // Extract name — Google OAuth stores name differently than email sign-up
-    // Google: user_metadata.full_name or user_metadata.name
-    // Email signup: user_metadata.first_name + user_metadata.last_name
+    // Extract user metadata
     const meta = user!.user_metadata || {};
+
+    // Check if user has completed onboarding — check Supabase Auth metadata first, then Postgres DB
+    let isNewUser = false;
+    if (meta.onboarding_complete === true) {
+        isNewUser = false;
+    } else {
+        try {
+            const agentProfile = await (prisma.agentProfile as any).findUnique({
+                where: { agentId: user!.id },
+                select: { onboardingComplete: true }
+            });
+            isNewUser = !agentProfile || !agentProfile.onboardingComplete;
+        } catch (err) {
+            console.error('[Layout] Onboarding DB check failed, defaulting to false for stability:', err);
+            isNewUser = false;
+        }
+    }
     const googleFullName: string = meta.full_name || meta.name || '';
     const googleParts = (googleFullName.trim().split(' ')).filter(Boolean);
 

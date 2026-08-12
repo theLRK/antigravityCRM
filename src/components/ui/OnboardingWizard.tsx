@@ -91,13 +91,17 @@ export default function OnboardingWizard({
     const handleComplete = async () => {
         setSaving(true);
         try {
-            await fetch('/api/onboarding/complete', {
+            const res = await fetch('/api/onboarding/complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...data, avatarUrl: userAvatar || '' }),
             });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                console.error('Onboarding save failed:', result.error || res.statusText);
+            }
         } catch (e) {
-            console.error('Onboarding save error:', e);
+            console.error('Onboarding save network error:', e);
         }
         setSaving(false);
         window.location.href = '/dashboard';
@@ -106,13 +110,17 @@ export default function OnboardingWizard({
     const handleSetupGmail = async () => {
         setSaving(true);
         try {
-            await fetch('/api/onboarding/complete', {
+            const res = await fetch('/api/onboarding/complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...data, avatarUrl: userAvatar || '' }),
             });
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                console.error('Onboarding save failed:', result.error || res.statusText);
+            }
         } catch (e) {
-            console.error('Onboarding save error:', e);
+            console.error('Onboarding save network error:', e);
         }
         setSaving(false);
         window.location.href = '/settings/email';
