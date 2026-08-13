@@ -64,22 +64,6 @@ export function Sidebar({ user }: { user: any }) {
                 </nav>
             </div>
 
-            {/* Plan Badge & Upgrade */}
-            <div className="px-6 mb-8">
-                <div className="card-modern p-5 bg-[#F3F4F4]/50 border-black/[0.03]">
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Starter Active</span>
-                    </div>
-                    <p className="text-xs font-bold text-[#2C2C2C] mb-4 leading-tight">Unlock AI property matching & analytics</p>
-                    <Link 
-                        href="/#pricing" 
-                        className="btn-primary py-2.5 text-[11px] w-full flex justify-center items-center shadow-md"
-                    >
-                        Upgrade to Pro
-                    </Link>
-                </div>
-            </div>
 
             {/* Bottom User Profile */}
             <div className="p-6 border-t border-black/5 bg-[#F3F4F4]/20">
