@@ -57,12 +57,7 @@ export async function requireRole(allowedRoles: AgentUserRole[]): Promise<AgentU
     return ctx;
 }
 
-/**
- * Builds a Prisma `where` clause for leads based on the user's role.
- * Admin → no filter (sees all). Agent → only assigned leads.
- */
 export function buildLeadFilter(ctx: AgentUserContext): object {
-    if (ctx.isAdmin) return {};
     return { assignedAgentId: ctx.supabaseId };
 }
 

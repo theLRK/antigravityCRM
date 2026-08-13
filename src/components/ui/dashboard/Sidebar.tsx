@@ -67,11 +67,11 @@ export function Sidebar({ user }: { user: any }) {
 
             {/* Bottom User Profile */}
             <div className="p-6 border-t border-black/5 bg-[#F3F4F4]/20">
-                <Link href="/admin" className="flex items-center gap-4 cursor-pointer group hover:bg-white p-2.5 rounded-2xl transition-all border border-transparent hover:border-black/5 hover:shadow-sm">
+                <Link href="/account" title="View & Edit Agent Profile" className="flex items-center gap-4 cursor-pointer group hover:bg-white p-2.5 rounded-2xl transition-all border border-transparent hover:border-black/5 hover:shadow-sm">
                     <div className="relative shrink-0">
                         <div className="w-11 h-11 rounded-full border-2 border-white shadow-md overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                             <img
-                                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100&h=100"
+                                src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100&h=100"}
                                 alt="User avatar"
                                 className="w-full h-full object-cover grayscale-[0.2] transition-all group-hover:grayscale-0"
                             />
@@ -82,7 +82,7 @@ export function Sidebar({ user }: { user: any }) {
                         <p className="text-sm font-black text-[#2C2C2C] truncate group-hover:text-[#853953] transition-colors">
                             {firstName} {lastName}
                         </p>
-                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Premium Access</p>
+                        <p className="text-[11px] font-bold text-[#853953] uppercase tracking-wider">Agent Profile</p>
                     </div>
                 </Link>
             </div>
