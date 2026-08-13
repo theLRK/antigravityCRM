@@ -34,6 +34,8 @@ interface Template {
 
 interface Props {
     properties: any[];
+    agentProfile?: any;
+    user?: any;
     onSend: (data: any) => Promise<void>;
 }
 
@@ -50,7 +52,7 @@ import {
     scheduleManualEmailAction 
 } from '../actions';
 
-export function ManualEmailTab({ properties, onSend }: Props) {
+export function ManualEmailTab({ properties, agentProfile, user, onSend }: Props) {
     const [leads, setLeads] = useState<LeadOption[]>([]);
     const [templates, setTemplates] = useState<Template[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +65,12 @@ export function ManualEmailTab({ properties, onSend }: Props) {
     const [showVariables, setShowVariables] = useState(false);
     const [scheduleDate, setScheduleDate] = useState('');
     const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const meta = user?.user_metadata || {};
+    const fullName = agentProfile?.name || meta.full_name || meta.name || (meta.first_name ? `${meta.first_name} ${meta.last_name || ''}`.trim() : '') || user?.email?.split('@')[0] || 'Agent';
+    const agentPhone = agentProfile?.phone || meta.phone || '';
+    const agentCompany = agentProfile?.company || meta.company || '';
+    const agentSignature = agentProfile?.signature || fullName;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -128,8 +136,10 @@ export function ManualEmailTab({ properties, onSend }: Props) {
         resolved = resolved.replace(/{{property_price}}/g, selectedProperty ? `$${selectedProperty.price.toLocaleString()}` : '[Price]');
         resolved = resolved.replace(/{{bedrooms}}/g, selectedProperty?.bedrooms?.toString() || '[Beds]');
         resolved = resolved.replace(/{{bathrooms}}/g, selectedProperty?.bathrooms?.toString() || '[Baths]');
-        resolved = resolved.replace(/{{agent_name}}/g, 'Samuel'); // Fallback or fetch from session
-        resolved = resolved.replace(/{{agent_phone}}/g, '+234 XXX XXX XXXX');
+        resolved = resolved.replace(/{{agent_name}}/g, fullName);
+        resolved = resolved.replace(/{{agent_phone}}/g, agentPhone || '[Agent Phone]');
+        resolved = resolved.replace(/{{agent_company}}/g, agentCompany || '[Agent Company]');
+        resolved = resolved.replace(/{{agent_signature}}/g, agentSignature);
         return resolved;
     };
 
@@ -282,12 +292,12 @@ export function ManualEmailTab({ properties, onSend }: Props) {
                                     </button>
                                     {showVariables && (
                                         <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-10 w-48 overflow-hidden py-1">
-                                            {['lead_name', 'lead_email', 'lead_score', 'property_title', 'property_price', 'bedrooms', 'bathrooms', 'agent_name', 'agent_phone'].map(v => (
+                                            {['lead_name', 'lead_email', 'lead_score', 'property_title', 'property_price', 'bedrooms', 'bathrooms', 'agent_name', 'agent_phone', 'agent_company', 'agent_signature'].map(v => (
                                                 <button
                                                     key={v}
                                                     type="button"
                                                     onClick={() => insertVariable(v)}
-                                                    className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 text-slate-600"
+                                                    className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 text-slate-600 font-mono"
                                                 >
                                                     {`{{${v}}}`}
                                                 </button>

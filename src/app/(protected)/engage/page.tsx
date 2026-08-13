@@ -180,7 +180,9 @@ export default async function EngageDashboardPage({ searchParams }: { searchPara
                     ),
                     'manual': (
                         <ManualEmailTab 
-                            properties={properties} 
+                            properties={properties}
+                            agentProfile={agentProfile}
+                            user={user}
                             onSend={handleManualSend} 
                         />
                     ),

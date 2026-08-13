@@ -26,6 +26,27 @@ export async function sendUnifiedEmailCore({
 
     if (!lead) throw new Error('Lead not found');
 
+    const agentName = profile?.name || profile?.emailFromName || 'Your Agent';
+    const agentPhone = profile?.phone || '';
+    const agentCompany = profile?.company || '';
+    const agentSignature = profile?.signature || agentName;
+
+    const resolvedSubject = subject
+        .replace(/\{\{lead_name\}\}/g, `${lead.firstName} ${lead.lastName}`.trim())
+        .replace(/\{\{first_name\}\}/g, lead.firstName)
+        .replace(/\{\{agent_name\}\}/g, agentName)
+        .replace(/\{\{agent_phone\}\}/g, agentPhone)
+        .replace(/\{\{agent_company\}\}/g, agentCompany)
+        .replace(/\{\{agent_signature\}\}/g, agentSignature);
+
+    const resolvedBody = body
+        .replace(/\{\{lead_name\}\}/g, `${lead.firstName} ${lead.lastName}`.trim())
+        .replace(/\{\{first_name\}\}/g, lead.firstName)
+        .replace(/\{\{agent_name\}\}/g, agentName)
+        .replace(/\{\{agent_phone\}\}/g, agentPhone)
+        .replace(/\{\{agent_company\}\}/g, agentCompany)
+        .replace(/\{\{agent_signature\}\}/g, agentSignature);
+
     // 1. Send Actual Email
     const gmailUser = profile?.gmailEmailAddress || process.env.GMAIL_USER;
     const gmailPass = (profile as any)?.gmailAppPassword || process.env.GMAIL_APP_PASSWORD;
@@ -37,10 +58,10 @@ export async function sendUnifiedEmailCore({
         });
 
         await transporter.sendMail({
-            from: `"${profile?.emailFromName || profile?.name || 'Formative CRM'}" <${gmailUser}>`,
+            from: `"${profile?.emailFromName || agentName}" <${gmailUser}>`,
             to: lead.email,
-            subject,
-            html: body.replace(/\n/g, '<br/>')
+            subject: resolvedSubject,
+            html: resolvedBody.replace(/\n/g, '<br/>')
         });
     }
 
