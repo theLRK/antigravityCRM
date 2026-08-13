@@ -352,38 +352,6 @@ export function PublicFormWizard({
                                                  onChange={(e) => handleInputChange('customLocation', e.target.value)}
                                                  className="block w-full rounded-xl border border-slate-200 py-3.5 px-4 text-slate-900 shadow-sm outline-none focus:ring-2 focus:ring-[#853953]/20 text-sm font-medium mb-6"
                                              />
-
-                                             {locationGroups && locationGroups.length > 0 && (
-                                                 <div className="space-y-4 pt-2 border-t border-slate-100">
-                                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quick Area Select (Optional)</p>
-                                                     {locationGroups.map((group: any) => (
-                                                         <div key={group.id}>
-                                                             <h4 className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">{group.name}</h4>
-                                                             <div className="flex flex-wrap gap-2">
-                                                                 {group.locations.map((loc: any) => {
-                                                                     const isSelected = (formData.preferredLocationIds || []).includes(loc.id);
-                                                                     return (
-                                                                         <div
-                                                                             key={loc.id}
-                                                                             onClick={() => {
-                                                                                 const current = formData.preferredLocationIds || [];
-                                                                                 if (isSelected) handleInputChange('preferredLocationIds', current.filter((id: string) => id !== loc.id));
-                                                                                 else handleInputChange('preferredLocationIds', [...current, loc.id]);
-                                                                             }}
-                                                                             className={`cursor-pointer rounded-full border-2 py-1.5 px-3 text-xs font-semibold transition-colors
-                                                                                 ${isSelected
-                                                                                     ? 'border-[#853953]/30 bg-[#853953]/5 text-[#853953]'
-                                                                                     : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300'}`}
-                                                                         >
-                                                                             {loc.name}
-                                                                         </div>
-                                                                     );
-                                                                 })}
-                                                             </div>
-                                                         </div>
-                                                     ))}
-                                                 </div>
-                                             )}
                                         </div>
 
                                         {/* Interactive Slider 2: Budget (Converting previous dropdowns to sliders) */}
