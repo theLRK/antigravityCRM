@@ -10,14 +10,19 @@ import {
     Send,
     Globe,
     Shield,
+    LogOut,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
 
 export function Sidebar({ user }: { user: any }) {
     const pathname = usePathname();
-    const firstName = user?.user_metadata?.first_name || 'Agent';
-    const lastName = user?.user_metadata?.last_name || '';
+    const meta = user?.user_metadata || {};
+    const fullName = meta.full_name || meta.name || '';
+    const nameParts = fullName ? fullName.trim().split(' ') : [];
+    
+    const firstName = meta.first_name || (nameParts.length > 0 ? nameParts[0] : '') || 'Agent';
+    const lastName = meta.last_name || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '') || '';
 
     const navLinks = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -65,26 +70,38 @@ export function Sidebar({ user }: { user: any }) {
             </div>
 
 
-            {/* Bottom User Profile */}
-            <div className="p-6 border-t border-black/5 bg-[#F3F4F4]/20">
-                <Link href="/account" title="View & Edit Agent Profile" className="flex items-center gap-4 cursor-pointer group hover:bg-white p-2.5 rounded-2xl transition-all border border-transparent hover:border-black/5 hover:shadow-sm">
-                    <div className="relative shrink-0">
-                        <div className="w-11 h-11 rounded-full border-2 border-white shadow-md overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-                            <img
-                                src={user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100&h=100"}
-                                alt="User avatar"
-                                className="w-full h-full object-cover grayscale-[0.2] transition-all group-hover:grayscale-0"
-                            />
+            {/* Bottom User Profile & Sign Out */}
+            <div className="p-5 border-t border-black/5 bg-[#F3F4F4]/20">
+                <div className="flex items-center justify-between gap-2">
+                    <Link href="/account" title="View & Edit Agent Profile" className="flex items-center gap-3 cursor-pointer group hover:bg-white p-2 rounded-2xl transition-all border border-transparent hover:border-black/5 hover:shadow-sm flex-1 min-w-0">
+                        <div className="relative shrink-0">
+                            <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                                <img
+                                    src={meta.avatar_url || meta.picture || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100&h=100"}
+                                    alt="User avatar"
+                                    className="w-full h-full object-cover grayscale-[0.2] transition-all group-hover:grayscale-0"
+                                />
+                            </div>
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
                         </div>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-[#2C2C2C] truncate group-hover:text-[#853953] transition-colors">
-                            {firstName} {lastName}
-                        </p>
-                        <p className="text-[11px] font-bold text-[#853953] uppercase tracking-wider">Agent Profile</p>
-                    </div>
-                </Link>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-black text-[#2C2C2C] truncate group-hover:text-[#853953] transition-colors">
+                                {firstName} {lastName}
+                            </p>
+                            <p className="text-[10px] font-bold text-[#853953] uppercase tracking-wider">Agent Profile</p>
+                        </div>
+                    </Link>
+
+                    <form action="/auth/signout" method="POST">
+                        <button
+                            type="submit"
+                            title="Log Out of Account"
+                            className="p-2.5 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100 flex items-center justify-center cursor-pointer"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </form>
+                </div>
             </div>
         </aside>
     );

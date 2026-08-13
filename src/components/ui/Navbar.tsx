@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Logo } from './Logo';
+import { createClient } from '@/utils/supabase/client';
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,6 +15,17 @@ export function Navbar() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+      } catch {}
+    };
+    checkUser();
   }, []);
 
   return (
@@ -29,14 +42,33 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-10">
+        <div className="hidden md:flex items-center gap-8">
           <Link href="#features" className="text-sm font-black text-[#2C2C2C]/60 hover:text-[#853953] transition-colors">Features</Link>
           <Link href="#how-it-works" className="text-sm font-black text-[#2C2C2C]/60 hover:text-[#853953] transition-colors">How it Works</Link>
           <Link href="#pricing" className="text-sm font-black text-[#2C2C2C]/60 hover:text-[#853953] transition-colors">Pricing</Link>
-          <Link href="/sign-in" className="text-sm font-black text-[#2C2C2C]/60 hover:text-[#853953] transition-colors">Login</Link>
-          <Link href="/sign-up" className="btn-primary py-2.5 text-sm">
-            Get Started
-          </Link>
+          
+          {user ? (
+            <>
+              <Link href="/dashboard" className="btn-primary py-2.5 text-sm">
+                Go to Dashboard
+              </Link>
+              <form action="/auth/signout" method="POST">
+                <button
+                  type="submit"
+                  className="text-sm font-black text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                >
+                  Log Out
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/sign-in" className="text-sm font-black text-[#2C2C2C]/60 hover:text-[#853953] transition-colors">Login</Link>
+              <Link href="/sign-up" className="btn-primary py-2.5 text-sm">
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Toggle Placeholder */}

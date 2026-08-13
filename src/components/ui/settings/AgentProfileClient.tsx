@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Camera, Save, CheckCircle, Loader2, User } from 'lucide-react';
 
 export default function AgentProfileClient({ initialProfile }: { initialProfile: any }) {
+    const router = useRouter();
     const [profile, setProfile] = useState({
         name: initialProfile?.name || '',
         phone: initialProfile?.phone || '',
@@ -33,14 +35,19 @@ export default function AgentProfileClient({ initialProfile }: { initialProfile:
     const handleSave = async () => {
         setSaving(true);
         try {
-            await fetch('/api/profile', {
+            const res = await fetch('/api/profile', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(profile)
+                body: JSON.stringify({ ...profile, imageUrl })
             });
-            setSavedOk(true);
-            setTimeout(() => setSavedOk(false), 2500);
-        } catch {}
+            if (res.ok) {
+                setSavedOk(true);
+                router.refresh();
+                setTimeout(() => setSavedOk(false), 2500);
+            }
+        } catch (err) {
+            console.error('Save profile error:', err);
+        }
         setSaving(false);
     };
 
