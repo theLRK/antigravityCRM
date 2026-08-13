@@ -75,6 +75,22 @@ export default async function DashboardPage() {
 
     const firstName = user.user_metadata?.first_name || 'Agent';
 
+    // Auto-claim any unassigned leads submitted via this agent's forms
+    try {
+        await prisma.lead.updateMany({
+            where: {
+                assignedAgentId: null,
+                sourceForm: { agentId: user.id }
+            },
+            data: {
+                assignedAgentId: user.id,
+                isUnassigned: false
+            }
+        });
+    } catch (claimErr: any) {
+        console.warn('[Dashboard] Auto-claim warning:', claimErr?.message);
+    }
+
     // ---- FETCH REAL CRM METRICS (Optimized) ----
     const totalLeadsCount = await prisma.lead.count({ where: { assignedAgentId: user.id } });
     const activeLeadsCount = await prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: { not: 'closed' } } });

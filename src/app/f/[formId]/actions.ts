@@ -1,6 +1,6 @@
 'use server';
 import { prisma } from '@/lib/prisma';
-
+import { revalidatePath } from 'next/cache';
 import { processScoreForLead } from '@/modules/scoring/orchestrator';
 
 
@@ -84,6 +84,8 @@ export async function submitPublicLead(formId: string, formData: Record<string, 
             preApproval: financing === 'Pre-approved',
             source: 'Public Form Wizard',
             formId: formId,
+            assignedAgentId: formConfig.agentId,
+            isUnassigned: false,
             isDuplicate: false,
             pipelineStage: 'new',
             currency: formConfig.currencySymbol || '$',
@@ -120,6 +122,9 @@ export async function submitPublicLead(formId: string, formData: Record<string, 
     } catch (e: any) {
         console.error("Failed to trigger orchestrator pipeline natively", e.message);
     }
+
+    revalidatePath('/leads');
+    revalidatePath('/dashboard');
 
     return { success: true, leadId: lead.id };
 }

@@ -108,6 +108,22 @@ export async function getLeads(options: { take?: number; skip?: number; query?: 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
+    // Auto-claim any unassigned leads submitted via this agent's forms
+    try {
+        await prisma.lead.updateMany({
+            where: {
+                assignedAgentId: null,
+                sourceForm: { agentId: user.id }
+            },
+            data: {
+                assignedAgentId: user.id,
+                isUnassigned: false
+            }
+        });
+    } catch (claimErr: any) {
+        console.warn('[getLeads] Auto-claim warning:', claimErr?.message);
+    }
+
     const { take = 20, skip = 0, query, stage } = options;
 
     const where: any = { assignedAgentId: user.id };
