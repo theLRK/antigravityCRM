@@ -171,6 +171,8 @@ export async function createProperty(data: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
+    const sanitizedLocId = (data.locationId && typeof data.locationId === 'string' && data.locationId.trim() !== '') ? data.locationId.trim() : null;
+
     try {
         const property = await prisma.property.create({
             data: {
@@ -178,7 +180,7 @@ export async function createProperty(data: {
                 price: data.price,
                 currency: data.currency || 'USD',
                 location: data.location || 'Unspecified',
-                locationId: data.locationId || undefined,
+                locationId: sanitizedLocId,
                 bedrooms: data.bedrooms,
                 bathrooms: data.bathrooms,
                 squareFootage: data.squareFootage,
@@ -193,9 +195,9 @@ export async function createProperty(data: {
         revalidatePath('/properties');
         runMatchingForProperty(property.id).catch(console.error);
         return property;
-    } catch (error) {
-        console.error("Error creating property:", error);
-        throw new Error("Failed to create property");
+    } catch (error: any) {
+        console.error("Error creating property:", error?.message || error);
+        throw new Error(`Failed to create property: ${error?.message || 'Database error'}`);
     }
 }
 
@@ -227,6 +229,9 @@ export async function updateProperty(id: string, data: Partial<{
         const updateData: any = { ...data };
         if (data.images) updateData.images = JSON.stringify(data.images);
         if (data.amenities) updateData.amenities = JSON.stringify(data.amenities);
+        if ('locationId' in data) {
+            updateData.locationId = (data.locationId && typeof data.locationId === 'string' && data.locationId.trim() !== '') ? data.locationId.trim() : null;
+        }
 
         const property = await prisma.property.update({
             where: { id },
@@ -235,9 +240,9 @@ export async function updateProperty(id: string, data: Partial<{
         revalidatePath('/properties');
         runMatchingForProperty(property.id).catch(console.error);
         return property;
-    } catch (error) {
-        console.error("Error updating property:", error);
-        throw new Error("Failed to update property");
+    } catch (error: any) {
+        console.error("Error updating property:", error?.message || error);
+        throw new Error(`Failed to update property: ${error?.message || 'Database error'}`);
     }
 }
 

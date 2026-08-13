@@ -133,10 +133,9 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
 
         setIsSubmitting(true);
         try {
-            const data = {
+            const data: any = {
                 title: formParams.title,
                 location: formattedLocation,
-                locationId: formParams.locationId || undefined,
                 price: parseInt(formParams.price.replace(/[^0-9]/g, '')) || 0,
                 bedrooms: parseInt(formParams.beds) || 0,
                 bathrooms: parseFloat(formParams.baths) || 0,
@@ -144,6 +143,10 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
                 propertyType: formParams.propertyType,
                 images: previewUrl ? [previewUrl] : []
             };
+            if (formParams.locationId && formParams.locationId.trim() !== '') {
+                data.locationId = formParams.locationId.trim();
+            }
+
             if (editingId) {
                 const updated = await updateProperty(editingId, data);
                 setProperties(properties.map(p => p.id === editingId ? updated : p));
@@ -153,10 +156,11 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
             }
             setIsAdding(false);
             setEditingId(null);
-            setFormParams({ title: '', locationId: '', price: '', beds: '', baths: '', status: 'Available', propertyType: 'House' });
+            setFormParams({ title: '', country: 'United States', cityArea: '', locationId: '', price: '', beds: '', baths: '', status: 'Available', propertyType: 'House' });
             setPreviewUrl(null);
-        } catch (error) {
-            alert("Failed to save property");
+        } catch (error: any) {
+            console.error("Save property error:", error);
+            alert(error?.message || "Failed to save property");
         } finally {
             setIsSubmitting(false);
         }
