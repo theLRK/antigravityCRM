@@ -48,23 +48,27 @@ export async function submitPublicLead(formId: string, formData: Record<string, 
     if (finalLocationIds.includes('other') && customLocation) {
         finalLocationIds = finalLocationIds.filter((id: string) => id !== 'other');
         
-        let otherGroup = (await (prisma as any).$queryRawUnsafe(`SELECT * FROM location_groups WHERE name = 'Other' LIMIT 1`))[0];
-        if (!otherGroup) {
-            const groupId = crypto.randomUUID();
+        try {
+            let otherGroup = (await (prisma as any).$queryRawUnsafe(`SELECT * FROM location_groups WHERE name = 'Other' LIMIT 1`))[0];
+            if (!otherGroup) {
+                const groupId = crypto.randomUUID();
+                await (prisma as any).$executeRawUnsafe(
+                    `INSERT INTO location_groups (id, name, created_at, updated_at) VALUES ($1, $2, $3, $4)`,
+                    groupId, 'Other', new Date().toISOString(), new Date().toISOString()
+                );
+                otherGroup = { id: groupId };
+            }
+            
+            const newLocId = crypto.randomUUID();
             await (prisma as any).$executeRawUnsafe(
-                `INSERT INTO location_groups (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)`,
-                groupId, 'Other', new Date().toISOString(), new Date().toISOString()
+                `INSERT INTO locations (id, name, group_id, is_custom, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)`,
+                newLocId, customLocation, otherGroup.id, true, new Date().toISOString(), new Date().toISOString()
             );
-            otherGroup = { id: groupId };
+            
+            finalLocationIds.push(newLocId);
+        } catch (locErr) {
+            console.warn('[PublicForm] Location custom insert warning:', locErr);
         }
-        
-        const newLocId = crypto.randomUUID();
-        await (prisma as any).$executeRawUnsafe(
-            `INSERT INTO locations (id, name, group_id, is_custom, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
-            newLocId, customLocation, otherGroup.id, 1, new Date().toISOString(), new Date().toISOString()
-        );
-        
-        finalLocationIds.push(newLocId);
     }
 
     const leadId = crypto.randomUUID();

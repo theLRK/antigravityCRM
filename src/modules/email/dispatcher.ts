@@ -131,6 +131,8 @@ export async function dispatchWelcomeEmail(leadId: string, scheduledDelay: boole
         let subject = '';
         let body = '';
 
+        const isInvestor = Boolean(lead.motivation?.toLowerCase().includes('invest') || lead.sourceForm?.title?.toLowerCase().includes('invest'));
+
         const fill = (template: string) =>
             template
                 .replace(/\{\{first_name\}\}/g, lead.firstName)
@@ -148,8 +150,6 @@ export async function dispatchWelcomeEmail(leadId: string, scheduledDelay: boole
                 .replace(/\{\{intent_snippet\}\}/g, isInvestor 
                     ? "As an investor, focusing on properties with strong cash flow and high ROI potential is key. I've prepared some off-market cap-rate models we can review."
                     : "I'll make sure we find a home in a great community that fits all your lifestyle needs.");
-
-        const isInvestor = lead.motivation?.toLowerCase().includes('invest') || lead.sourceForm?.title?.toLowerCase().includes('invest');
 
         if (tier === 'hot') {
             subject = fill(agentProfile?.emailTemplateHotSubject || `Let's schedule your home tour, {{first_name}}!`);
