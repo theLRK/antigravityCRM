@@ -156,7 +156,7 @@ export async function createProperty(data: {
     price: number;
     currency?: string;
     location: string;
-    locationId: string;
+    locationId?: string;
     bedrooms: number;
     bathrooms: number;
     squareFootage?: number;
@@ -177,8 +177,8 @@ export async function createProperty(data: {
                 title: data.title,
                 price: data.price,
                 currency: data.currency || 'USD',
-                location: data.location,
-                locationId: data.locationId,
+                location: data.location || 'Unspecified',
+                locationId: data.locationId || undefined,
                 bedrooms: data.bedrooms,
                 bathrooms: data.bathrooms,
                 squareFootage: data.squareFootage,

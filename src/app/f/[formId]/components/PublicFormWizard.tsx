@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowRight, ArrowLeft, Loader2, Home, User, Briefcase, FileSignature, CheckCircle2 } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, Loader2, Home, User, Briefcase, FileSignature, CheckCircle2, Globe } from 'lucide-react';
 import { submitPublicLead } from '../actions';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import { GLOBAL_COUNTRIES } from '@/lib/constants/locations';
 
 interface PublicFormWizardProps {
     formId: string;
@@ -112,7 +113,7 @@ export function PublicFormWizard({
         return currentChecks.every(field => {
             const val = formData[field];
             if (field === 'preferredLocationIds') {
-                return Array.isArray(val) && val.length > 0;
+                return (Array.isArray(val) && val.length > 0) || Boolean(formData.customLocation?.trim());
             }
             return val && String(val).trim() !== '';
         });
@@ -330,70 +331,59 @@ export function PublicFormWizard({
                                             </div>
                                         </div>
 
-                                        {/* Preferred Locations */}
-                                        <div>
-                                            <label className="block text-base font-semibold text-slate-900 mb-4">Preferred Locations <span className="text-red-400">*</span></label>
-                                            <div className="space-y-4">
-                                                {locationGroups.map((group: any) => (
-                                                    <div key={group.id}>
-                                                        <h4 className="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wide">{group.name}</h4>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {group.locations.map((loc: any) => {
-                                                                const isSelected = formData.preferredLocationIds.includes(loc.id);
-                                                                return (
-                                                                    <div
-                                                                        key={loc.id}
-                                                                        onClick={() => {
-                                                                            const current = formData.preferredLocationIds || [];
-                                                                            if (isSelected) handleInputChange('preferredLocationIds', current.filter((id: string) => id !== loc.id));
-                                                                            else handleInputChange('preferredLocationIds', [...current, loc.id]);
-                                                                        }}
-                                                                        className={`cursor-pointer rounded-full border-2 py-1.5 px-3 text-sm font-semibold transition-colors
-                                                                            ${isSelected
-                                                                                ? 'border-[#853953]/30 bg-[#853953]/5 text-[#853953]'
-                                                                                : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300'}`}
-                                                                    >
-                                                                        {loc.name}
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                
-                                                {/* Other Option */}
-                                                <div>
-                                                    <div
-                                                        onClick={() => {
-                                                            const current = formData.preferredLocationIds || [];
-                                                            if (current.includes('other')) {
-                                                                handleInputChange('preferredLocationIds', current.filter((id: string) => id !== 'other'));
-                                                                handleInputChange('customLocation', '');
-                                                            } else {
-                                                                handleInputChange('preferredLocationIds', [...current, 'other']);
-                                                            }
-                                                        }}
-                                                        className={`cursor-pointer inline-block rounded-full border-2 py-1.5 px-3 text-sm font-semibold transition-colors
-                                                            ${(formData.preferredLocationIds || []).includes('other')
-                                                                ? 'border-[#853953]/30 bg-[#853953]/5 text-[#853953]'
-                                                                : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300'}`}
-                                                    >
-                                                        Other location not listed
-                                                    </div>
-                                                    
-                                                    {(formData.preferredLocationIds || []).includes('other') && (
-                                                        <div className="mt-3">
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Please specify your preferred location..."
-                                                                value={formData.customLocation || ''}
-                                                                onChange={(e) => handleInputChange('customLocation', e.target.value)}
-                                                                className="block w-full rounded-md border-0 py-3 px-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-[#853953] sm:text-sm"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
+                                         {/* Preferred Locations */}
+                                         <div>
+                                             <label className="block text-base font-semibold text-slate-900 mb-2">Preferred Country / Region <span className="text-red-400">*</span></label>
+                                             <select
+                                                 value={formData.country || 'United States'}
+                                                 onChange={(e) => handleInputChange('country', e.target.value)}
+                                                 className="block w-full rounded-xl border border-slate-200 py-3.5 px-4 text-slate-900 shadow-sm outline-none focus:ring-2 focus:ring-[#853953]/20 text-sm font-semibold bg-white mb-6"
+                                             >
+                                                 {GLOBAL_COUNTRIES.map((c: string) => (
+                                                     <option key={c} value={c}>{c}</option>
+                                                 ))}
+                                             </select>
+
+                                             <label className="block text-base font-semibold text-slate-900 mb-2">Preferred City, Town, or Neighborhood</label>
+                                             <input
+                                                 type="text"
+                                                 placeholder="e.g. Miami Beach, FL or Kensington, London or Victoria Island"
+                                                 value={formData.customLocation || ''}
+                                                 onChange={(e) => handleInputChange('customLocation', e.target.value)}
+                                                 className="block w-full rounded-xl border border-slate-200 py-3.5 px-4 text-slate-900 shadow-sm outline-none focus:ring-2 focus:ring-[#853953]/20 text-sm font-medium mb-6"
+                                             />
+
+                                             {locationGroups && locationGroups.length > 0 && (
+                                                 <div className="space-y-4 pt-2 border-t border-slate-100">
+                                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quick Area Select (Optional)</p>
+                                                     {locationGroups.map((group: any) => (
+                                                         <div key={group.id}>
+                                                             <h4 className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">{group.name}</h4>
+                                                             <div className="flex flex-wrap gap-2">
+                                                                 {group.locations.map((loc: any) => {
+                                                                     const isSelected = (formData.preferredLocationIds || []).includes(loc.id);
+                                                                     return (
+                                                                         <div
+                                                                             key={loc.id}
+                                                                             onClick={() => {
+                                                                                 const current = formData.preferredLocationIds || [];
+                                                                                 if (isSelected) handleInputChange('preferredLocationIds', current.filter((id: string) => id !== loc.id));
+                                                                                 else handleInputChange('preferredLocationIds', [...current, loc.id]);
+                                                                             }}
+                                                                             className={`cursor-pointer rounded-full border-2 py-1.5 px-3 text-xs font-semibold transition-colors
+                                                                                 ${isSelected
+                                                                                     ? 'border-[#853953]/30 bg-[#853953]/5 text-[#853953]'
+                                                                                     : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300'}`}
+                                                                         >
+                                                                             {loc.name}
+                                                                         </div>
+                                                                     );
+                                                                 })}
+                                                             </div>
+                                                         </div>
+                                                     ))}
+                                                 </div>
+                                             )}
                                         </div>
 
                                         {/* Interactive Slider 2: Budget (Converting previous dropdowns to sliders) */}

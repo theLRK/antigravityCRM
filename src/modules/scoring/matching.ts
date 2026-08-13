@@ -40,7 +40,7 @@ export async function runPropertyMatchingForLead(leadId: string) {
                 score += 40; // No max, but meets min
             }
 
-            // Location Match (30 points)
+            // Location Match (30 points) - Hybrid Global Matching
             let locationMatch = false;
             
             // 2.1 Structured Location Match (UUIDs)
@@ -52,18 +52,41 @@ export async function runPropertyMatchingForLead(leadId: string) {
                 }
             }
 
-            // 2.2 Fallback: Legacy String Match
+            // 2.2 Global Hybrid Text & Region Matching
             if (!locationMatch) {
-                const prefArea = (lead.preferredAreas || '').toLowerCase();
-                const propLoc = (property.location || '').toLowerCase();
-                if (prefArea && propLoc) {
-                    if (propLoc.includes(prefArea) || prefArea.includes(propLoc)) {
-                        score += 30; // Direct match
+                const leadTexts = [
+                    lead.preferredAreas,
+                    lead.customLocation,
+                    ...(Array.isArray(lead.preferredLocationIds) ? (lead.preferredLocationIds as string[]) : [])
+                ].filter(Boolean).map(s => String(s).toLowerCase());
+
+                const propTexts = [
+                    property.location,
+                    property.address,
+                    property.locationId
+                ].filter(Boolean).map(s => String(s).toLowerCase());
+
+                const leadCombined = leadTexts.join(' ');
+                const propCombined = propTexts.join(' ');
+
+                if (leadCombined && propCombined) {
+                    // Check direct substring match
+                    if (propCombined.includes(leadCombined) || leadCombined.includes(propCombined)) {
+                        score += 30;
+                        locationMatch = true;
                     } else {
-                        const prefTokens = prefArea.split(/[, ]+/);
-                        const locTokens = propLoc.split(/[, ]+/);
-                        const intersect = prefTokens.filter(t => t.length > 3 && locTokens.includes(t));
-                        if (intersect.length > 0) score += 15; // Partial overlap
+                        // Check token overlap
+                        const leadTokens = leadCombined.split(/[, \-/]+/).filter(t => t.length >= 3);
+                        const propTokens = propCombined.split(/[, \-/]+/).filter(t => t.length >= 3);
+                        const intersect = leadTokens.filter(t => propTokens.some(pt => pt.includes(t) || t.includes(pt)));
+
+                        if (intersect.length >= 2) {
+                            score += 30;
+                            locationMatch = true;
+                        } else if (intersect.length === 1) {
+                            score += 20; // Strong partial match (e.g. city match)
+                            locationMatch = true;
+                        }
                     }
                 }
             }

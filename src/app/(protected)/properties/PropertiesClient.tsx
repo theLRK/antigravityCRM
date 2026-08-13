@@ -8,6 +8,7 @@ import { ImageUploadBox } from '@/components/ui/ImageUploadBox';
 import { AnimatedTooltip } from '@/components/ui/AnimatedTooltip';
 import { createProperty, updateProperty, deleteProperty } from './actions';
 import MatchingLeadsSection from '@/components/ui/properties/MatchingLeadsSection';
+import { GLOBAL_COUNTRIES } from '@/lib/constants/locations';
 
 export default function PropertiesClient({ initialProperties, locationGroups }: { initialProperties: any[], locationGroups?: any[] }) {
     const [properties, setProperties] = useState(initialProperties);
@@ -40,6 +41,8 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
     // Form state
     const [formParams, setFormParams] = useState({
         title: '',
+        country: 'United States',
+        cityArea: '',
         locationId: '',
         price: '',
         beds: '',
@@ -68,7 +71,7 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
                               p.location.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All' || p.status === statusFilter;
         const matchesType = typeFilter === 'All' || p.propertyType === typeFilter;
-        const matchesLoc = locFilter === 'All' || p.locationId === locFilter;
+        const matchesLoc = locFilter === 'All' || p.locationId === locFilter || p.location.toLowerCase().includes(locFilter.toLowerCase());
         
         let matchesBeds = true;
         if (bedsFilter !== 'All') {
@@ -97,6 +100,8 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
     const openEdit = (p: any) => {
         setFormParams({
             title: p.title,
+            country: 'United States',
+            cityArea: p.location || '',
             locationId: p.locationId || '',
             price: p.price.toString(),
             beds: p.bedrooms.toString(),
@@ -110,24 +115,28 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
     };
 
     const handleSave = async () => {
-        if (!formParams.title || !formParams.locationId) {
-            alert("Please fill out at least the title and select a location.");
+        if (!formParams.title || (!formParams.cityArea && !formParams.locationId)) {
+            alert("Please fill out the property title and location (city/area or country).");
             return;
         }
-        let locName = 'Unknown Location';
-        for (const g of (locationGroups || [])) {
-            const loc = g.locations.find((l: any) => l.id === formParams.locationId);
-            if (loc) {
-                locName = loc.name;
-                break;
+        
+        let formattedLocation = formParams.cityArea ? `${formParams.cityArea} (${formParams.country})` : formParams.country;
+        if (formParams.locationId) {
+            for (const g of (locationGroups || [])) {
+                const loc = g.locations.find((l: any) => l.id === formParams.locationId);
+                if (loc) {
+                    formattedLocation = `${formParams.cityArea || loc.name} (${formParams.country})`;
+                    break;
+                }
             }
         }
+
         setIsSubmitting(true);
         try {
             const data = {
                 title: formParams.title,
-                location: locName,
-                locationId: formParams.locationId,
+                location: formattedLocation,
+                locationId: formParams.locationId || undefined,
                 price: parseInt(formParams.price.replace(/[^0-9]/g, '')) || 0,
                 bedrooms: parseInt(formParams.beds) || 0,
                 bathrooms: parseFloat(formParams.baths) || 0,
@@ -196,18 +205,23 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
                             <label className="block text-sm font-bold text-slate-700 mb-2">Property Title</label>
                             <StyledInput value={formParams.title} onChange={(e) => setFormParams({ ...formParams, title: e.target.value })} />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Location</label>
-                            <select value={formParams.locationId} onChange={(e) => setFormParams({ ...formParams, locationId: e.target.value })} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none bg-white">
-                                <option value="" disabled>Select Location</option>
-                                {(locationGroups || []).map((group: any) => (
-                                    <optgroup key={group.id} label={group.name}>
-                                        {group.locations.map((loc: any) => (
-                                            <option key={loc.id} value={loc.id}>{loc.name}</option>
-                                        ))}
-                                    </optgroup>
-                                ))}
-                            </select>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">Country / Region</label>
+                                <select value={formParams.country} onChange={(e) => setFormParams({ ...formParams, country: e.target.value })} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none bg-white font-medium text-slate-800">
+                                    {GLOBAL_COUNTRIES.map((c: string) => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">City / Neighborhood</label>
+                                <StyledInput 
+                                    placeholder="e.g. Miami Beach, FL or Victoria Island" 
+                                    value={formParams.cityArea} 
+                                    onChange={(e) => setFormParams({ ...formParams, cityArea: e.target.value })} 
+                                />
+                            </div>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div>
