@@ -18,18 +18,34 @@ export default function AgentProfileClient({ initialProfile }: { initialProfile:
     const [uploading, setUploading] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
 
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         setUploading(true);
-        const fd = new FormData();
-        fd.append('file', file);
-        try {
-            const res = await fetch('/api/profile/upload-image', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (data.imageUrl) setImageUrl(data.imageUrl);
-        } catch {}
-        setUploading(false);
+
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            if (typeof reader.result === 'string') {
+                const dataUrl = reader.result;
+                setImageUrl(dataUrl);
+
+                // Send to backend API as well
+                try {
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    const res = await fetch('/api/profile/upload-image', { method: 'POST', body: fd });
+                    const data = await res.json();
+                    if (data.imageUrl) setImageUrl(data.imageUrl);
+                } catch (apiErr) {
+                    console.warn('[Profile Client] API upload warning, retaining Base64 URL:', apiErr);
+                }
+            }
+            setUploading(false);
+        };
+        reader.onerror = () => {
+            setUploading(false);
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleSave = async () => {
@@ -54,16 +70,16 @@ export default function AgentProfileClient({ initialProfile }: { initialProfile:
     return (
         <div className="space-y-8">
             {/* Avatar Section */}
-            <div className="flex items-start gap-6">
-                <div className="relative group cursor-pointer" onClick={() => fileRef.current?.click()}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div className="relative group cursor-pointer shrink-0" onClick={() => fileRef.current?.click()}>
                     <div className="w-24 h-24 rounded-2xl bg-[#853953]/5 border-2 border-[#853953]/10 flex items-center justify-center overflow-hidden shadow-sm">
                         {imageUrl ? (
-                            <img src={imageUrl} alt="Agent" className="w-full h-full object-cover" />
+                            <img src={imageUrl} alt="Agent Profile" className="w-full h-full object-cover" />
                         ) : (
                             <User className="w-10 h-10 text-[#853953]/30" />
                         )}
                     </div>
-                    <div className="absolute inset-0 rounded-2xl bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute inset-0 rounded-2xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         {uploading ? (
                             <Loader2 className="w-5 h-5 text-white animate-spin" />
                         ) : (
@@ -72,16 +88,37 @@ export default function AgentProfileClient({ initialProfile }: { initialProfile:
                     </div>
                     <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
                 </div>
-                <div>
+
+                <div className="flex-1 w-full space-y-2">
                     <h3 className="font-bold text-slate-900 text-lg">{profile.name || 'Your Name'}</h3>
-                    <p className="text-sm text-slate-500">{profile.company || 'Your Company'}</p>
-                    <button
-                        onClick={() => fileRef.current?.click()}
-                        className="mt-2 text-xs font-bold text-[#853953] hover:text-[#853953]/90 flex items-center gap-1.5"
-                    >
-                        <Camera className="w-3.5 h-3.5" />
-                        {imageUrl ? 'Change Photo' : 'Upload Photo'}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={() => fileRef.current?.click()}
+                            className="text-xs font-bold text-white bg-[#853953] hover:bg-[#853953]/90 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                            <Camera className="w-3.5 h-3.5" />
+                            {imageUrl ? 'Choose New Photo' : 'Upload Photo'}
+                        </button>
+                        {imageUrl && (
+                            <button
+                                type="button"
+                                onClick={() => setImageUrl('')}
+                                className="text-xs font-bold text-slate-500 hover:text-red-600 transition-colors cursor-pointer"
+                            >
+                                Remove Photo
+                            </button>
+                        )}
+                    </div>
+                    <div className="pt-1">
+                        <input
+                            type="text"
+                            value={imageUrl}
+                            onChange={(e) => setImageUrl(e.target.value)}
+                            placeholder="Or paste an image URL (e.g. https://...)"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:ring-2 focus:ring-[#853953]/20 outline-none"
+                        />
+                    </div>
                 </div>
             </div>
 
