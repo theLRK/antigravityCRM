@@ -267,6 +267,38 @@ export async function addLeadNote(leadId: string, noteText: string) {
     revalidatePath('/leads');
 }
 
+export async function rescoreLeadAction(leadId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const lead = await prisma.lead.findFirst({
+        where: { id: leadId, assignedAgentId: user.id }
+    });
+    if (!lead) throw new Error("Lead not found or unauthorized");
+
+    const scoreRecord = await processScoreForLead(lead.id, {
+        id: lead.id,
+        firstName: lead.firstName,
+        lastName: lead.lastName,
+        email: lead.email,
+        phone: lead.phone,
+        timeline: lead.moveTimeline,
+        budgetMin: lead.budgetMin,
+        budgetMax: lead.budgetMax,
+        financingStatus: lead.financing,
+        source: lead.source || 'Manual Entry',
+        motivation: lead.notes,
+        propertyType: lead.propertyType,
+        customLocation: lead.customLocation,
+        preferredAreas: lead.preferredAreas
+    });
+
+    revalidatePath('/leads');
+    revalidatePath('/dashboard');
+    return { success: true, score: scoreRecord };
+}
+
 async function seedPlaceholderLeads() {
     const dummyLeads = [
         {

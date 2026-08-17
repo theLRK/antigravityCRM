@@ -502,13 +502,61 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                         </div>
 
                                         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><BrainCircuit className="w-4 h-4 text-[#853953]" /> AI Score & Details</h3>
-                                            <p className="text-sm font-medium text-slate-700 bg-[#853953]/5 p-3 rounded-lg border border-[#853953]/10 mb-4">&ldquo;{reasoning?.reasoningSummary || 'Awaiting AI analysis...'}&rdquo;</p>
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                                    <BrainCircuit className="w-4 h-4 text-[#853953]" /> AI Score & Evaluation Rationale
+                                                </h3>
+                                                <button
+                                                    type="button"
+                                                    disabled={isSaving}
+                                                    onClick={async () => {
+                                                        setIsSaving(true);
+                                                        try {
+                                                            const { rescoreLeadAction } = await import('../actions');
+                                                            await rescoreLeadAction(lead.id);
+                                                            toast.success('AI Lead Score recalculated successfully!');
+                                                        } catch (e: any) {
+                                                            toast.error(e?.message || 'Failed to rescore lead');
+                                                        } finally {
+                                                            setIsSaving(false);
+                                                        }
+                                                    }}
+                                                    className="text-xs font-bold text-[#853953] bg-[#853953]/5 hover:bg-[#853953]/10 px-3 py-1.5 rounded-lg border border-[#853953]/20 flex items-center gap-1.5 transition-colors cursor-pointer"
+                                                >
+                                                    <Zap className="w-3.5 h-3.5" /> Re-Score AI Lead
+                                                </button>
+                                            </div>
+
+                                            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
+                                                <div className="text-center px-3 py-2 bg-white rounded-xl border border-slate-200 shadow-sm">
+                                                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">AI Score</span>
+                                                    <span className="text-2xl font-black text-[#853953]">{scoreObj?.finalScore ?? lead.confidenceScore ?? 50}%</span>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                                            (scoreObj?.likelihoodLabel || 'Warm') === 'Hot' ? 'bg-red-100 text-red-700' :
+                                                            (scoreObj?.likelihoodLabel || 'Warm') === 'Warm' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'
+                                                        }`}>
+                                                            {scoreObj?.likelihoodLabel || 'Warm'} Intent
+                                                        </span>
+                                                        <span className="text-xs text-slate-500 font-medium">Confidence: {lead.confidenceLevel || scoreObj?.confidenceLevel || 'High'}</span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-600 font-medium">
+                                                        {scoreObj?.suggestedAction || 'Reach out to discuss requirements and preferred locations.'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-sm font-medium text-slate-700 bg-[#853953]/5 p-3 rounded-lg border border-[#853953]/10 mb-4">
+                                                &ldquo;{reasoning?.reasoningSummary || reasoning?.llmReasoning || 'Lead intent evaluated high based on preference parameters.'}&rdquo;
+                                            </p>
                                             
                                             <dl className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm border-t border-slate-100 pt-4">
                                                 <div><dt className="text-slate-500 font-medium">Financing</dt><dd className="text-slate-900 font-bold capitalize mt-0.5">{lead.financing?.replace('_', ' ') || 'Unknown'}</dd></div>
                                                 {lead.preApproval && <div><dt className="text-slate-500 font-medium">Pre-Approved</dt><dd className="text-green-600 font-bold flex items-center gap-1 mt-0.5"><ShieldCheck className="w-4 h-4" /> Verified</dd></div>}
-                                                {(lead.budgetMin || lead.budgetMax) && <div><dt className="text-slate-500 font-medium">Budget</dt><dd className="text-slate-900 font-bold mt-0.5">{lead.currency}{lead.budgetMin?.toLocaleString() || '0'} - {lead.budgetMax?.toLocaleString() || '+'}</dd></div>}
+                                                {(lead.budgetMin || lead.budgetMax) && <div><dt className="text-slate-500 font-medium">Budget</dt><dd className="text-slate-900 font-bold mt-0.5">{lead.currency || '$'}{lead.budgetMin?.toLocaleString() || '0'} - {lead.budgetMax?.toLocaleString() || '+'}</dd></div>}
+                                                {lead.moveTimeline && <div><dt className="text-slate-500 font-medium">Move Timeline</dt><dd className="text-slate-900 font-bold mt-0.5">{lead.moveTimeline}</dd></div>}
                                             </dl>
                                         </div>
                                     </div>
