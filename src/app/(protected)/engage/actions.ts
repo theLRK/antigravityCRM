@@ -197,7 +197,7 @@ export async function sendManualEmailAction(leadId: string, subject: string, bod
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    await sendUnifiedEmail({
+    const result = await sendUnifiedEmail({
         leadId,
         agentId: user.id,
         subject,
@@ -207,7 +207,7 @@ export async function sendManualEmailAction(leadId: string, subject: string, bod
     });
 
     revalidatePath('/engage');
-    return { success: true };
+    return result || { success: true };
 }
 
 export async function markTaskComplete(taskId: string) {

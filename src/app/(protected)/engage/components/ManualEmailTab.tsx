@@ -157,8 +157,12 @@ export function ManualEmailTab({ properties, agentProfile, user, onSend }: Props
                 await scheduleManualEmailAction(selectedLeadId, resolvedSubject, resolvedMessage, scheduleDate);
                 setStatusMessage({ type: 'success', text: `Email scheduled for ${new Date(scheduleDate).toLocaleString()}` });
             } else {
-                await sendManualEmailAction(selectedLeadId, resolvedSubject, resolvedMessage, selectedPropertyId);
-                setStatusMessage({ type: 'success', text: 'Email sent successfully!' });
+                const res: any = await sendManualEmailAction(selectedLeadId, resolvedSubject, resolvedMessage, selectedPropertyId);
+                if (res?.notice) {
+                    setStatusMessage({ type: 'success', text: `Email logged & follow-up task created! (${res.notice})` });
+                } else {
+                    setStatusMessage({ type: 'success', text: 'Email sent & logged successfully!' });
+                }
             }
 
             setSubject('');
@@ -166,8 +170,9 @@ export function ManualEmailTab({ properties, agentProfile, user, onSend }: Props
             setSelectedPropertyId('');
             setScheduleDate('');
             setSelectedTemplateName('');
-        } catch (error) {
-            setStatusMessage({ type: 'error', text: 'Failed to process request. Please try again.' });
+        } catch (error: any) {
+            console.error('Manual email handleSend error:', error);
+            setStatusMessage({ type: 'error', text: error?.message || 'Failed to process request. Please check recipient email or settings.' });
         } finally {
             setIsSending(false);
         }

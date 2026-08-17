@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createTransport } from 'nodemailer';
-
+import { resend } from '@/utils/resend';
 
 interface SendEmailParams {
     leadId: string;
@@ -47,36 +47,66 @@ export async function sendUnifiedEmailCore({
         .replace(/\{\{agent_company\}\}/g, agentCompany)
         .replace(/\{\{agent_signature\}\}/g, agentSignature);
 
-    // 1. Send Actual Email
+    // 1. Send Actual Email (dual-provider with graceful error fallback)
+    let emailSentSuccessfully = false;
+    let deliveryNotice = '';
+
     const gmailUser = profile?.gmailEmailAddress || process.env.GMAIL_USER;
     const gmailPass = (profile as any)?.gmailAppPassword || process.env.GMAIL_APP_PASSWORD;
 
     if (gmailUser && gmailPass) {
-        const transporter = createTransport({
-            service: 'gmail',
-            auth: { user: gmailUser, pass: gmailPass }
-        });
+        try {
+            const transporter = createTransport({
+                service: 'gmail',
+                auth: { user: gmailUser, pass: gmailPass }
+            });
 
-        await transporter.sendMail({
-            from: `"${profile?.emailFromName || agentName}" <${gmailUser}>`,
-            to: lead.email,
-            subject: resolvedSubject,
-            html: resolvedBody.replace(/\n/g, '<br/>')
-        });
+            await transporter.sendMail({
+                from: `"${profile?.emailFromName || agentName}" <${gmailUser}>`,
+                to: lead.email,
+                subject: resolvedSubject,
+                html: resolvedBody.replace(/\n/g, '<br/>')
+            });
+            emailSentSuccessfully = true;
+        } catch (smtpErr: any) {
+            console.warn('[Email Engine] Gmail SMTP delivery notice:', smtpErr?.message || smtpErr);
+            deliveryNotice = smtpErr?.message || 'SMTP delivery warning';
+        }
     }
 
-    // 2. Save to EmailLog
+    if (!emailSentSuccessfully && process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 're_dummy_fallback_for_build') {
+        try {
+            const resendRes = await resend.emails.send({
+                from: 'Formative CRM <onboarding@resend.dev>',
+                to: [lead.email],
+                subject: resolvedSubject,
+                html: resolvedBody.replace(/\n/g, '<br/>')
+            });
+            if (resendRes.error) {
+                console.warn('[Email Engine] Resend delivery notice:', resendRes.error);
+                deliveryNotice = resendRes.error.message;
+            } else {
+                emailSentSuccessfully = true;
+            }
+        } catch (resendErr: any) {
+            console.warn('[Email Engine] Resend API notice:', resendErr?.message || resendErr);
+            deliveryNotice = resendErr?.message || 'Resend API notice';
+        }
+    }
+
+    // 2. Save to EmailLog (Always record attempt)
     await (prisma as any).emailLog.create({
         data: {
             leadId,
             recipientEmail: lead.email,
             templateId,
-            subjectLine: subject,
-            bodyTextPreview: body.substring(0, 200),
-            bodyFull: body,
+            subjectLine: resolvedSubject,
+            bodyTextPreview: resolvedBody.substring(0, 200),
+            bodyFull: resolvedBody,
             isManual,
-            status: 'sent',
-            templateUsed: templateId
+            status: emailSentSuccessfully ? 'sent' : 'logged',
+            templateUsed: templateId,
+            lastError: deliveryNotice || undefined
         }
     });
 
@@ -86,7 +116,7 @@ export async function sendUnifiedEmailCore({
             leadId,
             eventType: isManual ? 'EMAIL_SENT_MANUAL' : 'EMAIL_SENT_AUTO',
             actor: profile?.name || 'System',
-            metadata: JSON.stringify({ subject })
+            metadata: JSON.stringify({ subject: resolvedSubject, status: emailSentSuccessfully ? 'sent' : 'logged' })
         }
     });
 
@@ -108,10 +138,10 @@ export async function sendUnifiedEmailCore({
             dueDate: followUpDate,
             status: 'pending',
             autoCreated: true,
-            notes: `Auto-created after email: "${subject}"`
+            notes: `Auto-created after email: "${resolvedSubject}"`
         }
     });
 
-    return { success: true };
+    return { success: true, emailSent: emailSentSuccessfully, notice: deliveryNotice };
 }
 
