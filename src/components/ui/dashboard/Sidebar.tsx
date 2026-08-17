@@ -17,7 +17,7 @@ import {
 import { Logo } from '@/components/ui/Logo';
 import { usePresenterMode } from '@/components/ui/PresenterModeContext';
 
-export function Sidebar({ user }: { user: any }) {
+export function Sidebar({ user, avatarUrl }: { user: any, avatarUrl?: string }) {
     const pathname = usePathname();
     const { isPresenterMode, togglePresenterMode } = usePresenterMode();
     const meta = user?.user_metadata || {};
@@ -26,6 +26,7 @@ export function Sidebar({ user }: { user: any }) {
     
     const firstName = meta.first_name || (nameParts.length > 0 ? nameParts[0] : '') || 'Agent';
     const lastName = meta.last_name || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '') || '';
+    const displayAvatar = avatarUrl || meta.avatar_url || meta.picture || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100&h=100";
 
     const navLinks = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -101,7 +102,7 @@ export function Sidebar({ user }: { user: any }) {
                         <div className="relative shrink-0">
                             <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                                 <img
-                                    src={meta.avatar_url || meta.picture || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100&h=100"}
+                                    src={displayAvatar}
                                     alt="User avatar"
                                     className="w-full h-full object-cover grayscale-[0.2] transition-all group-hover:grayscale-0"
                                 />

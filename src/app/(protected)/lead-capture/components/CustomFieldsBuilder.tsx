@@ -45,8 +45,33 @@ export function CustomFieldsBuilder({ formId, initialFieldsJson }: CustomFieldsB
         setFields(prev => [...prev, newField]);
     };
 
+    // Helper to persist fields directly
+    const saveFieldsToDb = async (targetFields: CustomField[]) => {
+        setIsPending(true);
+        setIsSuccess(false);
+
+        const sanitizedFields = targetFields.map(f => {
+            if ((f.type === 'dropdown' || f.type === 'checkbox') && f.options) {
+                return { ...f, options: f.options.filter(o => o.trim() !== '') };
+            }
+            return f;
+        });
+
+        try {
+            await updateCustomFields(formId, JSON.stringify(sanitizedFields));
+            setIsSuccess(true);
+            setTimeout(() => setIsSuccess(false), 3000);
+        } catch (error) {
+            console.error("Failed to save custom fields", error);
+        } finally {
+            setIsPending(false);
+        }
+    };
+
     const removeField = (id: string) => {
-        setFields(prev => prev.filter(f => f.id !== id));
+        const nextFields = fields.filter(f => f.id !== id);
+        setFields(nextFields);
+        saveFieldsToDb(nextFields);
     };
 
     const updateField = (id: string, updates: Partial<CustomField>) => {
@@ -70,34 +95,17 @@ export function CustomFieldsBuilder({ formId, initialFieldsJson }: CustomFieldsB
     };
 
     const removeDropdownOption = (fieldId: string, index: number) => {
-        setFields(prev => prev.map(f => {
+        const nextFields = fields.map(f => {
             if (f.id !== fieldId || !f.options) return f;
             return { ...f, options: f.options.filter((_, i) => i !== index) };
-        }));
+        });
+        setFields(nextFields);
+        saveFieldsToDb(nextFields);
     };
 
-    // Save to Database via Server Action
-    const handleSave = async () => {
-        setIsPending(true);
-        setIsSuccess(false);
-
-        // Sanitize before saving (e.g., remove empty options)
-        const sanitizedFields = fields.map(f => {
-            if ((f.type === 'dropdown' || f.type === 'checkbox') && f.options) {
-                return { ...f, options: f.options.filter(o => o.trim() !== '') };
-            }
-            return f;
-        });
-
-        try {
-            await updateCustomFields(formId, JSON.stringify(sanitizedFields));
-            setIsSuccess(true);
-            setTimeout(() => setIsSuccess(false), 3000);
-        } catch (error) {
-            console.error("Failed to save custom fields", error);
-        } finally {
-            setIsPending(false);
-        }
+    // Manual Save Action
+    const handleSave = () => {
+        saveFieldsToDb(fields);
     };
 
     return (
@@ -226,7 +234,7 @@ export function CustomFieldsBuilder({ formId, initialFieldsJson }: CustomFieldsB
             <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end">
                 <button
                     onClick={handleSave}
-                    disabled={isPending || fields.length === 0}
+                    disabled={isPending}
                     className="inline-flex items-center rounded-md bg-[#853953] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#853953]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#853953] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
