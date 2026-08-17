@@ -10,7 +10,10 @@ import RecommendedPropertiesTab from '@/components/ui/leads/RecommendedPropertie
 import LeadTasksList from './LeadTasksList';
 import toast from 'react-hot-toast';
 
+import { usePresenterMode } from '@/components/ui/PresenterModeContext';
+
 export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { lead: any, onClose: () => void, onStatusChange: (id: string, stage: string) => void, onDelete: (id: string) => void }) {
+    const { isPresenterMode } = usePresenterMode();
     const [noteText, setNoteText] = useState('');
     const [deleteStep, setDeleteStep] = useState(0);
     const [activeTab, setActiveTab] = useState<'overview' | 'timeline' | 'tasks' | 'notes' | 'conversation' | 'properties'>('overview');
@@ -530,27 +533,34 @@ export function LeadDetailDrawer({ lead, onClose, onStatusChange, onDelete }: { 
                                             <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
                                                 <div className="text-center px-3 py-2 bg-white rounded-xl border border-slate-200 shadow-sm">
                                                     <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">AI Score</span>
-                                                    <span className="text-2xl font-black text-[#853953]">{scoreObj?.finalScore ?? lead.confidenceScore ?? 50}%</span>
+                                                    <span className="text-2xl font-black text-[#853953]">
+                                                        {isPresenterMode ? '•••' : `${scoreObj?.finalScore ?? lead.confidenceScore ?? 50}%`}
+                                                    </span>
                                                 </div>
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                                            isPresenterMode ? 'bg-amber-100 text-amber-800' :
                                                             (scoreObj?.likelihoodLabel || 'Warm') === 'Hot' ? 'bg-red-100 text-red-700' :
                                                             (scoreObj?.likelihoodLabel || 'Warm') === 'Warm' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'
                                                         }`}>
-                                                            {scoreObj?.likelihoodLabel || 'Warm'} Intent
+                                                            {isPresenterMode ? '🔒 Presenter Mode' : `${scoreObj?.likelihoodLabel || 'Warm'} Intent`}
                                                         </span>
-                                                        <span className="text-xs text-slate-500 font-medium">Confidence: {lead.confidenceLevel || scoreObj?.confidenceLevel || 'High'}</span>
+                                                        <span className="text-xs text-slate-500 font-medium">
+                                                            Confidence: {isPresenterMode ? '•••' : (lead.confidenceLevel || scoreObj?.confidenceLevel || 'High')}
+                                                        </span>
                                                     </div>
                                                     <p className="text-xs text-slate-600 font-medium">
-                                                        {scoreObj?.suggestedAction || 'Reach out to discuss requirements and preferred locations.'}
+                                                        {isPresenterMode ? 'Internal AI sales action masked for live screen share.' : (scoreObj?.suggestedAction || 'Reach out to discuss requirements and preferred locations.')}
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            <p className="text-sm font-medium text-slate-700 bg-[#853953]/5 p-3 rounded-lg border border-[#853953]/10 mb-4">
-                                                &ldquo;{reasoning?.reasoningSummary || reasoning?.llmReasoning || 'Lead intent evaluated high based on preference parameters.'}&rdquo;
-                                            </p>
+                                            {!isPresenterMode && (
+                                                <p className="text-sm font-medium text-slate-700 bg-[#853953]/5 p-3 rounded-lg border border-[#853953]/10 mb-4">
+                                                    &ldquo;{reasoning?.reasoningSummary || reasoning?.llmReasoning || 'Lead intent evaluated high based on preference parameters.'}&rdquo;
+                                                </p>
+                                            )}
                                             
                                             <dl className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm border-t border-slate-100 pt-4">
                                                 <div><dt className="text-slate-500 font-medium">Financing</dt><dd className="text-slate-900 font-bold capitalize mt-0.5">{lead.financing?.replace('_', ' ') || 'Unknown'}</dd></div>

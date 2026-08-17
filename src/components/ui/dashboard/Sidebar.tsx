@@ -10,13 +10,16 @@ import {
     Send,
     Globe,
     Shield,
+    Eye,
+    EyeOff,
     LogOut,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
-
+import { usePresenterMode } from '@/components/ui/PresenterModeContext';
 
 export function Sidebar({ user }: { user: any }) {
     const pathname = usePathname();
+    const { isPresenterMode, togglePresenterMode } = usePresenterMode();
     const meta = user?.user_metadata || {};
     const fullName = meta.full_name || meta.name || '';
     const nameParts = fullName ? fullName.trim().split(' ') : [];
@@ -67,6 +70,27 @@ export function Sidebar({ user }: { user: any }) {
                         );
                     })}
                 </nav>
+
+                {/* Presenter Privacy Mode Toggle */}
+                <button
+                    type="button"
+                    onClick={togglePresenterMode}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 mt-6 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                        isPresenterMode
+                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-800'
+                            : 'bg-slate-100/80 border-slate-200 text-slate-600 hover:bg-slate-200/60'
+                    }`}
+                    title="Mask internal AI scores & sales likelihood during client presentations"
+                >
+                    <span className="flex items-center gap-2">
+                        <Shield className="w-3.5 h-3.5" />
+                        Presenter Mode
+                    </span>
+                    <span className="flex items-center gap-1 font-mono text-[10px]">
+                        {isPresenterMode ? <EyeOff className="w-3.5 h-3.5 text-amber-600" /> : <Eye className="w-3.5 h-3.5 text-slate-400" />}
+                        {isPresenterMode ? 'ON' : 'OFF'}
+                    </span>
+                </button>
             </div>
 
 

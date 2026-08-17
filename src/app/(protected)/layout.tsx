@@ -4,6 +4,8 @@ import { Sidebar } from '@/components/ui/dashboard/Sidebar';
 import { prisma } from '@/lib/prisma';
 import OnboardingWizard from '@/components/ui/OnboardingWizard';
 
+import { PresenterModeProvider } from '@/components/ui/PresenterModeContext';
+
 export default async function DashboardLayout({
     children,
 }: {
@@ -51,26 +53,27 @@ export default async function DashboardLayout({
     const avatarUrl: string = meta.avatar_url || meta.picture || '';
 
     return (
-        <div className="bg-[#F3F4F4] min-h-screen text-[#2C2C2C] font-sans selection:bg-[#853953]/10 selection:text-[#853953] flex">
-            {/* Global Left Sidebar Navigation */}
-            <Sidebar user={user!} />
+        <PresenterModeProvider>
+            <div className="bg-[#F3F4F4] min-h-screen text-[#2C2C2C] font-sans selection:bg-[#853953]/10 selection:text-[#853953] flex">
+                {/* Global Left Sidebar Navigation */}
+                <Sidebar user={user!} />
 
-            {/* Main Content Pane */}
-            <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-                <div className="p-8 lg:p-12">
-                     {children}
+                {/* Main Content Pane */}
+                <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+                    <div className="p-8 lg:p-12">
+                         {children}
+                    </div>
                 </div>
+
+                {/* Onboarding Wizard — shown automatically for new users */}
+                {isNewUser && (
+                    <OnboardingWizard
+                        userName={firstName}
+                        userLastName={lastName}
+                        userAvatar={avatarUrl}
+                    />
+                )}
             </div>
-
-            {/* Onboarding Wizard — shown automatically for new users */}
-            {isNewUser && (
-                <OnboardingWizard
-                    userName={firstName}
-                    userLastName={lastName}
-                    userAvatar={avatarUrl}
-                />
-            )}
-        </div>
-    )
-
+        </PresenterModeProvider>
+    );
 }
