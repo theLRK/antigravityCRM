@@ -181,7 +181,10 @@ export function LeadCaptureEmailTemplates({
     initialAgentProfile
 }: LeadCaptureEmailTemplatesProps) {
     const [autoSend, setAutoSend] = useState(initialAutoSend);
-    const [fromName, setFromName] = useState(initialAgentProfile?.emailFromName || '');
+    const agentDisplayName = initialAgentProfile?.name 
+        ? (initialAgentProfile?.company ? `${initialAgentProfile.name} — ${initialAgentProfile.company}` : initialAgentProfile.name)
+        : 'Your Name (configured in Account Profile)';
+
     const [hotSubject, setHotSubject] = useState(initialAgentProfile?.emailTemplateHotSubject || DEFAULT_HOT.subject);
     const [hotBody, setHotBody] = useState(initialAgentProfile?.emailTemplateHotBody || DEFAULT_HOT.body);
     const [warmSubject, setWarmSubject] = useState(initialAgentProfile?.emailTemplateWarmSubject || DEFAULT_WARM.subject);
@@ -196,7 +199,7 @@ export function LeadCaptureEmailTemplates({
         try {
             // 1. Save templates on AgentProfile
             await saveEmailTemplates({
-                fromName,
+                fromName: initialAgentProfile?.name ? agentDisplayName : undefined,
                 hotSubject, hotBody,
                 warmSubject, warmBody,
                 coldSubject, coldBody
@@ -248,19 +251,20 @@ export function LeadCaptureEmailTemplates({
                 </button>
             </div>
 
-            {/* Sender Name */}
-            <div className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 px-6 py-5">
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
-                    Sender Name (Appears in Lead's Inbox)
-                </label>
-                <p className="text-xs text-slate-500 mb-3">This displays as the "From" sender name when emails are dispatched.</p>
-                <input
-                    type="text"
-                    value={fromName}
-                    onChange={e => setFromName(e.target.value)}
-                    placeholder="e.g. John Doe — Formative Realty"
-                    className="w-full max-w-lg px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#853953]/20 focus:border-[#853953] outline-none font-semibold text-slate-900"
-                />
+            {/* Sender Identity Notification Badge */}
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-[#853953]/10 text-[#853953] flex items-center justify-center font-bold text-xs shrink-0">
+                        From
+                    </div>
+                    <div>
+                        <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 block">Sender Name & Identity</span>
+                        <p className="text-xs font-bold text-slate-800">{agentDisplayName}</p>
+                    </div>
+                </div>
+                <span className="text-[11px] text-slate-500 font-medium">
+                    Automatically synced from your <a href="/account" className="text-[#853953] font-bold hover:underline">Account Profile</a>
+                </span>
             </div>
 
             {/* 3 Tier Template Cards */}
