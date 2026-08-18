@@ -9,30 +9,42 @@ async function buildTransporter(agentId?: string) {
     let gmailUser: string | undefined;
     let gmailAppPassword: string | undefined;
     let fromName: string | undefined;
+    let replyToEmail: string | undefined;
+    let isCustomInbox = false;
 
-    // Try to load credentials from AgentProfile if an agentId is passed
+    // 1. Try to load personal credentials from AgentProfile
     if (agentId) {
         const profile = await prisma.agentProfile.findUnique({
             where: { agentId }
         });
 
+        const agentUser = await prisma.agentUser.findFirst({
+            where: { supabaseId: agentId }
+        });
+
+        if (profile?.name) {
+            fromName = profile.company ? `${profile.name} — ${profile.company}` : profile.name;
+        } else if (profile?.emailFromName) {
+            fromName = profile.emailFromName;
+        }
+
+        replyToEmail = profile?.gmailEmailAddress || agentUser?.email || undefined;
+
         if (profile?.gmailEmailAddress && profile?.gmailAppPassword) {
             gmailUser = profile.gmailEmailAddress;
             gmailAppPassword = profile.gmailAppPassword;
-            fromName = profile.name 
-                ? (profile.company ? `${profile.name} — ${profile.company}` : profile.name)
-                : (profile.emailFromName || undefined);
-            console.log(`[EmailService] Using credentials for agent ${agentId}: ${gmailUser} (${fromName})`);
+            isCustomInbox = true;
+            console.log(`[EmailService] Using personal Gmail for agent ${agentId}: ${gmailUser} (${fromName})`);
         }
     }
 
-    // Fallback to system-level .env credentials
+    // 2. Fallback to system-level built-in Gmail credentials
     if (!gmailUser || !gmailAppPassword) {
         gmailUser = process.env.GMAIL_USER;
         gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
 
         if (gmailUser && gmailAppPassword) {
-            console.log(`[EmailService] Using system .env Gmail credentials: ${gmailUser}`);
+            console.log(`[EmailService] Using built-in system Gmail sender: ${gmailUser} (Reply-To: ${replyToEmail || 'System'})`);
         }
     }
 
@@ -40,13 +52,19 @@ async function buildTransporter(agentId?: string) {
         return null;
     }
 
+    const fromHeader = isCustomInbox
+        ? (fromName ? `"${fromName}" <${gmailUser}>` : `"Formative Real Estate" <${gmailUser}>`)
+        : (fromName ? `"${fromName} (via Formative)" <${gmailUser}>` : `"Formative Real Estate" <${gmailUser}>`);
+
     return {
         transporter: nodemailer.createTransport({
             service: "gmail",
             auth: { user: gmailUser, pass: gmailAppPassword }
         }),
-        from: fromName ? `"${fromName}" <${gmailUser}>` : `"Formative CRM" <${gmailUser}>`,
-        senderEmail: gmailUser
+        from: fromHeader,
+        replyTo: replyToEmail || gmailUser,
+        senderEmail: gmailUser,
+        isCustomInbox
     };
 }
 
@@ -58,22 +76,21 @@ export async function sendLeadEmail(
 ): Promise<boolean> {
     const transport = await buildTransporter(agentId);
 
-    // We don't have the leadId directly here easily, but we can log securely to the console
     if (!transport) {
-        console.warn(`[EmailService] No Gmail credentials found. Skipping email to ${to}.`);
-        console.warn(`[EmailService] Go to Settings → Email Connection to configure your sending email.`);
+        console.warn(`[EmailService] No Gmail credentials found (personal or system). Skipping email to ${to}.`);
         return false;
     }
 
     try {
-        console.log(`[EmailService] Sending email to ${to} from ${transport.senderEmail}...`);
+        console.log(`[EmailService] Sending automated email to ${to} from ${transport.from} (Reply-To: ${transport.replyTo})...`);
         const info = await transport.transporter.sendMail({
             from: transport.from,
+            replyTo: transport.replyTo,
             to,
             subject,
             html
         });
-        console.log(`[EmailService] ✅ Email sent successfully: ${info.messageId}`);
+        console.log(`[EmailService] ✅ Email dispatched successfully: ${info.messageId}`);
         return true;
     } catch (error: any) {
         console.error(`[EmailService] ❌ Email sending failed:`, error.message || error);

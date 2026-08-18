@@ -108,27 +108,31 @@ export default function EmailConnectionCard({
 
             {/* Status Banner */}
             {!isConnected && (
-                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                    <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl shadow-xs">
+                    <div className="w-8 h-8 rounded-xl bg-[#853953]/10 text-[#853953] flex items-center justify-center shrink-0 mt-0.5">
+                        <Mail className="w-4 h-4 text-[#853953]" />
+                    </div>
                     <div>
-                        <p className="text-sm font-semibold text-amber-800">No email account connected</p>
-                        <p className="text-xs text-amber-700 mt-0.5">Fill in your Gmail details below to enable automated lead emails.</p>
+                        <p className="text-sm font-bold text-slate-900">Built-in System Dispatch Active</p>
+                        <p className="text-xs text-slate-600 mt-0.5 leading-relaxed font-medium">
+                            Automated emails are active and sending on your behalf with lead replies routed to your account email. Connect your personal Gmail below for direct white-label inbox sending.
+                        </p>
                     </div>
                 </div>
             )}
 
             {/* Connection Status Card */}
             {isConnected && (
-                <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
                     <div className="flex items-center gap-3">
                         <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_6px_2px_rgba(16,185,129,0.4)]" />
                         <div>
                             <p className="text-sm font-bold text-emerald-900">{initialEmail || email}</p>
-                            <p className="text-xs text-emerald-700">Connected — automated lead emails are active</p>
+                            <p className="text-xs text-emerald-700">Connected — emails send directly through your personal Gmail inbox</p>
                         </div>
                     </div>
                     <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300">
-                        Active
+                        Custom Inbox
                     </span>
                 </div>
             )}
