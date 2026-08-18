@@ -1,5 +1,6 @@
 import { getAgentForm } from './actions';
 import { createClient } from '@/utils/supabase/server';
+import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { Link as LinkIcon, Users, CheckCircle2, QrCode, ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -8,14 +9,19 @@ import { ShareLinkBox } from './components/ShareLinkBox';
 
 export default async function LeadCapturePage() {
     const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
     const { data: { user } } = await supabase.auth.getUser();
 
-    const formConfig = await getAgentForm();
-    const totalSubmissions = formConfig.leads?.length || 0;
+    if (!session || !user) {
+        redirect('/sign-in');
+    }
 
-    const agentProfile = user ? await prisma.agentProfile.findUnique({
+    const formConfig = await getAgentForm();
+    const totalSubmissions = formConfig?.leads?.length || 0;
+
+    const agentProfile = await prisma.agentProfile.findUnique({
         where: { agentId: user.id }
-    }) : null;
+    });
 
     return (
         <main className="flex-1 w-full max-w-7xl mx-auto px-6 sm:px-8 py-10">

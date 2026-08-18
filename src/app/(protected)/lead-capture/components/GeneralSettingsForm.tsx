@@ -24,6 +24,8 @@ export function GeneralSettingsForm({
     currencySymbol
 }: GeneralSettingsFormProps) {
     const [isPending, setIsPending] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [isActive, setIsActive] = useState(initialIsActive);
     const defaultSuccess = "Thank you, {{first_name}}! Our AI matching engine is reviewing available properties matching your criteria.\n\n✉️ You will receive a personalized follow-up in your inbox ({{email}}) in 2–3 minutes.";
     const [customSuccessMessage, setCustomSuccessMessage] = useState(successMessage || defaultSuccess);
 
@@ -46,8 +48,27 @@ export function GeneralSettingsForm({
         setCustomSuccessMessage(prev => prev + ' ' + tag);
     };
 
+    async function handleSubmit(formData: FormData) {
+        setIsPending(true);
+        setIsSuccess(false);
+
+        if (isActive) {
+            formData.append('isActive', 'on');
+        }
+
+        try {
+            await updateFormSettings(formData);
+            setIsSuccess(true);
+            setTimeout(() => setIsSuccess(false), 3000);
+        } catch (error) {
+            console.error("Failed to update form settings", error);
+        } finally {
+            setIsPending(false);
+        }
+    }
+
     // Live preview formatting
-    const previewRender = customSuccessMessage
+    const previewRender = (customSuccessMessage || '')
         .replace(/\{\{first_name\}\}/g, 'Samuel')
         .replace(/\{\{email\}\}/g, 'buyer@gmail.com')
         .replace(/\{\{agent_name\}\}/g, 'Alex Rivera')
