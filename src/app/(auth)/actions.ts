@@ -16,7 +16,7 @@ export async function login(formData: FormData) {
 
     if (error) {
         console.error('[LoginAction] Auth error:', error.message)
-        redirect(`/sign-in?error=${encodeURIComponent('Could not authenticate user')}`)
+        redirect(`/sign-in?error=${encodeURIComponent(error.message || 'Invalid email or password')}`)
     }
 
     revalidatePath('/', 'layout')

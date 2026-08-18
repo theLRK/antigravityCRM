@@ -28,14 +28,12 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      const forwardedHost = request.headers.get('x-forwarded-host') 
-      const isLocalEnv = process.env.NODE_ENV === 'development'
+      const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0].trim()
+      const host = forwardedHost || request.headers.get('host')
+      const protocol = host && host.includes('localhost') ? 'http' : 'https'
 
-      // Important: Handle Netlify Proxy correctly since the internal 'origin' might be different
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+      if (host) {
+        return NextResponse.redirect(`${protocol}://${host}${next}`)
       } else {
         return NextResponse.redirect(`${origin}${next}`)
       }
