@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Sliders, Zap, Shield, HelpCircle } from 'lucide-react';
+import { FileText, Sliders, Zap, Shield, Sparkles, User, Building, Phone, ArrowUpRight } from 'lucide-react';
+import Link from 'next/link';
 import { GeneralSettingsForm } from './GeneralSettingsForm';
 import { CustomFieldsBuilder } from './CustomFieldsBuilder';
 import { LeadCaptureEmailTemplates } from './LeadCaptureEmailTemplates';
@@ -19,6 +20,11 @@ export function LeadCaptureTabs({ formConfig, agentProfile }: LeadCaptureTabsPro
         { id: 'fields', label: '2. Question & Field Builder', icon: Sliders, desc: 'Custom questions & locked scoring fields' },
         { id: 'emails', label: '3. AI Auto-Response & Email Templates', icon: Zap, desc: 'Auto-send toggle & Hot/Warm/Cold templates' }
     ];
+
+    const agentName = agentProfile?.name || 'Your Name';
+    const agentCompany = agentProfile?.company || 'Your Agency / Brokerage';
+    const agentPhone = agentProfile?.phone || 'Your Phone';
+    const agentImageUrl = agentProfile?.imageUrl || '';
 
     return (
         <div className="space-y-8">
@@ -47,26 +53,60 @@ export function LeadCaptureTabs({ formConfig, agentProfile }: LeadCaptureTabsPro
 
             {/* Tab Content 1: Form Basics & Currency */}
             {activeTab === 'general' && (
-                <div className="bg-white shadow-sm ring-1 ring-slate-200 rounded-3xl p-6 sm:p-8">
-                    <div className="border-b border-slate-100 pb-5 mb-6">
-                        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-[#853953]" />
-                            <span>Form Information & Currency Settings</span>
-                        </h3>
-                        <p className="text-xs text-slate-500 mt-1">
-                            Set your form title, public currency denomination (including Nigerian Naira ₦), and greeting text.
-                        </p>
+                <div className="space-y-6">
+                    {/* Live Branding Preview Card */}
+                    <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-700 relative overflow-hidden">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 min-w-0">
+                                <div className="w-14 h-14 rounded-2xl bg-white/10 text-white flex items-center justify-center font-black text-xl shrink-0 overflow-hidden border border-white/20">
+                                    {agentImageUrl ? (
+                                        <img src={agentImageUrl} alt={agentName} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span>{agentName.slice(0, 2).toUpperCase()}</span>
+                                    )}
+                                </div>
+                                <div className="min-w-0 space-y-0.5">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-[10px] font-black uppercase tracking-wider bg-[#853953] text-white px-2 py-0.5 rounded-full">
+                                            Live Form Header Branding
+                                        </span>
+                                    </div>
+                                    <h3 className="text-lg font-black text-white truncate">{agentName}</h3>
+                                    <p className="text-xs text-pink-200/80 font-medium truncate">{agentCompany} {agentPhone && `• ${agentPhone}`}</p>
+                                </div>
+                            </div>
+
+                            <Link
+                                href="/account"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white border border-white/20 transition-colors shrink-0"
+                            >
+                                <span>Edit Profile Branding</span>
+                                <ArrowUpRight className="w-3.5 h-3.5" />
+                            </Link>
+                        </div>
                     </div>
 
-                    <GeneralSettingsForm 
-                        formId={formConfig.id}
-                        title={formConfig.title}
-                        description={formConfig.description || ''}
-                        welcomeMessage={formConfig.welcomeMessage || ''}
-                        successMessage={formConfig.successMessage || ''}
-                        isActive={formConfig.isActive}
-                        currencySymbol={formConfig.currencySymbol || '₦'}
-                    />
+                    <div className="bg-white shadow-sm ring-1 ring-slate-200 rounded-3xl p-6 sm:p-8">
+                        <div className="border-b border-slate-100 pb-5 mb-6">
+                            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-[#853953]" />
+                                <span>Form Information & Currency Settings</span>
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Set your form title, public currency denomination (including Nigerian Naira ₦), and greeting text.
+                            </p>
+                        </div>
+
+                        <GeneralSettingsForm 
+                            formId={formConfig.id}
+                            title={formConfig.title}
+                            description={formConfig.description || ''}
+                            welcomeMessage={formConfig.welcomeMessage || ''}
+                            successMessage={formConfig.successMessage || ''}
+                            isActive={formConfig.isActive}
+                            currencySymbol={formConfig.currencySymbol || '₦'}
+                        />
+                    </div>
                 </div>
             )}
 
@@ -98,7 +138,7 @@ export function LeadCaptureTabs({ formConfig, agentProfile }: LeadCaptureTabsPro
                             These fields power the Formative sub-3s scoring algorithm (Intent, Readiness, Budget alignment):
                         </p>
                         <div className="flex flex-wrap gap-2">
-                            {['First & Last Name', 'Email Address', 'Phone Number', 'Property Type', 'Budget Range (₦)', 'Move Timeline', 'Financing Status', 'Location Preferences'].map(f => (
+                            {['First & Last Name', 'Email Address', 'Phone / WhatsApp', 'Property Category', 'Budget Range (₦)', 'Move Timeline', 'Purchasing Readiness', 'Neighborhood Preferences'].map(f => (
                                 <span key={f} className="inline-flex items-center rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-700 ring-1 ring-slate-200 shadow-xs">
                                     {f}
                                 </span>

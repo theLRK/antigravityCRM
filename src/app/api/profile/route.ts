@@ -29,10 +29,27 @@ export async function PATCH(request: Request) {
         const firstName = nameParts[0] || '';
         const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
+        const emailFromName = fullName ? (company ? `${fullName} — ${company}` : fullName) : null;
+
         const profile = await (prisma.agentProfile as any).upsert({
             where: { agentId: user.id },
-            create: { agentId: user.id, name: fullName || null, phone: phone || null, company: company || null, signature: signature || null, imageUrl: imageUrl || null },
-            update: { name: fullName || null, phone: phone || null, company: company || null, signature: signature || null, imageUrl: imageUrl || undefined }
+            create: { 
+                agentId: user.id, 
+                name: fullName || null, 
+                phone: phone || null, 
+                company: company || null, 
+                signature: signature || null, 
+                imageUrl: imageUrl || null,
+                emailFromName: emailFromName
+            },
+            update: { 
+                name: fullName || null, 
+                phone: phone || null, 
+                company: company || null, 
+                signature: signature || null, 
+                imageUrl: imageUrl || undefined,
+                emailFromName: emailFromName
+            }
         });
 
         // Sync with AgentUser

@@ -48,6 +48,11 @@ export default async function PublicLeadCapturePage({ params }: PageProps) {
         );
     }
 
+    // Fetch agent profile for custom agent/agency branding
+    const agentProfile = await prisma.agentProfile.findUnique({
+        where: { agentId: formConfig.agentId }
+    });
+
     // Pass the configurations downward to the interactive Client Wizard
     return (
         <div className="min-h-screen bg-slate-50 selection:bg-[#853953]/10 selection:text-[#853953]">
@@ -58,8 +63,9 @@ export default async function PublicLeadCapturePage({ params }: PageProps) {
                 welcomeMessage={formConfig.welcomeMessage || ''}
                 successMessage={formConfig.successMessage || ''}
                 customFieldsJson={formConfig.customFields || '[]'}
-                currencySymbol={formConfig.currencySymbol || '$'}
+                currencySymbol={formConfig.currencySymbol || '₦'}
                 locationGroups={locationGroups}
+                agentProfile={agentProfile}
             />
         </div>
     );

@@ -19,8 +19,10 @@ async function buildTransporter(agentId?: string) {
         if (profile?.gmailEmailAddress && profile?.gmailAppPassword) {
             gmailUser = profile.gmailEmailAddress;
             gmailAppPassword = profile.gmailAppPassword;
-            fromName = profile.emailFromName || undefined;
-            console.log(`[EmailService] Using credentials for agent ${agentId}: ${gmailUser}`);
+            fromName = profile.name 
+                ? (profile.company ? `${profile.name} — ${profile.company}` : profile.name)
+                : (profile.emailFromName || undefined);
+            console.log(`[EmailService] Using credentials for agent ${agentId}: ${gmailUser} (${fromName})`);
         }
     }
 
