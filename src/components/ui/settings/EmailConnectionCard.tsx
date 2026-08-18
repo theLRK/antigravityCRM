@@ -146,20 +146,6 @@ export default function EmailConnectionCard({
                 </div>
 
                 <div className="px-6 py-5 space-y-4">
-                    {/* Sender Display Name */}
-                    <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                            Sender Display Name
-                        </label>
-                        <input
-                            type="text"
-                            value={fromName}
-                            onChange={e => setFromName(e.target.value)}
-                            placeholder="e.g. John Smith — Formative Realty"
-                            className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#853953] focus:border-transparent outline-none"
-                        />
-                        <p className="text-xs text-slate-400 mt-1">This is what leads will see as the "From" name in their inbox.</p>
-                    </div>
 
                     {/* Gmail Address */}
                     <div>

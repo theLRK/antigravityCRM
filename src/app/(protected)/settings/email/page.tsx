@@ -60,9 +60,6 @@ export default async function EmailSettingsPage() {
                         <Link href="/settings/email" className="bg-[#853953]/10 text-[#853953] flex items-center px-3 py-2 text-sm font-medium rounded-md">
                             Email Connection
                         </Link>
-                        <Link href="/settings/email-templates" className="text-slate-600 hover:bg-slate-50 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
-                            Email Templates
-                        </Link>
                     </nav>
                 </div>
 

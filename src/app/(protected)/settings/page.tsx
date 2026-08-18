@@ -41,10 +41,6 @@ export default async function SettingsPage() {
                             <Bell className="text-slate-400 group-hover:text-slate-500 flex-shrink-0 -ml-1 mr-3 h-5 w-5" />
                             Email Connection
                         </Link>
-                        <Link href="/settings/email-templates" className="text-slate-900 hover:bg-slate-50 hover:text-slate-900 group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
-                            <Shield className="text-slate-400 group-hover:text-slate-500 flex-shrink-0 -ml-1 mr-3 h-5 w-5" />
-                            Email Templates
-                        </Link>
                     </nav>
                 </div>
 
