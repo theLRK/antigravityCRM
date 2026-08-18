@@ -24,27 +24,34 @@ export function GeneralSettingsForm({
     currencySymbol
 }: GeneralSettingsFormProps) {
     const [isPending, setIsPending] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [isActive, setIsActive] = useState(initialIsActive);
+    const defaultSuccess = "Thank you, {{first_name}}! Our AI matching engine is reviewing available properties matching your criteria.\n\n✉️ You will receive a personalized follow-up in your inbox ({{email}}) in 2–3 minutes.";
+    const [customSuccessMessage, setCustomSuccessMessage] = useState(successMessage || defaultSuccess);
 
-    async function handleSubmit(formData: FormData) {
-        setIsPending(true);
-        setIsSuccess(false);
-
-        if (isActive) {
-            formData.append('isActive', 'on');
+    const presets = [
+        {
+            label: "AI 2-Minute Follow-up (Recommended)",
+            text: "Thank you, {{first_name}}! Our AI matching engine is reviewing available properties matching your criteria.\n\n✉️ You will receive a personalized follow-up in your inbox ({{email}}) in 2–3 minutes."
+        },
+        {
+            label: "Standard Inquiry Confirmation",
+            text: "Thank you, {{first_name}}! We have received your property inquiry. {{agent_name}} will review your criteria and contact you shortly."
+        },
+        {
+            label: "Direct Showing & Tour Notice",
+            text: "Thank you, {{first_name}}! Your request has been received by {{agent_name}} at {{agent_company}}. We are preparing recommendations and will be in touch today."
         }
+    ];
 
-        try {
-            await updateFormSettings(formData);
-            setIsSuccess(true);
-            setTimeout(() => setIsSuccess(false), 3000);
-        } catch (error) {
-            console.error("Failed to update form settings", error);
-        } finally {
-            setIsPending(false);
-        }
-    }
+    const insertTag = (tag: string) => {
+        setCustomSuccessMessage(prev => prev + ' ' + tag);
+    };
+
+    // Live preview formatting
+    const previewRender = customSuccessMessage
+        .replace(/\{\{first_name\}\}/g, 'Samuel')
+        .replace(/\{\{email\}\}/g, 'buyer@gmail.com')
+        .replace(/\{\{agent_name\}\}/g, 'Alex Rivera')
+        .replace(/\{\{agent_company\}\}/g, 'Lekki Luxury Realty');
 
     return (
         <form action={handleSubmit} className="space-y-6">
@@ -77,7 +84,7 @@ export function GeneralSettingsForm({
                 </button>
             </div>
 
-            {/* Title & Short Description */}
+            {/* Title & Currency Format */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label htmlFor="title" className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
@@ -117,6 +124,7 @@ export function GeneralSettingsForm({
                 </div>
             </div>
 
+            {/* Intake Description */}
             <div>
                 <label htmlFor="description" className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
                     Intake Description / Subtitle
@@ -131,34 +139,91 @@ export function GeneralSettingsForm({
                 />
             </div>
 
-            {/* Welcome & Success Messages */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                <div>
-                    <label htmlFor="welcomeMessage" className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                        Welcome Screen Heading
-                    </label>
-                    <input 
-                        type="text" 
-                        name="welcomeMessage" 
-                        id="welcomeMessage" 
-                        defaultValue={welcomeMessage} 
-                        placeholder="e.g. Find Your Dream Property"
-                        className="block w-full rounded-xl border border-slate-200 py-2.5 px-3.5 text-slate-900 shadow-sm focus:border-[#853953] focus:ring-2 focus:ring-[#853953]/20 sm:text-sm font-medium" 
-                    />
+            {/* Welcome Screen Heading */}
+            <div>
+                <label htmlFor="welcomeMessage" className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
+                    Welcome Screen Heading
+                </label>
+                <input 
+                    type="text" 
+                    name="welcomeMessage" 
+                    id="welcomeMessage" 
+                    defaultValue={welcomeMessage} 
+                    placeholder="e.g. Find Your Dream Property"
+                    className="block w-full rounded-xl border border-slate-200 py-2.5 px-3.5 text-slate-900 shadow-sm focus:border-[#853953] focus:ring-2 focus:ring-[#853953]/20 sm:text-sm font-medium" 
+                />
+            </div>
+
+            {/* Post-Submission Customization Section */}
+            <div className="pt-2 space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                        <label htmlFor="successMessage" className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                            Post-Submission Confirmation Card
+                        </label>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                            Customize the confirmation message displayed to clients immediately after submitting the form.
+                        </p>
+                    </div>
+
+                    {/* Quick Presets */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] font-bold text-slate-400">Presets:</span>
+                        {presets.map((preset, idx) => (
+                            <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setCustomSuccessMessage(preset.text)}
+                                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-[#853953]/10 hover:text-[#853953] text-slate-600 transition-colors"
+                            >
+                                {preset.label.split(' ')[0]} {preset.label.split(' ')[1]}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                <div>
-                    <label htmlFor="successMessage" className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                        Post-Submission Thank You Message
-                    </label>
-                    <input 
-                        type="text" 
-                        name="successMessage" 
-                        id="successMessage" 
-                        defaultValue={successMessage} 
-                        placeholder="e.g. Thank you! An agent will reach out shortly."
-                        className="block w-full rounded-xl border border-slate-200 py-2.5 px-3.5 text-slate-900 shadow-sm focus:border-[#853953] focus:ring-2 focus:ring-[#853953]/20 sm:text-sm font-medium" 
-                    />
+                {/* Variable Inserter Chips */}
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-slate-500">Insert tag:</span>
+                    {[
+                        { label: 'Client Name', tag: '{{first_name}}' },
+                        { label: 'Client Email', tag: '{{email}}' },
+                        { label: 'Agent Name', tag: '{{agent_name}}' },
+                        { label: 'Agency / Firm', tag: '{{agent_company}}' }
+                    ].map(v => (
+                        <button
+                            key={v.tag}
+                            type="button"
+                            onClick={() => insertTag(v.tag)}
+                            className="inline-flex items-center gap-1 text-xs font-mono font-medium px-2.5 py-1 rounded-md bg-[#853953]/10 text-[#853953] hover:bg-[#853953]/20 transition-colors"
+                        >
+                            + {v.tag}
+                        </button>
+                    ))}
+                </div>
+
+                <textarea
+                    id="successMessage"
+                    name="successMessage"
+                    rows={4}
+                    value={customSuccessMessage}
+                    onChange={e => setCustomSuccessMessage(e.target.value)}
+                    placeholder="Enter your custom thank you and follow-up message..."
+                    className="block w-full rounded-xl border border-slate-200 py-3 px-3.5 text-slate-900 shadow-sm focus:border-[#853953] focus:ring-2 focus:ring-[#853953]/20 sm:text-sm font-medium leading-relaxed font-sans"
+                />
+
+                {/* Live Client Preview Box */}
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                            Live Client Success Screen Preview
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400">Sample Render</span>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed whitespace-pre-line font-medium shadow-2xs">
+                        {previewRender}
+                    </div>
                 </div>
             </div>
 

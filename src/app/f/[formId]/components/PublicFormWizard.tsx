@@ -161,6 +161,15 @@ export function PublicFormWizard({
     };
 
     if (isSuccess) {
+        const defaultSuccess = "Thank you, {{first_name}}! Our AI matching engine is reviewing available properties matching your criteria.\n\n✉️ You will receive a personalized follow-up in your inbox ({{email}}) in 2–3 minutes.";
+        const rawSuccess = (successMessage && successMessage.trim() !== '') ? successMessage : defaultSuccess;
+        const parsedSuccessMessage = rawSuccess
+            .replace(/\{\{first_name\}\}/g, formData.firstName || 'there')
+            .replace(/\{\{email\}\}/g, formData.email || '')
+            .replace(/\{\{agent_name\}\}/g, agentName)
+            .replace(/\{\{agent_company\}\}/g, agentCompany || '')
+            .replace(/\{\{phone\}\}/g, agentPhone || '');
+
         return (
             <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-[#F3F4F4] via-white to-[#F3F4F4]">
                 <motion.div
@@ -175,17 +184,14 @@ export function PublicFormWizard({
                     <p className="text-sm font-bold text-[#853953] mb-4">
                         {agentName} {agentCompany && `• ${agentCompany}`}
                     </p>
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-left space-y-3 mb-6">
-                        <p className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-left space-y-2 mb-6">
+                        <p className="text-xs font-bold text-slate-900 flex items-center gap-2 mb-1">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>AI Property Evaluation in Progress</span>
+                            <span>Inquiry Confirmation</span>
                         </p>
-                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                            Thank you, <strong className="text-slate-900">{formData.firstName || 'Client'}</strong>. Our AI matching engine is currently analyzing available and off-market properties tailored to your criteria.
-                        </p>
-                        <p className="text-xs text-[#853953] font-bold">
-                            ✉️ You will receive a personalized follow-up in your inbox ({formData.email}) in 2–3 minutes.
-                        </p>
+                        <div className="text-xs text-slate-700 leading-relaxed font-medium whitespace-pre-line">
+                            {parsedSuccessMessage}
+                        </div>
                     </div>
                     {agentPhone && (
                         <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 font-semibold flex items-center justify-center gap-2">
