@@ -70,8 +70,12 @@ export async function GET(request: Request) {
             })
         ];
 
-        // Sort desc
-        feedEvents.sort((a: any, b: any) => b.timestamp.getTime() - a.timestamp.getTime());
+        // Sort desc safely
+        feedEvents.sort((a: any, b: any) => {
+            const timeB = a.timestamp ? new Date(b.timestamp).getTime() : 0;
+            const timeA = b.timestamp ? new Date(a.timestamp).getTime() : 0;
+            return timeB - timeA;
+        });
 
         // Return only the top 'take' items
         return NextResponse.json({ feed: feedEvents.slice(0, take) });

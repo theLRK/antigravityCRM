@@ -64,15 +64,23 @@ export default function TaskCalendar() {
 
     const createTask = async () => {
         if (!newTask.title.trim() || !newTask.leadId) return;
-        await fetch('/api/tasks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...newTask, dueDate: new Date(newTask.dueDate).toISOString() })
-        });
-        setShowNewTask(false);
-        setNewTask({ title: '', taskType: 'Call', dueDate: today.toISOString().split('T')[0], dueTime: '', leadId: '' });
-        setSearchLead('');
-        fetchTasks();
+        try {
+            const dueDateTimeString = newTask.dueTime ? `${newTask.dueDate}T${newTask.dueTime}:00` : `${newTask.dueDate}T09:00:00`;
+            const validDate = new Date(dueDateTimeString);
+            const isoDueDate = isNaN(validDate.getTime()) ? new Date(newTask.dueDate).toISOString() : validDate.toISOString();
+
+            await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...newTask, dueDate: isoDueDate })
+            });
+            setShowNewTask(false);
+            setNewTask({ title: '', taskType: 'Call', dueDate: today.toISOString().split('T')[0], dueTime: '', leadId: '' });
+            setSearchLead('');
+            fetchTasks();
+        } catch (err) {
+            console.error('Failed to create calendar task:', err);
+        }
     };
 
     return (
@@ -153,20 +161,31 @@ export default function TaskCalendar() {
                             />
                             {showLeadDropdown && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                                    {leads.filter(l => 
-                                        `${l.firstName} ${l.lastName}`.toLowerCase().includes(searchLead.toLowerCase()) ||
-                                        l.email.toLowerCase().includes(searchLead.toLowerCase()) ||
-                                        (l.phone && l.phone.includes(searchLead))
-                                    ).map(l => (
-                                        <div 
-                                            key={l.id} 
-                                            className="px-3 py-2 hover:bg-slate-50 cursor-pointer border-t border-slate-50 flex flex-col"
-                                            onClick={() => { setNewTask(p => ({...p, leadId: l.id})); setSearchLead(`${l.firstName} ${l.lastName}`); setShowLeadDropdown(false); }}
-                                        >
-                                            <span className="font-bold text-sm text-slate-800">{l.firstName} {l.lastName}</span>
-                                            <span className="text-xs text-slate-500">{l.email}</span>
-                                        </div>
-                                    ))}
+                                    {leads.filter(l => {
+                                        const name = (l.lead_name || `${l.firstName || ''} ${l.lastName || ''}`).toLowerCase();
+                                        const email = (l.email || l.lead_email || '').toLowerCase();
+                                        const phone = String(l.phone || '');
+                                        const query = searchLead.toLowerCase();
+                                        return name.includes(query) || email.includes(query) || phone.includes(query);
+                                    }).map(l => {
+                                        const displayName = l.lead_name || `${l.firstName || ''} ${l.lastName || ''}`.trim() || 'Lead';
+                                        const displayEmail = l.email || l.lead_email || '';
+                                        const leadId = l.id || l.lead_id;
+                                        return (
+                                            <div 
+                                                key={leadId} 
+                                                className="px-3 py-2 hover:bg-slate-50 cursor-pointer border-t border-slate-50 flex flex-col"
+                                                onClick={() => { 
+                                                    setNewTask(p => ({...p, leadId})); 
+                                                    setSearchLead(displayName); 
+                                                    setShowLeadDropdown(false); 
+                                                }}
+                                            >
+                                                <span className="font-bold text-sm text-slate-800">{displayName}</span>
+                                                <span className="text-xs text-slate-500">{displayEmail} {l.phone ? `• ${l.phone}` : ''}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

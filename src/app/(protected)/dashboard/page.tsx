@@ -91,44 +91,86 @@ export default async function DashboardPage() {
         console.warn('[Dashboard] Auto-claim warning:', claimErr?.message);
     }
 
-    // ---- FETCH REAL CRM METRICS (Optimized) ----
-    const totalLeadsCount = await prisma.lead.count({ where: { assignedAgentId: user.id } });
-    const activeLeadsCount = await prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: { not: 'closed' } } });
-    const closedLeadsCount = await prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: 'closed' } });
-    const conversionRate = totalLeadsCount > 0 ? ((closedLeadsCount / totalLeadsCount) * 100).toFixed(1) : '0.0';
-
-    const highIntentCount = await prisma.lead.count({
-        where: {
-            assignedAgentId: user.id,
-            pipelineStage: 'new',
-            scores: { some: { finalScore: { gte: 80 } } }
-        }
-    });
-
+    // ---- FETCH REAL CRM METRICS (Ultra-Optimized Parallel Batch) ----
     const now = new Date();
-    const overdueCount = await prisma.lead.count({
-        where: {
-            assignedAgentId: user.id,
-            pipelineStage: { not: 'closed' },
-            followUpDate: { lt: now }
-        }
-    });
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-    // Fetch only top priorities for the UI component
-    const priorityLeads = await prisma.lead.findMany({
-        where: {
-            assignedAgentId: user.id,
-            OR: [
-                { pipelineStage: 'new', scores: { some: { finalScore: { gte: 80 } } } },
-                { pipelineStage: { not: 'closed' }, followUpDate: { lt: now } }
-            ]
-        },
-        include: {
-            scores: { orderBy: { createdAt: 'desc' }, take: 1, include: { reasoningBreakdowns: true } }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 5
-    });
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const [
+        totalLeadsCount,
+        activeLeadsCount,
+        closedLeadsCount,
+        highIntentCount,
+        overdueCount,
+        priorityLeads,
+        sentToday,
+        totalSent,
+        openedCount,
+        clickedCount,
+        agentProfile,
+        captureFormCount,
+        recentLeads7d,
+        pipelineLeads
+    ] = await Promise.all([
+        prisma.lead.count({ where: { assignedAgentId: user.id } }),
+        prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: { not: 'closed' } } }),
+        prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: 'closed' } }),
+        prisma.lead.count({
+            where: {
+                assignedAgentId: user.id,
+                pipelineStage: 'new',
+                scores: { some: { finalScore: { gte: 80 } } }
+            }
+        }),
+        prisma.lead.count({
+            where: {
+                assignedAgentId: user.id,
+                pipelineStage: { not: 'closed' },
+                followUpDate: { lt: now }
+            }
+        }),
+        prisma.lead.findMany({
+            where: {
+                assignedAgentId: user.id,
+                OR: [
+                    { pipelineStage: 'new', scores: { some: { finalScore: { gte: 80 } } } },
+                    { pipelineStage: { not: 'closed' }, followUpDate: { lt: now } }
+                ]
+            },
+            include: {
+                scores: { orderBy: { createdAt: 'desc' }, take: 1, include: { reasoningBreakdowns: true } }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 5
+        }),
+        prisma.emailLog.count({
+            where: { 
+                sentAt: { gte: todayStart },
+                lead: { assignedAgentId: user.id }
+            }
+        }),
+        prisma.emailLog.count({ where: { status: 'sent', lead: { assignedAgentId: user.id } } }),
+        prisma.emailLog.count({ where: { NOT: { openedAt: null }, lead: { assignedAgentId: user.id } } }),
+        prisma.emailLog.count({ where: { NOT: { clickedAt: null }, lead: { assignedAgentId: user.id } } }),
+        prisma.agentProfile.findUnique({ where: { agentId: user.id } }),
+        prisma.leadCaptureForm.count({ where: { agentId: user.id } }),
+        prisma.lead.findMany({
+            where: { assignedAgentId: user.id, createdAt: { gte: sevenDaysAgo } },
+            select: { createdAt: true, scores: { select: { finalScore: true }, take: 1, orderBy: { createdAt: 'desc' } } }
+        }),
+        prisma.lead.findMany({
+            where: { assignedAgentId: user.id },
+            select: { pipelineStage: true }
+        })
+    ]);
+
+    const conversionRate = totalLeadsCount > 0 ? ((closedLeadsCount / totalLeadsCount) * 100).toFixed(1) : '0.0';
+    const openRate = totalSent > 0 ? Math.round((openedCount / totalSent) * 100) : 0;
+    const clickRate = totalSent > 0 ? Math.round((clickedCount / totalSent) * 100) : 0;
 
     const todayPriorities = priorityLeads.map(l => ({
         ...l,
@@ -138,65 +180,37 @@ export default async function DashboardPage() {
         suggestedAction: l.scores?.[0]?.suggestedAction || 'Needs attention'
     }));
 
-    // ---- FETCH EMAIL METRICS (Optimized) ----
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    
-    const sentToday = await prisma.emailLog.count({
-        where: { 
-            sentAt: { gte: todayStart },
-            lead: { assignedAgentId: user.id }
-        }
-    });
-
-    const totalSent = await prisma.emailLog.count({ where: { status: 'sent', lead: { assignedAgentId: user.id } } });
-    const openedCount = await prisma.emailLog.count({ where: { NOT: { openedAt: null }, lead: { assignedAgentId: user.id } } });
-    const clickedCount = await prisma.emailLog.count({ where: { NOT: { clickedAt: null }, lead: { assignedAgentId: user.id } } });
-
-    const openRate = totalSent > 0 ? Math.round((openedCount / totalSent) * 100) : 0;
-    const clickRate = totalSent > 0 ? Math.round((clickedCount / totalSent) * 100) : 0;
-
-    // ---- ONBOARDING SETUP STATUS ----
-    const agentProfile = await prisma.agentProfile.findUnique({ where: { agentId: user.id } });
     const emailConnected = !!(agentProfile?.gmailEmailAddress && (agentProfile as any)?.gmailAppPassword);
-    const captureFormExists = await prisma.leadCaptureForm.count({ where: { agentId: user.id } }) > 0;
+    const captureFormExists = captureFormCount > 0;
     const hasFirstLead = totalLeadsCount > 0;
     const hasTemplates = !!(agentProfile?.emailTemplateHotBody);
 
-    // ---- CHART DATA TRANSFORMATIONS ----
-    // (Keeping simple for now, but using count is better than filtering full list)
-    const last7DaysData = await Promise.all(Array.from({ length: 7 }, async (_, i) => {
+    // In-memory 7 days aggregation (Zero additional DB round-trips)
+    const last7DaysData = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
-        d.setHours(0,0,0,0);
+        d.setHours(0, 0, 0, 0);
         const dayEnd = new Date(d);
-        dayEnd.setHours(23,59,59,999);
-        
-        const count = await prisma.lead.count({
-            where: { assignedAgentId: user.id, createdAt: { gte: d, lte: dayEnd } }
-        });
-        const hotCount = await prisma.lead.count({
-            where: { 
-                assignedAgentId: user.id,
-                createdAt: { gte: d, lte: dayEnd },
-                scores: { some: { finalScore: { gte: 80 } } }
-            }
-        });
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const dayLeads = recentLeads7d.filter(l => l.createdAt >= d && l.createdAt <= dayEnd);
+        const hotLeads = dayLeads.filter(l => (l.scores?.[0]?.finalScore || 0) >= 80);
 
         return {
             date: d.toLocaleDateString('en-US', { weekday: 'short' }),
-            total: count,
-            hot: hotCount
+            total: dayLeads.length,
+            hot: hotLeads.length
         };
-    }));
+    });
 
+    // In-memory Pipeline Distribution (Zero additional DB round-trips)
     const pipelineStages = ['new', 'contacted', 'booked_showing', 'closed'];
-    const pipelineChartData = await Promise.all(pipelineStages.map(async stage => {
-        const count = await prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: stage } });
-        const colors: any = { new: '#853953', contacted: '#612D53', booked_showing: '#2C2C2C', closed: '#10b981' };
-        const labels: any = { new: 'New', contacted: 'In Progress', booked_showing: 'Booked', closed: 'Closed' };
+    const colors: any = { new: '#853953', contacted: '#612D53', booked_showing: '#2C2C2C', closed: '#10b981' };
+    const labels: any = { new: 'New', contacted: 'In Progress', booked_showing: 'Booked', closed: 'Closed' };
+    const pipelineChartData = pipelineStages.map(stage => {
+        const count = pipelineLeads.filter(l => l.pipelineStage === stage).length;
         return { name: labels[stage], value: count, color: colors[stage] };
-    }));
+    });
 
     const setupSteps = [
         {
