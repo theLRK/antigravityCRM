@@ -144,7 +144,7 @@ export async function dispatchWelcomeEmail(leadId: string, scheduledDelay: boole
             ? await prisma.agentProfile.findUnique({ where: { agentId } })
             : null;
 
-        const agentName = agentProfile?.emailFromName || 'Your Agent';
+        const agentName = agentProfile?.name || agentProfile?.emailFromName || 'Your Real Estate Advisor';
 
         // Build email from saved templates or use built-in defaults
         let subject = '';

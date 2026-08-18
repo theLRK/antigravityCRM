@@ -32,6 +32,8 @@ export async function getAgentForm() {
                 welcomeMessage: "Welcome! Tell me what you're looking for.",
                 successMessage: "Thank you! I have received your inquiry and will be in touch shortly.",
                 isActive: true,
+                autoSendFirstMessage: true,
+                currencySymbol: '₦',
                 customFields: JSON.stringify([]) // Empty array of custom fields by default
             },
             include: {

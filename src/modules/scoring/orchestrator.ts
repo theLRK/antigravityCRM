@@ -187,15 +187,25 @@ export async function processScoreForLead(leadId: string, leadData: any) {
             console.error(`[LeadPipeline] Property Matcher failed, continuing: ${matchErr?.message || matchErr}`);
         }
 
-        // ── Step 5: Emit Event (Triggers downstream actions like Email) ───
-        bus.emit('lead.scored', {
-            leadId,
-            scoreId: scoreRecord.id,
-            finalScore,
-            likelihoodLabel,
-            confidenceLevel,
-            suggestedAction
-        });
+        // ── Step 5: Automated AI Email Dispatch ─────────────────────────
+        console.log(`[LeadPipeline] Triggering Automated Welcome Email for Lead ${leadId}...`);
+        try {
+            await dispatchWelcomeEmail(leadId);
+        } catch (emailErr: any) {
+            console.error(`[LeadPipeline] Email dispatch error (non-fatal):`, emailErr?.message || emailErr);
+        }
+
+        // Emit Event for any auxiliary listeners
+        try {
+            bus.emit('lead.scored', {
+                leadId,
+                scoreId: scoreRecord.id,
+                finalScore,
+                likelihoodLabel,
+                confidenceLevel,
+                suggestedAction
+            });
+        } catch (_) {}
 
         console.log(`[LeadPipeline] ✅ Pipeline complete for Lead ${leadId}`);
         console.log(`[LeadPipeline] ─────────────────────────────────────────`);

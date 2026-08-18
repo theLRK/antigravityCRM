@@ -175,9 +175,18 @@ export function PublicFormWizard({
                     <p className="text-sm font-bold text-[#853953] mb-4">
                         {agentName} {agentCompany && `• ${agentCompany}`}
                     </p>
-                    <p className="text-slate-600 text-sm leading-relaxed mb-6 font-medium">
-                        {successMessage || "Thank you! We have received your property requirements and will review matched listings to contact you shortly."}
-                    </p>
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-left space-y-3 mb-6">
+                        <p className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>AI Property Evaluation in Progress</span>
+                        </p>
+                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                            Thank you, <strong className="text-slate-900">{formData.firstName || 'Client'}</strong>. Our AI matching engine is currently analyzing available and off-market properties tailored to your criteria.
+                        </p>
+                        <p className="text-xs text-[#853953] font-bold">
+                            ✉️ You will receive a personalized follow-up in your inbox ({formData.email}) in 2–3 minutes.
+                        </p>
+                    </div>
                     {agentPhone && (
                         <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 font-semibold flex items-center justify-center gap-2">
                             <Phone className="w-4 h-4 text-[#853953]" />
