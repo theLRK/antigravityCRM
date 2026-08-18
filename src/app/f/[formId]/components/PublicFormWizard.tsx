@@ -42,14 +42,21 @@ export function PublicFormWizard({
         }
     })();
 
+    const isNaira = currencySymbol === '₦';
+    const defaultBudgetMin = isNaira ? '50000000' : '250000';
+    const defaultBudgetMax = isNaira ? '250000000' : '750000';
+    const budgetStep = isNaira ? 5000000 : 25000;
+    const minSliderBound = isNaira ? 10000000 : 50000;
+    const maxSliderBound = isNaira ? 2500000000 : 5000000;
+
     // Form State
     const [formData, setFormData] = useState<Record<string, any>>({
         firstName: '',
         lastName: '',
         email: '',
         phone: '',
-        budgetMin: '250000',
-        budgetMax: '750000',
+        budgetMin: defaultBudgetMin,
+        budgetMax: defaultBudgetMax,
         moveTimeline: '',
         financing: '',
         propertyInterest: '',
@@ -62,7 +69,7 @@ export function PublicFormWizard({
         setFormData(prev => {
             const next = { ...prev, [field]: value };
             if (field === 'budgetMin' && Number(value) >= Number(next.budgetMax)) {
-                next.budgetMax = String(Number(value) + 50000);
+                next.budgetMax = String(Number(value) + budgetStep);
             }
             return next;
         });
@@ -370,7 +377,9 @@ export function PublicFormWizard({
                                                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Minimum</span>
                                                     <input
                                                         type="range"
-                                                        min="100000" max="2000000" step="50000"
+                                                        min={minSliderBound}
+                                                        max={maxSliderBound / 2}
+                                                        step={budgetStep}
                                                         value={formData.budgetMin}
                                                         onChange={(e) => handleInputChange('budgetMin', e.target.value)}
                                                         className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#853953]"
@@ -380,7 +389,9 @@ export function PublicFormWizard({
                                                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Maximum</span>
                                                     <input
                                                         type="range"
-                                                        min={Math.max(Number(formData.budgetMin) + 50000, 150000)} max="5000000" step="50000"
+                                                        min={Math.max(Number(formData.budgetMin) + budgetStep, minSliderBound + budgetStep)}
+                                                        max={maxSliderBound}
+                                                        step={budgetStep}
                                                         value={formData.budgetMax}
                                                         onChange={(e) => handleInputChange('budgetMax', e.target.value)}
                                                         className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#853953]"

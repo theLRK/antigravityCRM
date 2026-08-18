@@ -184,38 +184,7 @@ export async function dispatchWelcomeEmail(leadId: string, scheduledDelay: boole
 <hr/><small>To unsubscribe, reply UNSUBSCRIBE.</small>`);
         }
 
-        // For VIP 'hot' leads, save as Draft instead of dispatching
-        if (tier === 'hot') {
-            console.log(`[EmailService] Saving HOT tier email as DRAFT for broker preview...`);
-            
-            try {
-                await prisma.emailLog.create({
-                    data: {
-                        leadId: lead.id,
-                        recipientEmail: lead.email,
-                        templateId: `engage_${tier}_draft`,
-                        subjectLine: subject,
-                        bodyTextPreview: body, // Store body in case they want to review
-                        status: 'draft',
-                        attemptCount: 0
-                    }
-                });
-    
-                await prisma.activityLog.create({
-                    data: {
-                        leadId: lead.id,
-                        eventType: 'email_draft_created',
-                        actor: 'system',
-                        metadata: JSON.stringify({ subject, tier, message: "Draft pending broker approval" })
-                    }
-                });
-            } catch (logErr: any) {
-                console.warn(`[EmailService] Failed to log email event:`, logErr.message);
-            }
-            return;
-        }
-
-        console.log(`[EmailService] Preparing ${tier.toUpperCase()} email for ${lead.email}...`);
+        console.log(`[EmailService] Auto-dispatching ${tier.toUpperCase()} email to ${lead.email}...`);
         const success = await sendLeadEmail(lead.email, subject, body, agentId);
 
         // Log to database

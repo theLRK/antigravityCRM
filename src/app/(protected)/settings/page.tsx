@@ -93,9 +93,9 @@ export default async function SettingsPage() {
                                     <p className="font-semibold text-slate-900 group-hover:text-[#853953]">Email Connection</p>
                                     <p className="text-xs text-slate-500">Connect your Gmail account for automated sends</p>
                                 </Link>
-                                <Link href="/settings/email-templates" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-[#853953]/30 hover:bg-[#853953]/5 transition-colors group">
-                                    <p className="font-semibold text-slate-900 group-hover:text-[#853953]">Email Templates</p>
-                                    <p className="text-xs text-slate-500">Customize your HOT, WARM, and COLD templates</p>
+                                <Link href="/lead-capture" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-[#853953]/30 hover:bg-[#853953]/5 transition-colors group">
+                                    <p className="font-semibold text-slate-900 group-hover:text-[#853953]">Lead Capture & AI Auto-Response</p>
+                                    <p className="text-xs text-slate-500">Configure public form, Naira (₦) currency, and AI email templates</p>
                                 </Link>
                                 <Link href="/engage" className="flex flex-col gap-1 p-4 rounded-xl border border-slate-200 hover:border-[#853953]/30 hover:bg-[#853953]/5 transition-colors group">
                                     <p className="font-semibold text-slate-900 group-hover:text-[#853953]">Engage Dashboard</p>
