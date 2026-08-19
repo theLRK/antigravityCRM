@@ -1,23 +1,19 @@
 'use server'
 
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { resend } from '@/utils/resend';
+import { sendUnifiedEmail } from '@/lib/email-utils';
+
+async function getAuthUser() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
+}
 
 export async function getAgentProfile() {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) return null;
 
     const profile = await prisma.agentProfile.findUnique({
@@ -43,17 +39,7 @@ export async function getAgentProfile() {
 }
 
 export async function updateEmailSettings(formData: FormData) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) throw new Error("Unauthorized");
 
     const emailFromName = formData.get('emailFromName') as string;
@@ -68,17 +54,7 @@ export async function updateEmailSettings(formData: FormData) {
 }
 
 export async function updateEmailTemplate(tier: 'hot' | 'warm' | 'cold', subject: string, body: string) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) throw new Error("Unauthorized");
 
     const dataPayload: any = {};
@@ -102,17 +78,7 @@ export async function updateEmailTemplate(tier: 'hot' | 'warm' | 'cold', subject
 }
 
 export async function sendTestEmailAction(tier: 'hot' | 'warm' | 'cold', leadId?: string) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) throw new Error("Unauthorized");
 
     if (leadId) {
@@ -180,21 +146,8 @@ export async function sendTestEmailAction(tier: 'hot' | 'warm' | 'cold', leadId?
     return { success: true };
 }
 
-import { sendUnifiedEmail } from '@/lib/email-utils';
-
 export async function sendManualEmailAction(leadId: string, subject: string, body: string, propertyId?: string) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) throw new Error("Unauthorized");
 
     const result = await sendUnifiedEmail({
@@ -232,17 +185,7 @@ export async function markTaskComplete(taskId: string) {
 }
 
 export async function markTaskDoneAction(taskId: string) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) throw new Error("Unauthorized");
 
     // Verify task ownership
@@ -272,17 +215,7 @@ export async function markTaskDoneAction(taskId: string) {
 }
 
 export async function rescheduleTaskAction(taskId: string, newDate: Date) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) throw new Error("Unauthorized");
 
     // Verify task ownership
@@ -300,17 +233,7 @@ export async function rescheduleTaskAction(taskId: string, newDate: Date) {
 }
 
 export async function createTaskAction(data: { leadId: string; propertyId?: string; title: string; note?: string; dueDate?: Date; taskType?: string }) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) throw new Error("Unauthorized");
     
     await prisma.task.create({
@@ -330,18 +253,7 @@ export async function createTaskAction(data: { leadId: string; propertyId?: stri
 }
 
 export async function scheduleManualEmailAction(leadId: string, subject: string, body: string, scheduledAt: string) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) throw new Error("Unauthorized");
 
     await prisma.scheduledEmail.create({
@@ -360,18 +272,7 @@ export async function scheduleManualEmailAction(leadId: string, subject: string,
 }
 
 export async function getScheduledEmailsAction() {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) { return cookieStore.get(name)?.value; },
-            },
-        }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) throw new Error("Unauthorized");
 
     return await prisma.scheduledEmail.findMany({
@@ -380,4 +281,3 @@ export async function getScheduledEmailsAction() {
         orderBy: { scheduledAt: 'asc' }
     });
 }
-
