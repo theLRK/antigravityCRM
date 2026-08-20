@@ -1,14 +1,14 @@
-import { login } from '../actions';
-import { GoogleSignInButton } from '@/components/ui/auth/GoogleSignInButton';
+import { updatePassword } from '../actions';
 import { Logo } from '@/components/ui/Logo';
-import { ArrowRight, ChevronRight, Check } from 'lucide-react';
+import { ArrowRight, Check, KeyRound } from 'lucide-react';
 
-export default async function SignInPage({
+export default async function ResetPasswordPage({
     searchParams,
 }: {
     searchParams: Promise<{ error?: string }>
 }) {
-    const errorParam = (await searchParams).error;
+    const params = await searchParams;
+    const errorParam = params.error;
 
     return (
         <div className="flex min-h-screen bg-[#F3F4F4]">
@@ -21,14 +21,14 @@ export default async function SignInPage({
 
                 <div className="relative z-10">
                     <h2 className="text-6xl font-black text-white mb-8 tracking-tighter leading-tight">
-                        Welcome <br /> back.
+                        Set New <br /> Password.
                     </h2>
                     <p className="text-white/70 text-2xl font-medium max-w-sm mb-12">
-                        Manage leads. Close deals. <br /> Grow faster with AI.
+                        Create a strong, secure password for your agent account.
                     </p>
                     
                     <div className="space-y-6">
-                        {['94% Average Lead Accuracy', 'Automated Daily Workflows', 'Smart Property Matching'].map((feature, idx) => (
+                        {['Minimum 6 characters', 'Encrypted Credentials', 'Instant Dashboard Access'].map((feature, idx) => (
                             <div key={idx} className="flex items-center gap-4 text-white/90 font-bold">
                                 <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
                                     <Check className="w-3 h-3" />
@@ -40,16 +40,19 @@ export default async function SignInPage({
                 </div>
 
                 <div className="relative z-10 pt-12 border-t border-white/10 text-white/50 text-xs font-black uppercase tracking-[0.2em]">
-                    Trusted by 2,000+ elite agents
+                    Formative CRM Security
                 </div>
             </div>
 
             {/* Right: Form */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
                 <div className="w-full max-w-md">
-                    <div className="mb-12">
-                        <h1 className="text-4xl font-black text-[#2C2C2C] mb-4 tracking-tight">Sign In</h1>
-                        <p className="text-gray-400 font-bold">Enter your credentials to access your command center.</p>
+                    <div className="mb-10">
+                        <div className="w-12 h-12 rounded-2xl bg-[#853953]/10 flex items-center justify-center text-[#853953] mb-4">
+                            <KeyRound className="w-6 h-6" />
+                        </div>
+                        <h1 className="text-4xl font-black text-[#2C2C2C] mb-3 tracking-tight">New Password</h1>
+                        <p className="text-gray-400 font-bold">Enter your new secure password below.</p>
                     </div>
 
                     {errorParam && (
@@ -59,58 +62,39 @@ export default async function SignInPage({
                         </div>
                     )}
 
-                    <GoogleSignInButton label="Continue with Google" />
-
-                    <div className="relative flex items-center mb-6">
-                        <div className="flex-grow border-t border-gray-200"></div>
-                        <span className="flex-shrink-0 mx-4 text-[10px] font-black uppercase tracking-widest text-[#853953]/70">Or continue with email</span>
-                        <div className="flex-grow border-t border-gray-200"></div>
-                    </div>
-
-                    <form className="space-y-6" action={login}>
+                    <form className="space-y-6" action={updatePassword}>
                         <div className="space-y-2">
-                            <label className="text-xs font-black text-[#2C2C2C] uppercase tracking-widest pl-1">Work Email</label>
-                            <input
-                                name="email"
-                                type="email"
-                                required
-                                className="input-field"
-                                placeholder="agent@formative.io"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center pl-1">
-                                <label className="text-xs font-black text-[#2C2C2C] uppercase tracking-widest">Password</label>
-                                <a href="/forgot-password" className="text-[10px] font-black text-[#853953] uppercase tracking-wider hover:underline transition-all">Forgot?</a>
-                            </div>
+                            <label className="text-xs font-black text-[#2C2C2C] uppercase tracking-widest pl-1">New Password</label>
                             <input
                                 name="password"
                                 type="password"
                                 required
+                                minLength={6}
                                 className="input-field"
                                 placeholder="••••••••"
                             />
                         </div>
 
-                        <div className="flex items-center gap-3 pl-1">
-                            <input type="checkbox" className="w-4 h-4 rounded-md border-gray-300 text-[#853953] focus:ring-[#853953]" />
-                            <span className="text-xs font-bold text-gray-500">Remember me for 30 days</span>
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-[#2C2C2C] uppercase tracking-widest pl-1">Confirm New Password</label>
+                            <input
+                                name="confirmPassword"
+                                type="password"
+                                required
+                                minLength={6}
+                                className="input-field"
+                                placeholder="••••••••"
+                            />
                         </div>
 
                         <button
                             type="submit"
                             className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2 mt-4"
                         >
-                            Sign In to Platform
+                            Update Password & Sign In
                             <ArrowRight className="w-5 h-5" />
                         </button>
                     </form>
-
-                    <div className="mt-12 pt-8 border-t border-black/5 text-center">
-                        <p className="text-sm font-bold text-gray-400">
-                            Don't have an account? <a href="/sign-up" className="text-[#853953] font-black hover:underline ml-1">Create one free</a>
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>

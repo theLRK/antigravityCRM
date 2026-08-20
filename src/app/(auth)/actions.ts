@@ -89,3 +89,55 @@ export async function loginWithGoogle() {
         redirect(data.url)
     }
 }
+
+export async function requestPasswordReset(formData: FormData) {
+    const supabase = await createClient()
+    const email = (formData.get('email') as string || '').trim()
+
+    if (!email) {
+        redirect('/forgot-password?error=' + encodeURIComponent('Email address is required'))
+    }
+
+    const { headers } = await import('next/headers')
+    const headersList = await headers()
+    const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'localhost:4000'
+    const protocol = host.includes('localhost') ? 'http' : 'https'
+    const redirectUrl = `${protocol}://${host}/auth/callback?next=/reset-password`
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+    })
+
+    if (error) {
+        console.error('[ResetPasswordAction] error:', error.message)
+        redirect('/forgot-password?error=' + encodeURIComponent(error.message))
+    }
+
+    redirect('/forgot-password?success=true&email=' + encodeURIComponent(email))
+}
+
+export async function updatePassword(formData: FormData) {
+    const supabase = await createClient()
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirmPassword') as string
+
+    if (!password || password.length < 6) {
+        redirect('/reset-password?error=' + encodeURIComponent('Password must be at least 6 characters'))
+    }
+
+    if (password !== confirmPassword) {
+        redirect('/reset-password?error=' + encodeURIComponent('Passwords do not match'))
+    }
+
+    const { error } = await supabase.auth.updateUser({
+        password: password,
+    })
+
+    if (error) {
+        console.error('[UpdatePasswordAction] error:', error.message)
+        redirect('/reset-password?error=' + encodeURIComponent(error.message))
+    }
+
+    revalidatePath('/', 'layout')
+    redirect('/dashboard')
+}
