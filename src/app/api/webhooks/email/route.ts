@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         }
 
         await prisma.emailLog.update({
-            where: { id: emailLogId },
+            where: { id: emailLog.id },
             data: updateData
         });
 

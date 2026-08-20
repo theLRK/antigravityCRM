@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ lea
             isManual: true
         });
 
-        return NextResponse.json({ success: true, ...res });
+        return NextResponse.json(res);
     } catch (e: any) {
         console.error('[send-email]', e);
         return NextResponse.json({ error: e.message }, { status: 500 });

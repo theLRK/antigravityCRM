@@ -1,13 +1,13 @@
 import { bus } from './bus';
 import { processScoreForLead } from '../modules/scoring/orchestrator';
 import { dispatchWelcomeEmail } from '../modules/email/dispatcher';
+import { prisma } from '@/lib/prisma';
 
 export const registerEventHandlers = () => {
     // Phase 1 -> Phase 2 connection
     bus.on('lead.created', async (payload) => {
         console.log(`[Event] lead.created -> scoring lead ${payload.leadId}`);
         // Fetch the full lead data before scoring
-        import { prisma } from '@/lib/prisma';
         const dbLead = await prisma.lead.findUnique({ where: { id: payload.leadId } });
 
         if (!dbLead) {

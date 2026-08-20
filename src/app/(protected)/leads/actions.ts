@@ -288,7 +288,7 @@ export async function rescoreLeadAction(leadId: string) {
         budgetMax: lead.budgetMax,
         financingStatus: lead.financing,
         source: lead.source || 'Manual Entry',
-        motivation: lead.notes,
+        motivation: lead.motivation,
         propertyType: lead.propertyType,
         customLocation: lead.customLocation,
         preferredAreas: lead.preferredAreas

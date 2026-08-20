@@ -78,7 +78,7 @@ export default async function DashboardLayout({
                     <OnboardingWizard
                         userName={firstName}
                         userLastName={lastName}
-                        userAvatar={avatarUrl}
+                        userAvatar={finalAvatarUrl}
                     />
                 )}
             </div>

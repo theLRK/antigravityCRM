@@ -88,24 +88,21 @@ Return ONLY valid JSON in this format:
             }
         }
     } catch (openAiErr: any) {
-        // Continue to heuristic fallback
+        console.warn(`[LeadPipeline] OpenAI scoring fallback notice:`, openAiErr?.message || openAiErr);
     }
 
-    } catch (error: any) {
-        console.warn(`[LeadPipeline] OpenAI API call notice (${error?.message || 'Key unconfigured'}). Generating smart local AI evaluation.`);
-        
-        const factors = [];
-        if (lead.timeline && lead.timeline !== 'Unknown') factors.push(`move timeline (${lead.timeline})`);
-        if (lead.financing_status && lead.financing_status !== 'Unknown') factors.push(`financing readiness (${lead.financing_status})`);
-        if (lead.budget_range && lead.budget_range !== 'Unknown') factors.push(`budget parameter (${lead.budget_range})`);
+    // 3. Deterministic Smart Heuristic Fallback
+    const factors = [];
+    if (lead.timeline && lead.timeline !== 'Unknown') factors.push(`move timeline (${lead.timeline})`);
+    if (lead.financing_status && lead.financing_status !== 'Unknown') factors.push(`financing readiness (${lead.financing_status})`);
+    if (lead.budget_range && lead.budget_range !== 'Unknown') factors.push(`budget parameter (${lead.budget_range})`);
 
-        const smartReason = factors.length > 0
-            ? `Calculated high buyer readiness based on ${factors.join(', ')}.`
-            : `Evaluated buyer readiness based on active preference parameters.`;
+    const smartReason = factors.length > 0
+        ? `Calculated high buyer readiness based on ${factors.join(', ')}.`
+        : `Evaluated buyer readiness based on active preference parameters.`;
 
-        return {
-            adjustment: 0,
-            reason: smartReason
-        };
-    }
+    return {
+        adjustment: 0,
+        reason: smartReason
+    };
 }

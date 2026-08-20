@@ -63,7 +63,6 @@ export async function runPropertyMatchingForLead(leadId: string) {
 
                 const propTexts = [
                     property.location,
-                    property.address,
                     property.locationId
                 ].filter(Boolean).map(s => String(s).toLowerCase());
 

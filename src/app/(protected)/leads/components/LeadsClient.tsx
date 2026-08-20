@@ -26,9 +26,9 @@ import { LeadDetailDrawer } from './LeadDetailDrawer';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
-export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
-    const [leads, setLeads] = useState(initialLeads.leads || []);
-    const [totalCount, setTotalCount] = useState(initialLeads.totalCount || 0);
+export function LeadsClient({ initialLeads }: { initialLeads: any }) {
+    const [leads, setLeads] = useState(initialLeads?.leads || (Array.isArray(initialLeads) ? initialLeads : []));
+    const [totalCount, setTotalCount] = useState(initialLeads?.totalCount || (Array.isArray(initialLeads) ? initialLeads.length : 0));
     const [page, setPage] = useState(1);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [isPending, startTransition] = useTransition();
@@ -71,7 +71,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
         setIsLoadingMore(true);
         const nextPage = page + 1;
         const res = await getLeads({ take: 20, skip: page * 20, stage: activeFilter, query: searchQuery });
-        setLeads(prev => [...prev, ...res.leads]);
+        setLeads((prev: any[]) => [...prev, ...(res.leads || [])]);
         setPage(nextPage);
         setIsLoadingMore(false);
     };
@@ -92,16 +92,16 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
 
     const handleStatusChange = async (leadId: string, newStatus: string) => {
         startTransition(() => {
-            setLeads(leads.map(l => l.id === leadId ? { ...l, pipelineStage: newStatus } : l));
+            setLeads(leads.map((l: any) => l.id === leadId ? { ...l, pipelineStage: newStatus } : l));
         });
         await updateLeadStatus(leadId, newStatus);
     };
 
     const handleDeleteLead = async (leadId: string) => {
-        const lead = leads.find(l => l.id === leadId);
+        const lead = leads.find((l: any) => l.id === leadId);
         const name = lead ? `${lead.firstName} ${lead.lastName}` : 'Lead';
         startTransition(() => {
-            setLeads(leads.filter(l => l.id !== leadId));
+            setLeads(leads.filter((l: any) => l.id !== leadId));
             setSelectedLead(null);
         });
         await deleteLead(leadId);
@@ -113,7 +113,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
         const count = ids.length;
         setIsBulkDeleting(true);
         try {
-            setLeads(prev => prev.filter(l => !selectedIds.has(l.id)));
+            setLeads((prev: any[]) => prev.filter((l: any) => !selectedIds.has(l.id)));
             setSelectedLead(null);
             await Promise.all(ids.map(id => deleteLead(id)));
             setSelectedIds(new Set());
@@ -138,7 +138,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
         if (selectedIds.size === filteredLeads.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(filteredLeads.map(l => l.id)));
+            setSelectedIds(new Set(filteredLeads.map((l: any) => l.id)));
         }
     };
 
@@ -185,7 +185,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
     };
 
     // Derived filtering
-    const filteredLeads = leads.filter(lead => {
+    const filteredLeads = leads.filter((lead: any) => {
         // Search 
         const searchTarget = `${lead.firstName} ${lead.lastName} ${lead.email} ${lead.phone}`.toLowerCase();
         if (searchQuery && !searchTarget.includes(searchQuery.toLowerCase())) return false;
@@ -433,7 +433,7 @@ export function LeadsClient({ initialLeads }: { initialLeads: any[] }) {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-slate-200">
-                                    {filteredLeads.map((lead) => {
+                                    {filteredLeads.map((lead: any) => {
                                         const scoreObj = lead.scores?.[0];
                                         const finalScore = scoreObj?.finalScore || 0;
                                         const overdue = isOverdue(lead.followUpDate) && lead.pipelineStage !== 'closed';
