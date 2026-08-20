@@ -1,8 +1,9 @@
+import { generateWithGemini } from '@/lib/gemini';
 import OpenAI from "openai";
 import { env } from '../../../config/env';
 
 const openai = new OpenAI({
-    apiKey: env.OPENAI_API_KEY || process.env.OPENAI_API_KEY
+    apiKey: env.OPENAI_API_KEY || process.env.OPENAI_API_KEY || 're_dummy'
 });
 
 interface LeadInput {
@@ -19,20 +20,18 @@ interface LLMScoreResult {
 }
 
 export async function runLLMScoring(lead: LeadInput): Promise<LLMScoreResult> {
-    console.log(`[LeadPipeline] Running LLM scoring...`);
+    console.log(`[LeadPipeline] Running LLM scoring with Google Gemini...`);
 
-    try {
-        const prompt = `
-You are an AI assistant evaluating real estate buyer intent.
-
-Based on the lead data, adjust the score by -5 to +5.
+    const prompt = `
+You are an expert real estate AI evaluating buyer intent.
+Based on the lead data, determine an adjustment score between -5 and +5 and a short 1-sentence analytical reason.
 
 Lead data:
-Timeline: ${lead.timeline ?? "Unknown"}
-Financing: ${lead.financing_status ?? "Unknown"}
-Budget: ${lead.budget_range ?? "Unknown"}
-Motivation: ${lead.motivation ?? "None"}
-Source: ${lead.source ?? "Unknown"}
+- Timeline: ${lead.timeline ?? "Unknown"}
+- Financing: ${lead.financing_status ?? "Unknown"}
+- Budget: ${lead.budget_range ?? "Unknown"}
+- Motivation: ${lead.motivation ?? "None"}
+- Source: ${lead.source ?? "Unknown"}
 
 Return ONLY valid JSON in this format:
 {
@@ -41,34 +40,56 @@ Return ONLY valid JSON in this format:
 }
 `;
 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            temperature: 0.2,
-            messages: [
-                { role: "system", content: "You analyze buyer readiness. Always respond with valid JSON only." },
-                { role: "user", content: prompt }
-            ],
-            response_format: { type: "json_object" },
-            max_tokens: 200,
-        }, {
-            timeout: env.LLM_TIMEOUT_MS || 8000
+    // 1. Primary: Google Gemini 2.0 Flash
+    try {
+        const geminiRes = await generateWithGemini({
+            prompt,
+            systemInstruction: "You analyze buyer readiness. Always respond with valid JSON only.",
+            responseJson: true,
+            temperature: 0.2
         });
 
-        const content = response.choices[0].message?.content;
-
-        if (!content) {
-            throw new Error("Empty LLM response");
+        if (geminiRes) {
+            const parsed = JSON.parse(geminiRes);
+            const result = {
+                adjustment: Math.max(-5, Math.min(5, Number(parsed.adjustment) || 0)),
+                reason: String(parsed.reason || "High buyer readiness evaluated by Gemini AI.")
+            };
+            console.log(`[LeadPipeline] Gemini scoring completed. Adjustment: ${result.adjustment}. Reason: ${result.reason}`);
+            return result;
         }
+    } catch (geminiErr: any) {
+        console.warn(`[LeadPipeline] Gemini scoring fallback notice:`, geminiErr?.message || geminiErr);
+    }
 
-        const parsed = JSON.parse(content);
+    // 2. Secondary Fallback: OpenAI (if configured)
+    try {
+        if (env.OPENAI_API_KEY && !env.OPENAI_API_KEY.includes('your_')) {
+            const response = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                temperature: 0.2,
+                messages: [
+                    { role: "system", content: "You analyze buyer readiness. Always respond with valid JSON only." },
+                    { role: "user", content: prompt }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 200,
+            }, {
+                timeout: env.LLM_TIMEOUT_MS || 8000
+            });
 
-        const result = {
-            adjustment: Math.max(-5, Math.min(5, Number(parsed.adjustment) || 0)),
-            reason: String(parsed.reason || "LLM reasoning unavailable")
-        };
-
-        console.log(`[LeadPipeline] LLM scoring completed. Adjustment: ${result.adjustment}. Reason: ${result.reason}`);
-        return result;
+            const content = response.choices[0].message?.content;
+            if (content) {
+                const parsed = JSON.parse(content);
+                return {
+                    adjustment: Math.max(-5, Math.min(5, Number(parsed.adjustment) || 0)),
+                    reason: String(parsed.reason || "LLM reasoning evaluated.")
+                };
+            }
+        }
+    } catch (openAiErr: any) {
+        // Continue to heuristic fallback
+    }
 
     } catch (error: any) {
         console.warn(`[LeadPipeline] OpenAI API call notice (${error?.message || 'Key unconfigured'}). Generating smart local AI evaluation.`);

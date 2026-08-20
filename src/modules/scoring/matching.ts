@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma';
+import { generateWithGemini } from '@/lib/gemini';
 import OpenAI from 'openai';
 import { env } from '../../config/env';
 
-const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY || 're_dummy' });
 
 export async function runPropertyMatchingForLead(leadId: string) {
     try {
@@ -255,20 +256,31 @@ export async function runMatchingForProperty(propertyId: string) {
                 });
 
                 let reasoning = 'A strong deterministic match based on client criteria.';
-                try {
-                    const prompt = `You are a real estate AI assistant matching a Lead with a Property. Write exactly 1-2 short sentences evaluating the fit, speaking to the agent (e.g. "This fits their budget perfectly and...").
-                    
-                    Lead details: Budget: ${lead.budgetMin ? '$' + lead.budgetMin : 'Any'} to ${lead.budgetMax ? '$' + lead.budgetMax : 'Any'} | Areas: ${lead.preferredAreas || 'Any'} | Beds needed: ${lead.bedroomsMin || 'Any'} | Timeline: ${lead.moveTimeline || 'Unknown'}
-                    Property details: Name: ${property.title} | Location: ${property.location} | Price: ${property.currency}${property.price} | Beds: ${property.bedrooms} Bed`;
+                const prompt = `You are a real estate AI assistant matching a Lead with a Property. Write exactly 1-2 short sentences evaluating the fit, speaking to the agent (e.g. "This fits their budget perfectly and...").
+                
+                Lead details: Budget: ${lead.budgetMin ? '$' + lead.budgetMin : 'Any'} to ${lead.budgetMax ? '$' + lead.budgetMax : 'Any'} | Areas: ${lead.preferredAreas || 'Any'} | Beds needed: ${lead.bedroomsMin || 'Any'} | Timeline: ${lead.moveTimeline || 'Unknown'}
+                Property details: Name: ${property.title} | Location: ${property.location} | Price: ${property.currency}${property.price} | Beds: ${property.bedrooms} Bed`;
 
-                    const completion = await openai.chat.completions.create({
-                        model: 'gpt-4o-mini',
-                        messages: [{ role: 'system', content: prompt }],
-                        temperature: 0.3,
-                        max_tokens: 60
+                try {
+                    const geminiRes = await generateWithGemini({
+                        prompt,
+                        systemInstruction: "You are an expert real estate property match analyst. Keep it concise (1-2 sentences).",
+                        temperature: 0.3
                     });
-                    reasoning = completion.choices[0]?.message?.content?.trim() || reasoning;
-                } catch (err) {}
+                    if (geminiRes) reasoning = geminiRes.trim();
+                } catch (geminiErr) {
+                    try {
+                        if (env.OPENAI_API_KEY && !env.OPENAI_API_KEY.includes('your_')) {
+                            const completion = await openai.chat.completions.create({
+                                model: 'gpt-4o-mini',
+                                messages: [{ role: 'system', content: prompt }],
+                                temperature: 0.3,
+                                max_tokens: 60
+                            });
+                            reasoning = completion.choices[0]?.message?.content?.trim() || reasoning;
+                        }
+                    } catch (openAiErr) {}
+                }
 
                 await prisma.propertyMatch.create({
                     data: {

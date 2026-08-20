@@ -1,10 +1,11 @@
 import { Lead, Sequence, SequenceStep } from '@prisma/client';
 import OpenAI from 'openai';
 import { dispatchAIEmail } from '../email/dispatcher';
-
+import { generateWithGemini } from '@/lib/gemini';
 import { prisma } from '@/lib/prisma';
+
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY || 're_dummy'
 });
 
 export async function executeSequenceStep(lead: Lead, sequence: Sequence, step: SequenceStep) {
@@ -54,24 +55,61 @@ INSTRUCTIONS:
 }
 `;
 
-    // Call OpenAI
-    const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-            { role: 'system', content: contextPrompt }
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7
-    });
+    // 1. Generate via Google Gemini
+    let aiSubject = '';
+    let aiBody = '';
 
-    const aiOutputText = response.choices[0]?.message?.content;
-    if (!aiOutputText) throw new Error("OpenAI returned empty response");
+    try {
+        const geminiRes = await generateWithGemini({
+            prompt: contextPrompt,
+            systemInstruction: "You are an expert real estate AI copywriter. Respond with valid JSON only.",
+            responseJson: true,
+            temperature: 0.6
+        });
 
-    const parsed = JSON.parse(aiOutputText);
-
-    if (!parsed.subject || !parsed.body) {
-        throw new Error("OpenAI returned malformed JSON");
+        if (geminiRes) {
+            const parsed = JSON.parse(geminiRes);
+            if (parsed.subject && parsed.body) {
+                aiSubject = parsed.subject;
+                aiBody = parsed.body;
+            }
+        }
+    } catch (geminiErr: any) {
+        console.warn(`[Executor] Gemini sequence generation notice:`, geminiErr?.message || geminiErr);
     }
+
+    // 2. OpenAI Fallback
+    if (!aiSubject && process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.includes('your_')) {
+        try {
+            const response = await openai.chat.completions.create({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: contextPrompt }
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.7
+            });
+
+            const aiOutputText = response.choices[0]?.message?.content;
+            if (aiOutputText) {
+                const parsed = JSON.parse(aiOutputText);
+                if (parsed.subject && parsed.body) {
+                    aiSubject = parsed.subject;
+                    aiBody = parsed.body;
+                }
+            }
+        } catch (openAiErr: any) {
+            console.warn(`[Executor] OpenAI sequence generation notice:`, openAiErr?.message || openAiErr);
+        }
+    }
+
+    // 3. Fallback Heuristic Template if all LLMs are unconfigured
+    if (!aiSubject) {
+        aiSubject = `Update regarding your property search - ${agentProfile?.name || 'Your Agent'}`;
+        aiBody = `<p>Hi ${lead.firstName},</p><p>I'm following up regarding your property search in ${lead.preferredAreas || 'your preferred areas'}. We have active updates matching your criteria.</p><p>Please let me know if you would like to review recent opportunities.</p>`;
+    }
+
+    const parsed = { subject: aiSubject, body: aiBody };
 
     // Replace basic variables if any snuck in
     let htmlBody = parsed.body.replace('{{agent_name}}', agentProfile?.name || 'Your Agent');
