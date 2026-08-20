@@ -37,23 +37,44 @@ import Link from 'next/link';
 
 // --- Sub-components to keep the file clean ---
 
-function MetricCard({ title, amount, change, trend, Icon }: any) {
+function MetricCard({ title, amount, change, trend, subtext, Icon }: {
+    title: string;
+    amount: string;
+    change?: string;
+    trend?: 'up' | 'down' | 'neutral';
+    subtext?: string;
+    Icon: any;
+}) {
     const isUp = trend === 'up';
+    const isDown = trend === 'down';
     return (
-        <div className="card-modern p-6 flex flex-col group transition-all duration-300 hover:scale-[1.02]">
-            <div className="flex justify-between items-start mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-[#F3F4F4] flex items-center justify-center text-[#853953] group-hover:bg-gradient-to-br group-hover:from-[#853953] group-hover:to-[#612D53] group-hover:text-white transition-all shadow-sm">
-                    <Icon className="w-6 h-6" />
-                </div>
-                {change !== '0%' && (
-                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black ${isUp ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                        {isUp ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                        {change}
+        <div className="card-modern p-6 flex flex-col justify-between group transition-all duration-300 hover:scale-[1.01] hover:shadow-md bg-white border border-slate-200/80 rounded-2xl shadow-xs">
+            <div>
+                <div className="flex justify-between items-start mb-5">
+                    <div className="w-12 h-12 rounded-2xl bg-[#F3F4F4] flex items-center justify-center text-[#853953] group-hover:bg-gradient-to-br group-hover:from-[#853953] group-hover:to-[#612D53] group-hover:text-white transition-all shadow-xs">
+                        <Icon className="w-6 h-6" />
                     </div>
-                )}
+                    {change && (
+                        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                            isUp ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' :
+                            isDown ? 'bg-rose-50 text-rose-700 border border-rose-200/60' :
+                            'bg-slate-50 text-slate-600 border border-slate-200/60'
+                        }`}>
+                            {isUp && <ArrowUpRight className="w-3.5 h-3.5" />}
+                            {isDown && <ArrowDownRight className="w-3.5 h-3.5" />}
+                            {change}
+                        </div>
+                    )}
+                </div>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1.5">{title}</p>
+                <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">{amount}</h3>
             </div>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">{title}</p>
-            <h3 className="text-3xl font-black text-[#2C2C2C] tracking-tight">{amount}</h3>
+            {subtext && (
+                <p className="text-[11px] font-medium text-slate-400 mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                    {subtext}
+                </p>
+            )}
         </div>
     );
 }
@@ -97,8 +118,12 @@ export default async function DashboardPage() {
     todayStart.setHours(0, 0, 0, 0);
 
     const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    fourteenDaysAgo.setHours(0, 0, 0, 0);
 
     const [
         totalLeadsCount,
@@ -114,10 +139,12 @@ export default async function DashboardPage() {
         agentProfile,
         captureFormCount,
         recentLeads7d,
+        leadsLastWeekCount,
+        propertyMatchesCount,
         pipelineLeads
     ] = await Promise.all([
         prisma.lead.count({ where: { assignedAgentId: user.id } }),
-        prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: { not: 'closed' } } }),
+        prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: { notIn: ['closed', 'lost'] } } }),
         prisma.lead.count({ where: { assignedAgentId: user.id, pipelineStage: 'closed' } }),
         prisma.lead.count({
             where: {
@@ -162,11 +189,30 @@ export default async function DashboardPage() {
             where: { assignedAgentId: user.id, createdAt: { gte: sevenDaysAgo } },
             select: { createdAt: true, scores: { select: { finalScore: true }, take: 1, orderBy: { createdAt: 'desc' } } }
         }),
+        prisma.lead.count({
+            where: { assignedAgentId: user.id, createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } }
+        }),
+        prisma.propertyMatch.count({
+            where: { lead: { assignedAgentId: user.id } }
+        }),
         prisma.lead.findMany({
             where: { assignedAgentId: user.id },
             select: { pipelineStage: true }
         })
     ]);
+
+    // True Mathematical Growth Rate vs Prior 7 Days
+    const leadsThisWeekCount = recentLeads7d.length;
+    let leadGrowthText = 'Baseline';
+    let leadGrowthTrend: 'up' | 'down' | 'neutral' = 'neutral';
+    if (leadsLastWeekCount > 0) {
+        const delta = Math.round(((leadsThisWeekCount - leadsLastWeekCount) / leadsLastWeekCount) * 100);
+        leadGrowthText = delta >= 0 ? `+${delta}%` : `${delta}%`;
+        leadGrowthTrend = delta >= 0 ? 'up' : 'down';
+    } else if (leadsThisWeekCount > 0) {
+        leadGrowthText = `+${leadsThisWeekCount} new`;
+        leadGrowthTrend = 'up';
+    }
 
     const conversionRate = totalLeadsCount > 0 ? ((closedLeadsCount / totalLeadsCount) * 100).toFixed(1) : '0.0';
     const openRate = totalSent > 0 ? Math.round((openedCount / totalSent) * 100) : 0;
@@ -324,22 +370,25 @@ export default async function DashboardPage() {
                     <MetricCard
                         title="Active Pipeline"
                         amount={activeLeadsCount.toString()}
-                        change={activeLeadsCount > 0 ? '+New' : '0%'}
-                        trend="up"
+                        change={leadGrowthText}
+                        trend={leadGrowthTrend}
+                        subtext="vs. prior 7 days"
                         Icon={Users}
                     />
                     <MetricCard
-                        title="Conv. Efficiency"
+                        title="Conversion Rate"
                         amount={`${conversionRate}%`}
-                        change={closedLeadsCount > 0 ? '+1.5%' : '0%'}
-                        trend="up"
+                        change={closedLeadsCount > 0 ? `${closedLeadsCount} Closed` : undefined}
+                        trend={closedLeadsCount > 0 ? 'up' : 'neutral'}
+                        subtext="Lifetime win efficiency"
                         Icon={ArrowLeftRight}
                     />
                     <MetricCard
-                        title="Match Precision"
-                        amount={highIntentCount.toString()}
-                        change="Priority"
-                        trend="up"
+                        title="Property Matches"
+                        amount={propertyMatchesCount.toString()}
+                        change={highIntentCount > 0 ? `${highIntentCount} Hot Leads` : undefined}
+                        trend={propertyMatchesCount > 0 ? 'up' : 'neutral'}
+                        subtext="AI verified property fits"
                         Icon={Sparkles}
                     />
                 </div>

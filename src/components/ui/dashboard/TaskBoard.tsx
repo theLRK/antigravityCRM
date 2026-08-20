@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle, Clock, AlertTriangle, Phone, Mail, ArrowRight, RotateCcw, Calendar, Plus, X } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, Phone, Mail, ArrowRight, RotateCcw, Calendar, Plus, X, Home, Bell } from 'lucide-react';
 import TaskSnoozeMenu from './TaskSnoozeMenu';
 
 interface Task {
@@ -32,14 +32,17 @@ function formatDue(dateStr: string) {
     return `In ${days} days`;
 }
 
-const typeIcon: Record<string, string> = {
-    'Call': '📞',
-    'Email': '📧',
-    'Follow Up': '🔁',
-    'Meeting': '🗓️',
-    'Viewing': '🏠',
-    'Reminder': '🔔',
-};
+function getTaskTypeIcon(type: string) {
+    switch (type) {
+        case 'Call': return <Phone className="w-4 h-4 text-emerald-600" />;
+        case 'Email': return <Mail className="w-4 h-4 text-[#853953]" />;
+        case 'Follow Up': return <RotateCcw className="w-4 h-4 text-blue-600" />;
+        case 'Meeting': return <Calendar className="w-4 h-4 text-amber-600" />;
+        case 'Viewing': return <Home className="w-4 h-4 text-purple-600" />;
+        case 'Reminder': return <Bell className="w-4 h-4 text-rose-600" />;
+        default: return <CheckCircle className="w-4 h-4 text-slate-500" />;
+    }
+}
 
 export default function TaskBoard() {
     const [tasks, setTasks] = useState<TaskGroups>({ overdue: [], today: [], upcoming: [], completed: [] });
@@ -280,7 +283,9 @@ function TaskCard({ task, variant, onComplete, onSnoozed }: {
 
     return (
         <div className={`${bgColor} border border-slate-100 border-l-4 ${borderColor} rounded-2xl p-4 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow`}>
-            <span className="text-xl mt-0.5">{typeIcon[task.taskType] || '📋'}</span>
+            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-xs border border-slate-100 shrink-0 mt-0.5">
+                {getTaskTypeIcon(task.taskType)}
+            </div>
 
             <div className="flex-1 min-w-0">
                 <p className="font-bold text-slate-900 text-sm truncate">{task.title}</p>
