@@ -18,6 +18,17 @@ export async function runScheduledEmailScheduler() {
 
         for (const email of dueEmails) {
             try {
+                // Atomic claim: update status to 'processing' before dispatch to prevent duplicate sends
+                const claimed = await (prisma as any).scheduledEmail.updateMany({
+                    where: { id: email.id, status: 'scheduled' },
+                    data: { status: 'processing' }
+                });
+
+                if (claimed.count === 0) {
+                    console.log(`[ScheduledEmailScheduler] Skipping email ${email.id}: already claimed.`);
+                    continue;
+                }
+
                 console.log(`[ScheduledEmailScheduler] Sending scheduled email ${email.id} to Lead ${email.leadId}...`);
                 
                 await sendUnifiedEmailCore({
@@ -37,6 +48,10 @@ export async function runScheduledEmailScheduler() {
                 console.log(`[ScheduledEmailScheduler] ✅ Email ${email.id} sent and status updated.`);
             } catch (err: any) {
                 console.error(`[ScheduledEmailScheduler] ❌ Failed to send email ${email.id}:`, err.message);
+                await (prisma as any).scheduledEmail.updateMany({
+                    where: { id: email.id, status: 'processing' },
+                    data: { status: 'failed' }
+                });
             }
         }
 

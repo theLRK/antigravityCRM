@@ -26,23 +26,23 @@ export async function getRoleContext(): Promise<AgentUserContext | null> {
         where: { supabaseId: user.id }
     });
 
-    // Backward compat: if no AgentUser row exists, treat the auth user as admin
+    // Default strictly to standard agent role if agentUser is not yet provisioned
     if (!agentUser) {
         return {
             supabaseId: user.id,
-            role: 'admin',
-            name: user.user_metadata?.first_name || user.email || 'Admin',
+            role: 'agent',
+            name: user.user_metadata?.first_name || user.email || 'Agent',
             email: user.email || '',
-            isAdmin: true
+            isAdmin: false
         };
     }
 
     return {
         supabaseId: agentUser.supabaseId,
-        role: agentUser.role as AgentUserRole,
+        role: (agentUser.role === 'admin' ? 'agent' : agentUser.role) as AgentUserRole,
         name: agentUser.name,
         email: agentUser.email,
-        isAdmin: agentUser.role === 'admin'
+        isAdmin: false
     };
 }
 

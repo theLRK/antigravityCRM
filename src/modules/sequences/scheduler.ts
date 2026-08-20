@@ -46,6 +46,17 @@ export async function runSequenceScheduler() {
 
         for (const state of dueStates) {
             try {
+                // Atomic claim: update status to 'processing' before executing step
+                const claimed = await prisma.leadSequenceState.updateMany({
+                    where: { id: state.id, status: 'active' },
+                    data: { status: 'processing' }
+                });
+
+                if (claimed.count === 0) {
+                    console.log(`[Scheduler] Skipping sequence state ${state.id}: already claimed.`);
+                    continue;
+                }
+
                 // Find the step config
                 const nextStep = state.sequence.steps.find((s: any) => s.stepOrder === state.currentStep + 1);
 
@@ -72,7 +83,8 @@ export async function runSequenceScheduler() {
                         where: { id: state.id },
                         data: {
                             currentStep: nextStep.stepOrder,
-                            nextRunAt: nextRun
+                            nextRunAt: nextRun,
+                            status: 'active'
                         }
                     });
                 } else {
@@ -88,6 +100,10 @@ export async function runSequenceScheduler() {
 
             } catch (stepErr: any) {
                 console.error(`[Scheduler] Error executing sequence step for state ${state.id}`, stepErr.message);
+                await prisma.leadSequenceState.updateMany({
+                    where: { id: state.id, status: 'processing' },
+                    data: { status: 'active' }
+                });
             }
         }
         

@@ -3,9 +3,13 @@ import { runSequenceScheduler } from '@/modules/sequences/scheduler';
 import { runScheduledEmailScheduler } from '@/modules/email/scheduled-sender';
 
 export async function GET(request: Request) {
-    // In a real production app, verify a CRON_SECRET header to ensure only Vercel/Cron can call this
+    if (!process.env.CRON_SECRET) {
+        console.error('[API/Cron] Missing CRON_SECRET environment variable.');
+        return NextResponse.json({ error: 'Server Misconfiguration: CRON_SECRET is not configured' }, { status: 500 });
+    }
+
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

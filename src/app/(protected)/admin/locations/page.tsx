@@ -7,7 +7,7 @@ import { BackButton } from '@/components/ui/BackButton';
 export default async function LocationsPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect('/login');
+    if (!user) redirect('/sign-in');
 
     return (
         <div className="min-h-screen bg-slate-50">

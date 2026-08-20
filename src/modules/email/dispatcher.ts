@@ -38,17 +38,9 @@ async function buildTransporter(agentId?: string) {
         }
     }
 
-    // 2. Fallback to system-level built-in Gmail credentials
+    // Fail closed: Never fall back to system or global environment variable credentials.
     if (!gmailUser || !gmailAppPassword) {
-        gmailUser = process.env.GMAIL_USER;
-        gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
-
-        if (gmailUser && gmailAppPassword) {
-            console.log(`[EmailService] Using built-in system Gmail sender: ${gmailUser} (Reply-To: ${replyToEmail || 'System'})`);
-        }
-    }
-
-    if (!gmailUser || !gmailAppPassword) {
+        console.warn(`[EmailService] Fail Closed: No personal Gmail credentials configured for agent ${agentId || 'unknown'}. Skipping send.`);
         return null;
     }
 

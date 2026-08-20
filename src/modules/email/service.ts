@@ -25,6 +25,9 @@ export async function sendUnifiedEmailCore({
     ]);
 
     if (!lead) throw new Error('Lead not found');
+    if (lead.assignedAgentId !== agentId) {
+        throw new Error('Unauthorized lead email access');
+    }
 
     const agentName = profile?.name || profile?.emailFromName || 'Your Agent';
     const agentPhone = profile?.phone || '';
@@ -50,9 +53,11 @@ export async function sendUnifiedEmailCore({
     // 1. Send Actual Email (dual-provider with graceful error fallback)
     let emailSentSuccessfully = false;
     let deliveryNotice = '';
+    let resendMessageId: string | undefined = undefined;
 
-    const gmailUser = profile?.gmailEmailAddress || process.env.GMAIL_USER;
-    const gmailPass = (profile as any)?.gmailAppPassword || process.env.GMAIL_APP_PASSWORD;
+    // Fail closed: Require agent's personal credentials; do NOT fall back to global process.env.GMAIL_USER
+    const gmailUser = profile?.gmailEmailAddress;
+    const gmailPass = (profile as any)?.gmailAppPassword;
 
     if (gmailUser && gmailPass) {
         try {
@@ -61,13 +66,14 @@ export async function sendUnifiedEmailCore({
                 auth: { user: gmailUser, pass: gmailPass }
             });
 
-            await transporter.sendMail({
+            const sendInfo = await transporter.sendMail({
                 from: `"${profile?.emailFromName || agentName}" <${gmailUser}>`,
                 to: lead.email,
                 subject: resolvedSubject,
                 html: resolvedBody.replace(/\n/g, '<br/>')
             });
             emailSentSuccessfully = true;
+            resendMessageId = sendInfo.messageId;
         } catch (smtpErr: any) {
             console.warn('[Email Engine] Gmail SMTP delivery notice:', smtpErr?.message || smtpErr);
             deliveryNotice = smtpErr?.message || 'SMTP delivery warning';
@@ -87,6 +93,9 @@ export async function sendUnifiedEmailCore({
                 deliveryNotice = resendRes.error.message;
             } else {
                 emailSentSuccessfully = true;
+                if (resendRes.data?.id) {
+                    resendMessageId = resendRes.data.id;
+                }
             }
         } catch (resendErr: any) {
             console.warn('[Email Engine] Resend API notice:', resendErr?.message || resendErr);
@@ -94,7 +103,7 @@ export async function sendUnifiedEmailCore({
         }
     }
 
-    // 2. Save to EmailLog (Always record attempt)
+    // 2. Save to EmailLog (Always record attempt with stored Resend/SMTP message ID)
     await (prisma as any).emailLog.create({
         data: {
             leadId,
@@ -106,7 +115,8 @@ export async function sendUnifiedEmailCore({
             isManual,
             status: emailSentSuccessfully ? 'sent' : 'logged',
             templateUsed: templateId,
-            lastError: deliveryNotice || undefined
+            lastError: deliveryNotice || undefined,
+            gmailMessageId: resendMessageId || undefined
         }
     });
 
