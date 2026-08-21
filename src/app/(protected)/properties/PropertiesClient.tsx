@@ -289,11 +289,20 @@ export default function PropertiesClient({ initialProperties, locationGroups, ag
 
     // Search/Filter states
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [typeFilter, setTypeFilter] = useState('All');
     const [bedsFilter, setBedsFilter] = useState('All');
     const [demandFilter, setDemandFilter] = useState('All');
     const [locFilter, setLocFilter] = useState('All');
+
+    // 250ms search debounce
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm.trim().toLowerCase());
+        }, 250);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     // Menu state
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -377,8 +386,9 @@ export default function PropertiesClient({ initialProperties, locationGroups, ag
     };
 
     const filteredProps = properties.filter(p => {
-        const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              p.location.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = !debouncedSearch || 
+                              p.title.toLowerCase().includes(debouncedSearch) || 
+                              p.location.toLowerCase().includes(debouncedSearch);
         const matchesStatus = statusFilter === 'All' || p.status === statusFilter;
         const matchesType = typeFilter === 'All' || p.propertyType === typeFilter;
         const matchesLoc = locFilter === 'All' || p.locationId === locFilter || p.location.toLowerCase().includes(locFilter.toLowerCase());
@@ -477,22 +487,28 @@ export default function PropertiesClient({ initialProperties, locationGroups, ag
     };
 
     const handleDelete = async (id: string) => {
+        setIsDeletingId(id);
+        // Optimistic instant removal
+        setProperties(prev => prev.filter(p => p.id !== id));
         try {
             const res = await fetch(`/api/properties/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error("Delete failed");
-            setProperties(properties.filter(p => p.id !== id));
-            setIsDeletingId(null);
         } catch (err: any) {
+            console.error("Failed to delete property:", err);
             alert("Failed to delete property");
+        } finally {
+            setIsDeletingId(null);
         }
     };
 
     const handleStatusChange = async (id: string, newStatus: string) => {
+        // Optimistic instant status update
+        setProperties(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
+        setActiveMenuId(null);
         try {
-            const updated = await updateProperty(id, { status: newStatus });
-            setProperties(properties.map(p => p.id === id ? { ...p, status: newStatus } : p));
-            setActiveMenuId(null);
+            await updateProperty(id, { status: newStatus });
         } catch (error) {
+            console.error("Failed to update status:", error);
             alert("Failed to update status");
         }
     };

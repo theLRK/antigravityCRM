@@ -54,15 +54,46 @@ function getStatusLabel(task: ExtendedTask) {
     return 'Pending';
 }
 
+import { Loader2 } from 'lucide-react';
+
 export function FollowUpsTab({ tasks, onSendNow, onMarkDone, onReschedule, onViewLead }: Props) {
-    if (tasks.length === 0) {
+    const [visibleTasks, setVisibleTasks] = React.useState(tasks);
+    const [pendingTaskId, setPendingTaskId] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        setVisibleTasks(tasks);
+    }, [tasks]);
+
+    const handleDoneClick = async (taskId: string) => {
+        setPendingTaskId(taskId);
+        // Optimistic removal
+        setVisibleTasks(prev => prev.filter(t => t.id !== taskId));
+        try {
+            await onMarkDone(taskId);
+        } finally {
+            setPendingTaskId(null);
+        }
+    };
+
+    const handleRescheduleClick = async (taskId: string) => {
+        setPendingTaskId(taskId);
+        // Optimistic removal
+        setVisibleTasks(prev => prev.filter(t => t.id !== taskId));
+        try {
+            await onReschedule?.(taskId);
+        } finally {
+            setPendingTaskId(null);
+        }
+    };
+
+    if (visibleTasks.length === 0) {
         return (
-            <div className="bg-white rounded-xl border border-dashed border-slate-200 p-12 text-center">
-                <div className="w-12 h-12 bg-[#853953]/5 text-[#853953] rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center shadow-2xs">
+                <div className="w-12 h-12 bg-[#853953]/5 text-[#853953] rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <CheckCircle2 className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900">All caught up!</h3>
-                <p className="text-slate-500">No follow-up tasks currently pending.</p>
+                <h3 className="text-base font-extrabold text-slate-900">All caught up!</h3>
+                <p className="text-slate-500 text-xs font-medium mt-1">No follow-up tasks currently pending.</p>
             </div>
         );
     }
@@ -83,11 +114,12 @@ export function FollowUpsTab({ tasks, onSendNow, onMarkDone, onReschedule, onVie
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 italic font-medium">
-                        {tasks.map((task) => {
+                        {visibleTasks.map((task) => {
                             const lead = task.lead;
                             const topMatch = lead?.propertyMatches[0];
                             const priority = getPriority(task);
                             const statusLabel = getStatusLabel(task);
+                            const isPending = pendingTaskId === task.id;
 
                             return (
                                 <tr key={task.id} className="hover:bg-slate-50/50 transition-colors">
@@ -168,15 +200,17 @@ export function FollowUpsTab({ tasks, onSendNow, onMarkDone, onReschedule, onVie
                                                 </>
                                             )}
                                             <button 
-                                                onClick={() => onMarkDone(task.id)}
-                                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                onClick={() => handleDoneClick(task.id)}
+                                                disabled={isPending}
+                                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
                                                 title="Mark as Done"
                                             >
-                                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                                {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                                             </button>
                                             <button 
-                                                onClick={() => onReschedule?.(task.id)}
-                                                className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"
+                                                onClick={() => handleRescheduleClick(task.id)}
+                                                disabled={isPending}
+                                                className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
                                                 title="Reschedule Task"
                                             >
                                                 <History className="w-3.5 h-3.5" />

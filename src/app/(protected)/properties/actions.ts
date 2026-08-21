@@ -5,18 +5,56 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { runMatchingForProperty } from '@/modules/scoring/matching';
 
-export async function getProperties(filters?: {
-    search?: string;
-    status?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    beds?: number;
-}) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+// In-memory cache for location groups with 5-minute TTL
+let cachedLocationGroups: any[] | null = null;
+let cachedLocationGroupsExpiresAt = 0;
 
-    const where: any = { agentId: user.id };
+export async function getCachedLocationGroups(): Promise<any[]> {
+    const now = Date.now();
+    if (cachedLocationGroups && now < cachedLocationGroupsExpiresAt) {
+        return cachedLocationGroups;
+    }
+
+    try {
+        const [groupsRaw, locationsRaw] = await Promise.all([
+            prisma.$queryRaw<any[]>`SELECT id, name, created_at as createdAt FROM location_groups ORDER BY name ASC`,
+            prisma.$queryRaw<any[]>`SELECT id, name, group_id as groupId, is_custom as isCustom, created_by_lead_id as createdByLeadId, created_at as createdAt FROM locations`
+        ]);
+
+        const locationGroups = groupsRaw.map(g => ({
+            ...g,
+            locations: locationsRaw.filter(l => l.groupId === g.id)
+        }));
+
+        cachedLocationGroups = locationGroups;
+        cachedLocationGroupsExpiresAt = now + 5 * 60 * 1000; // 5 minutes
+        return locationGroups;
+    } catch (err) {
+        console.error('Error loading location groups:', err);
+        return cachedLocationGroups || [];
+    }
+}
+
+export async function getProperties(
+    filters?: {
+        search?: string;
+        status?: string;
+        minPrice?: number;
+        maxPrice?: number;
+        beds?: number;
+    },
+    agentIdOverride?: string
+) {
+    let agentId = agentIdOverride;
+
+    if (!agentId) {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Unauthorized");
+        agentId = user.id;
+    }
+
+    const where: any = { agentId };
 
     if (filters?.search) {
         where.AND = [

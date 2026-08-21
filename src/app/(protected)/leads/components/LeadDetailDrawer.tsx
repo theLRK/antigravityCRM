@@ -45,10 +45,13 @@ export function LeadDetailDrawer({
     const [selectedCallOutcome, setSelectedCallOutcome] = useState<'spoke_to_lead' | 'not_interested' | 'left_voicemail' | 'no_answer' | 'callback_requested'>('spoke_to_lead');
     const [callbackDate, setCallbackDate] = useState('');
     const [callbackTime, setCallbackTime] = useState('');
-    const [showStageSuggestion, setShowStageSuggestion] = useState(false);
-    
+    const [stageState, setStageState] = useState(lead.pipelineStage);
     const [deleteStep, setDeleteStep] = useState(0);
     const [activeTab, setActiveTab] = useState<'overview' | 'calls_notes' | 'tasks' | 'properties' | 'timeline' | 'conversation'>('overview');
+
+    useEffect(() => {
+        setStageState(lead.pipelineStage);
+    }, [lead.pipelineStage]);
     
     // Notes list state
     const [notesList, setNotesList] = useState<NoteItem[]>(lead.notes || []);
@@ -326,8 +329,12 @@ export function LeadDetailDrawer({
 
                         <div className="flex items-center gap-3">
                             <select
-                                value={lead.pipelineStage}
-                                onChange={(e) => onStatusChange(lead.id, e.target.value)}
+                                value={stageState}
+                                onChange={(e) => {
+                                    const newStage = e.target.value;
+                                    setStageState(newStage);
+                                    onStatusChange(lead.id, newStage);
+                                }}
                                 className="text-xs font-bold bg-slate-100 hover:bg-slate-200 border-none text-slate-800 py-1.5 pl-3 pr-8 rounded-full focus:ring-2 focus:ring-[#853953] appearance-none shadow-sm cursor-pointer transition-all"
                             >
                                 <option value="new">New</option>

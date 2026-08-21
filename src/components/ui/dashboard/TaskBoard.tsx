@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Clock, AlertTriangle, Phone, Mail, ArrowRight, RotateCcw, Calendar, Plus, X, Home, Bell } from 'lucide-react';
 import TaskSnoozeMenu from './TaskSnoozeMenu';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface Task {
     id: string;
@@ -72,15 +73,51 @@ export default function TaskBoard() {
     }, []);
 
     const complete = async (id: string) => {
-        await fetch(`/api/tasks/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'completed' }) });
-        fetchTasks();
+        // Optimistic instant removal from active queues
+        setTasks(prev => ({
+            ...prev,
+            overdue: prev.overdue.filter(t => t.id !== id),
+            today: prev.today.filter(t => t.id !== id),
+            upcoming: prev.upcoming.filter(t => t.id !== id)
+        }));
+
+        try {
+            await fetch(`/api/tasks/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'completed' })
+            });
+        } catch (err) {
+            console.error('Task complete error:', err);
+            fetchTasks(); // Rollback if failure
+        }
     };
 
     const reschedule = async (id: string) => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        await fetch(`/api/tasks/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dueDate: tomorrow.toISOString(), status: 'pending' }) });
-        fetchTasks();
+
+        // Optimistically remove from overdue/today
+        setTasks(prev => {
+            const task = [...prev.overdue, ...prev.today, ...prev.upcoming].find(t => t.id === id);
+            return {
+                ...prev,
+                overdue: prev.overdue.filter(t => t.id !== id),
+                today: prev.today.filter(t => t.id !== id),
+                upcoming: task ? [{ ...task, dueDate: tomorrow.toISOString() }, ...prev.upcoming.filter(t => t.id !== id)] : prev.upcoming
+            };
+        });
+
+        try {
+            await fetch(`/api/tasks/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dueDate: tomorrow.toISOString(), status: 'pending' })
+            });
+        } catch (err) {
+            console.error('Task reschedule error:', err);
+            fetchTasks();
+        }
     };
 
     const createTask = async () => {
@@ -113,7 +150,14 @@ export default function TaskBoard() {
         }
     };
 
-    if (loading) return <div className="h-48 flex items-center justify-center text-slate-400 text-sm">Loading tasks...</div>;
+    if (loading) {
+        return (
+            <div className="h-48 flex flex-col items-center justify-center gap-2 bg-white rounded-3xl border border-slate-200/80 p-6 shadow-2xs">
+                <LoadingSpinner size={36} color="#853953" />
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Syncing task queue...</p>
+            </div>
+        );
+    }
 
     const allTotal = tasks.overdue.length + tasks.today.length + tasks.upcoming.length;
 

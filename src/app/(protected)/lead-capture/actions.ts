@@ -12,13 +12,13 @@ async function getAuthAgentId() {
 }
 
 // 1. Fetch the Agent's Active Form (MVP assumes 1 active form per agent for now)
-export async function getAgentForm() {
-    const agentId = await getAuthAgentId();
+export async function getAgentForm(agentIdOverride?: string) {
+    const agentId = agentIdOverride || (await getAuthAgentId());
 
     let form = await prisma.leadCaptureForm.findFirst({
         where: { agentId },
         include: {
-            leads: true // Include leads to calculate total submissions
+            leads: { select: { id: true } } // Fetch only IDs for submission count
         }
     });
 

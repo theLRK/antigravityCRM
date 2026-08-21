@@ -10,18 +10,19 @@ import { ShareLinkBox } from './components/ShareLinkBox';
 export default async function LeadCapturePage() {
     const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
-    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session || !user) {
+    if (!session) {
         redirect('/sign-in');
     }
 
-    const formConfig = await getAgentForm();
-    const totalSubmissions = formConfig?.leads?.length || 0;
+    const user = session.user;
 
-    const agentProfile = await prisma.agentProfile.findUnique({
-        where: { agentId: user.id }
-    });
+    const [formConfig, agentProfile] = await Promise.all([
+        getAgentForm(user.id),
+        prisma.agentProfile.findUnique({ where: { agentId: user.id } })
+    ]);
+
+    const totalSubmissions = formConfig?.leads?.length || 0;
 
     return (
         <main className="flex-1 w-full max-w-7xl mx-auto px-6 sm:px-8 py-10">
