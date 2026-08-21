@@ -71,3 +71,35 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 }
 
+// DELETE /api/properties/[id]/notes?noteId=xxx
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    try {
+        const { id } = await params;
+        const { searchParams } = new URL(req.url);
+        const noteId = searchParams.get('noteId');
+        if (!noteId) return NextResponse.json({ error: 'Missing noteId parameter' }, { status: 400 });
+
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+        // Verify property ownership
+        const property = await prisma.property.findFirst({
+            where: { id, agentId: user.id }
+        });
+        if (!property) return NextResponse.json({ error: 'Property not found or unauthorized' }, { status: 404 });
+
+        await prisma.propertyNote.delete({
+            where: { id: noteId }
+        });
+
+        // Trigger property re-matching in background
+        runMatchingForProperty(id).catch(console.error);
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        console.error('[DELETE /api/properties/:id/notes]', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+

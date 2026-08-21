@@ -853,6 +853,7 @@ function PropertyNotesDrawer({ property, onClose }: { property: any, onClose: ()
     const [notes, setNotes] = useState<any[]>([]);
     const [newNote, setNewNote] = useState('');
     const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetch(`/api/properties/${property.id}/notes`)
@@ -876,6 +877,22 @@ function PropertyNotesDrawer({ property, onClose }: { property: any, onClose: ()
         }
     };
 
+    const handleDeleteNote = async (noteId: string) => {
+        setDeletingId(noteId);
+        try {
+            const res = await fetch(`/api/properties/${property.id}/notes?noteId=${noteId}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setNotes(prev => prev.filter(n => n.id !== noteId));
+            }
+        } catch (err) {
+            console.error('Failed to delete property note', err);
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
     return (
         <>
             <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 transition-opacity" onClick={onClose} />
@@ -892,11 +909,11 @@ function PropertyNotesDrawer({ property, onClose }: { property: any, onClose: ()
                     <textarea 
                         value={newNote}
                         onChange={e => setNewNote(e.target.value)}
-                        placeholder="e.g., Owner flexible on price, urgent sale..."
+                        placeholder="e.g., Owner flexible on price, urgent sale, private swimming pool..."
                         className="w-full h-24 p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-[#853953] text-sm resize-none"
                     />
-                    <button onClick={handleAddNote} disabled={!newNote.trim()} className="mt-3 w-full bg-[#853953] hover:bg-[#612D53] disabled:opacity-50 text-white font-bold py-2.5 rounded-xl transition-all shadow-sm">
-                        Save Note
+                    <button onClick={handleAddNote} disabled={!newNote.trim()} className="mt-3 w-full bg-[#853953] hover:bg-[#612D53] disabled:opacity-50 text-white font-bold py-2.5 rounded-xl transition-all shadow-sm cursor-pointer">
+                        Save Note & Re-Match Leads
                     </button>
                 </div>
 
@@ -906,7 +923,17 @@ function PropertyNotesDrawer({ property, onClose }: { property: any, onClose: ()
                             <div key={n.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm relative group">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-xs font-bold text-slate-900">{n.agentName}</span>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400">{new Date(n.createdAt).toLocaleDateString()}</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] uppercase font-bold text-slate-400">{new Date(n.createdAt).toLocaleDateString()}</span>
+                                        <button
+                                            onClick={() => handleDeleteNote(n.id)}
+                                            disabled={deletingId === n.id}
+                                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 p-1 rounded transition-opacity cursor-pointer"
+                                            title="Delete Note"
+                                        >
+                                            {deletingId === n.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{n.content}</p>
                             </div>

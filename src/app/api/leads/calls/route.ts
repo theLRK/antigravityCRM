@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
-
+import { prisma } from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
+import { processScoreForLead } from '@/modules/scoring/orchestrator';
+import { runPropertyMatchingForLead } from '@/modules/scoring/matching';
 
 export async function POST(req: Request) {
     try {
@@ -26,17 +28,38 @@ export async function POST(req: Request) {
                 leadId,
                 agentId: user.id,
                 outcome,
-                notes,
-                nextStep
+                notes: notes || '',
+                nextStep: nextStep || null
             }
         });
 
-        // Also log to activity log for the timeline
+        // Map outcome to user-friendly badge title
+        const outcomeLabels: Record<string, string> = {
+            'spoke_to_lead': 'Spoke with Lead',
+            'not_interested': 'Not Interested / On Hold',
+            'left_voicemail': 'Left Voicemail',
+            'no_answer': 'No Answer',
+            'callback_requested': 'Callback Requested'
+        };
+        const outcomeLabel = outcomeLabels[outcome] || outcome.replace(/_/g, ' ');
+
+        // Save categorized Call Note into notes table
+        const noteContent = `📞 [CALL: ${outcomeLabel}] ${notes ? notes.trim() : `Call outcome recorded: ${outcomeLabel}.`}`;
+        const note = await (prisma as any).note.create({
+            data: {
+                leadId,
+                agentId: user.id,
+                content: noteContent
+            }
+        });
+
+        // Log to activity log for timeline
         await prisma.activityLog.create({
             data: {
                 leadId,
                 eventType: 'call.logged',
-                metadata: JSON.stringify({ outcome, notes })
+                actor: user.email || 'agent',
+                metadata: JSON.stringify({ outcome: outcomeLabel, notes })
             }
         });
 
@@ -46,7 +69,15 @@ export async function POST(req: Request) {
             data: { lastContactedAt: new Date() }
         });
 
-        return NextResponse.json({ callLog });
+        // Trigger real-time background AI Lead Re-scoring & Property Re-matching with the new call notes
+        processScoreForLead(leadId, {
+            ...lead,
+            notes: noteContent
+        }).catch(err => console.error('[CallLog] Re-scoring error:', err));
+
+        runPropertyMatchingForLead(leadId).catch(err => console.error('[CallLog] Re-matching error:', err));
+
+        return NextResponse.json({ success: true, callLog, note });
     } catch (error: any) {
         console.error('Call Log API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
