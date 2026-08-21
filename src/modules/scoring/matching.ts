@@ -5,295 +5,361 @@ import { env } from '../../config/env';
 
 const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY || 're_dummy' });
 
-export async function runPropertyMatchingForLead(leadId: string) {
-    try {
-        console.log(`[PropertyMatcher] Starting match run for Lead ID ${leadId}`);
-        const lead = await prisma.lead.findUnique({ where: { id: leadId } });
-        if (!lead) throw new Error("Lead not found");
-
-        const properties = await prisma.property.findMany({
-            where: { status: 'Available', agentId: lead.assignedAgentId || '' }
-        });
-        if (properties.length === 0) {
-            console.log(`[PropertyMatcher] No available properties to match against.`);
-            return;
-        }
-
-        const matchCandidates: any[] = [];
-
-        // 1. Deterministic Scoring
-        for (const property of properties) {
-            let score = 0;
-
-            // Budget Match (40 points)
-            // Use property price against lead budgetMin/budgetMax
-            if (lead.budgetMax) {
-                if (property.price <= lead.budgetMax) {
-                    if (lead.budgetMin && property.price < lead.budgetMin * 0.8) {
-                        score += 20; // Too cheap, maybe lower quality? Still technically in budget but under min
-                    } else {
-                        score += 40; // Sweet spot
-                    }
-                } else if (property.price <= lead.budgetMax * 1.15) {
-                    score += 20; // Slightly over budget (15% stretch)
-                }
-            } else if (lead.budgetMin && property.price >= lead.budgetMin) {
-                score += 40; // No max, but meets min
-            }
-
-            // Location Match (30 points) - Hybrid Global Matching
-            let locationMatch = false;
-            
-            // 2.1 Structured Location Match (UUIDs)
-            const leadLocIds = Array.isArray(lead.preferredLocationIds) ? (lead.preferredLocationIds as string[]) : [];
-            if (leadLocIds.length > 0 && property.locationId) {
-                if (leadLocIds.includes(property.locationId)) {
-                    score += 30;
-                    locationMatch = true;
-                }
-            }
-
-            // 2.2 Global Hybrid Text & Region Matching
-            if (!locationMatch) {
-                const leadTexts = [
-                    lead.preferredAreas,
-                    lead.customLocation,
-                    ...(Array.isArray(lead.preferredLocationIds) ? (lead.preferredLocationIds as string[]) : [])
-                ].filter(Boolean).map(s => String(s).toLowerCase());
-
-                const propTexts = [
-                    property.location,
-                    property.locationId
-                ].filter(Boolean).map(s => String(s).toLowerCase());
-
-                const leadCombined = leadTexts.join(' ');
-                const propCombined = propTexts.join(' ');
-
-                if (leadCombined && propCombined) {
-                    // Check direct substring match
-                    if (propCombined.includes(leadCombined) || leadCombined.includes(propCombined)) {
-                        score += 30;
-                        locationMatch = true;
-                    } else {
-                        // Check token overlap
-                        const leadTokens = leadCombined.split(/[, \-/]+/).filter(t => t.length >= 3);
-                        const propTokens = propCombined.split(/[, \-/]+/).filter(t => t.length >= 3);
-                        const intersect = leadTokens.filter(t => propTokens.some(pt => pt.includes(t) || t.includes(pt)));
-
-                        if (intersect.length >= 2) {
-                            score += 30;
-                            locationMatch = true;
-                        } else if (intersect.length === 1) {
-                            score += 20; // Strong partial match (e.g. city match)
-                            locationMatch = true;
-                        }
-                    }
-                }
-            }
-
-            // Bedrooms Match (20 points)
-            if (lead.bedroomsMin) {
-                if (property.bedrooms >= lead.bedroomsMin) {
-                    score += 20;
-                } else if (property.bedrooms === lead.bedroomsMin - 1) {
-                    score += 10; // Exactly 1 bed short
-                }
-            } else {
-                score += 20; // Did not specify, assuming matches
-            }
-
-            // Timeline Match (10 points)
-            // Property is available, if lead is immediate = 10 points
-            const timeline = (lead.moveTimeline || '').toLowerCase();
-            if (timeline.includes('immediate') || timeline.includes('asap') || timeline.includes('1-3')) {
-                score += 10;
-            } else if (timeline.includes('3-6')) {
-                score += 5;
-            }
-
-            // Push to candidates
-            if (score >= 40) {
-                matchCandidates.push({ property, score });
-            }
-        }
-
-        // Sort descending
-        matchCandidates.sort((a, b) => b.score - a.score);
-        
-        // Take top 5 candidates
-        const topMatches = matchCandidates.slice(0, 5);
-        if (topMatches.length === 0) {
-            console.log(`[PropertyMatcher] No properties met minimum threshold (40%).`);
-            return;
-        }
-
-        // 2. Generate AI reasoning for matches
-        for (const candidate of topMatches) {
-            // Delete old match if rerunning
-            await prisma.propertyMatch.deleteMany({
-                where: { leadId: lead.id, propertyId: candidate.property.id }
-            });
-
-            let reasoning = 'A strong deterministic match based on client criteria.';
-            
-            try {
-                const prompt = `You are a real estate AI assistant matching a Lead with a Property.
-                Write exactly 1-2 short sentences evaluating the fit, speaking to the agent (e.g. "This fits their budget perfectly and...").
-                
-                Lead details:
-                - Budget: ${lead.budgetMin ? '$' + lead.budgetMin : 'Any'} to ${lead.budgetMax ? '$' + lead.budgetMax : 'Any'}
-                - Areas: ${lead.preferredAreas || 'Any'}
-                - Beds needed: ${lead.bedroomsMin || 'Any'}
-                - Timeline: ${lead.moveTimeline || 'Unknown'}
-
-                Property details:
-                - Name: ${candidate.property.title}
-                - Location: ${candidate.property.location}
-                - Price: ${candidate.property.currency}${candidate.property.price}
-                - Beds: ${candidate.property.bedrooms} Bed`;
-
-                const completion = await openai.chat.completions.create({
-                    model: 'gpt-4o-mini',
-                    messages: [{ role: 'system', content: prompt }],
-                    temperature: 0.3,
-                    max_tokens: 60
-                });
-
-                reasoning = completion.choices[0]?.message?.content?.trim() || reasoning;
-            } catch (err) {
-                console.error(`[PropertyMatcher] AI Reasoning generation failed for property ${candidate.property.id}. Using fallback.`);
-            }
-
-            await prisma.propertyMatch.create({
-                data: {
-                    leadId: lead.id,
-                    propertyId: candidate.property.id,
-                    score: candidate.score,
-                    reasoning: reasoning
-                }
-            });
-            console.log(`[PropertyMatcher] Saved property match ${candidate.property.id} (Score: ${candidate.score})`);
-        }
-
-        console.log(`[PropertyMatcher] Finished evaluating property matches for Lead ID ${leadId}.`);
-    } catch (e: any) {
-        console.error(`[PropertyMatcher] Error running matcher:`, e.message || e);
-    }
+export interface MatchEvaluationResult {
+    score: number;
+    matchPercent: number;
+    matchReason: string;
+    breakdown: {
+        budgetFit: string;
+        locationFit: string;
+        specsFit: string;
+        notesFit: string;
+    };
+    pitchHook: string;
 }
 
+/**
+ * Intelligent Multi-Factor Property Match Evaluator with Google Gemini
+ * Analyzes structured criteria + lead notes + property notes + semantic amenities.
+ */
+export async function evaluateLeadPropertyMatch(lead: any, property: any, locationMap?: Map<string, any>): Promise<MatchEvaluationResult> {
+    let budgetScore = 0;
+    let budgetText = 'No budget specified';
+    let locationScore = 0;
+    let locationText = 'Location criteria flexible';
+    let specsScore = 0;
+    let specsText = 'Standard residential match';
+
+    // 1. Budget Fit (Max 35 points)
+    const price = property.price || 0;
+    const maxBudget = lead.budgetMax || 0;
+    const minBudget = lead.budgetMin || 0;
+
+    if (maxBudget > 0) {
+        if (price <= maxBudget) {
+            if (minBudget > 0 && price < minBudget * 0.8) {
+                budgetScore = 20;
+                budgetText = `${budgetScore}/35 - Below min budget target (${property.currency || '$'}${price.toLocaleString()})`;
+            } else {
+                budgetScore = 35;
+                budgetText = `35/35 - Fits within ${property.currency || '$'}${maxBudget.toLocaleString()} budget perfectly`;
+            }
+        } else if (price <= maxBudget * 1.1) {
+            budgetScore = 20;
+            budgetText = `20/35 - Slight stretch (within 10% of ${property.currency || '$'}${maxBudget.toLocaleString()})`;
+        } else {
+            budgetScore = 0;
+            budgetText = `0/35 - Price (${property.currency || '$'}${price.toLocaleString()}) exceeds budget (${property.currency || '$'}${maxBudget.toLocaleString()})`;
+        }
+    } else if (minBudget > 0) {
+        if (price >= minBudget) {
+            budgetScore = 30;
+            budgetText = `30/35 - Meets ${property.currency || '$'}${minBudget.toLocaleString()} minimum requirement`;
+        }
+    } else {
+        budgetScore = 15;
+        budgetText = '15/35 - Flexible budget parameter';
+    }
+
+    // 2. Hybrid Location Fit (Max 25 points)
+    let leadLocIds: string[] = [];
+    if (Array.isArray(lead.preferredLocationIds)) {
+        leadLocIds = lead.preferredLocationIds;
+    } else if (typeof lead.preferredLocationIds === 'string' && lead.preferredLocationIds.startsWith('[')) {
+        try { leadLocIds = JSON.parse(lead.preferredLocationIds); } catch {}
+    }
+
+    const propLocId = property.locationId;
+    let locMatched = false;
+
+    if (leadLocIds.length > 0 && propLocId) {
+        if (leadLocIds.includes(propLocId)) {
+            locationScore = 25;
+            locationText = `25/25 - Exact location match for ${property.location}`;
+            locMatched = true;
+        } else if (locationMap) {
+            const propLoc = locationMap.get(propLocId);
+            if (propLoc?.groupId) {
+                const isSibling = leadLocIds.some(lid => locationMap.get(lid)?.groupId === propLoc.groupId);
+                if (isSibling) {
+                    locationScore = 20;
+                    locationText = `20/25 - Adjacent neighborhood in same area group (${propLoc.group?.name || 'region'})`;
+                    locMatched = true;
+                }
+            }
+        }
+    }
+
+    if (!locMatched) {
+        const leadAreaText = [lead.preferredAreas, lead.customLocation].filter(Boolean).join(' ').toLowerCase();
+        const propAreaText = (property.location || '').toLowerCase();
+
+        if (leadAreaText && propAreaText) {
+            if (propAreaText.includes(leadAreaText) || leadAreaText.includes(propAreaText)) {
+                locationScore = 25;
+                locationText = `25/25 - Free-text location match (${property.location})`;
+            } else {
+                const leadTokens = leadAreaText.split(/[, \-/]+/).filter((t: string) => t.length >= 3);
+                const propTokens = propAreaText.split(/[, \-/]+/).filter((t: string) => t.length >= 3);
+                const overlap = leadTokens.filter((t: string) => propTokens.some((pt: string) => pt.includes(t) || t.includes(pt)));
+
+                if (overlap.length >= 2) {
+                    locationScore = 20;
+                    locationText = `20/25 - Strong area overlap in ${overlap.join(', ')}`;
+                } else if (overlap.length === 1) {
+                    locationScore = 15;
+                    locationText = `15/25 - Partial city/region match in ${overlap[0]}`;
+                } else {
+                    locationScore = 0;
+                    locationText = `0/25 - Location mismatch (${property.location} vs ${lead.preferredAreas || 'unspecified'})`;
+                }
+            }
+        } else {
+            locationScore = 12;
+            locationText = '12/25 - Open to general location';
+        }
+    }
+
+    // 3. Bedrooms & Specs (Max 20 points)
+    const minBeds = lead.bedroomsMin || 0;
+    const propBeds = property.bedrooms || 0;
+
+    if (minBeds > 0) {
+        if (propBeds >= minBeds) {
+            specsScore = 20;
+            specsText = `20/20 - ${propBeds} beds meets or exceeds ${minBeds}+ target`;
+        } else if (propBeds === minBeds - 1) {
+            specsScore = 10;
+            specsText = `10/20 - ${propBeds} beds is 1 bed under ${minBeds} target`;
+        } else {
+            specsScore = 0;
+            specsText = `0/20 - ${propBeds} beds does not meet ${minBeds}+ target`;
+        }
+    } else {
+        specsScore = 15;
+        specsText = `15/20 - ${propBeds} beds (flexible buyer requirement)`;
+    }
+
+    const baseScore = budgetScore + locationScore + specsScore;
+
+    // 4. Semantic AI Analysis on Notes & Amenities (Google Gemini 2.0 Flash)
+    // Gather lead notes and property notes
+    const leadNotesArr = Array.isArray(lead.notes) ? lead.notes.map((n: any) => n.content || n).filter(Boolean) : [];
+    const leadNotesCombined = [lead.motivation, ...leadNotesArr].filter(Boolean).join('; ');
+
+    const propNotesArr = Array.isArray(property.notes) ? property.notes.map((n: any) => n.content || n).filter(Boolean) : [];
+    const propNotesCombined = [property.description, ...propNotesArr].filter(Boolean).join('; ');
+
+    let aiBonus = 0;
+    let notesText = '+0 pts - No specific notes alignment';
+    let matchReason = `${lead.firstName} matches ${property.title} with a base compatibility score of ${baseScore}%.`;
+    let pitchHook = `I found a wonderful property in ${property.location} that matches your budget and criteria.`;
+
+    // Run Gemini if there are notes to analyze
+    if (leadNotesCombined || propNotesCombined) {
+        const prompt = `
+You are an expert real estate AI matching analyst in Formative CRM.
+Evaluate how well the Lead's preferences and private agent notes align with the Property details and property notes.
+
+LEAD PROFILE:
+- Name: ${lead.firstName} ${lead.lastName}
+- Budget: ${lead.currency || '$'}${lead.budgetMin || 0} to ${lead.currency || '$'}${lead.budgetMax || 'Any'}
+- Location: ${lead.preferredAreas || lead.customLocation || 'Any'}
+- Beds Needed: ${lead.bedroomsMin || 'Any'}
+- Timeline: ${lead.moveTimeline || 'Unknown'}
+- Agent & Lead Notes: "${leadNotesCombined || 'None'}"
+
+PROPERTY DETAILS:
+- Title: ${property.title}
+- Location: ${property.location}
+- Price: ${property.currency || '$'}${property.price}
+- Beds/Baths: ${property.bedrooms} Beds, ${property.bathrooms} Baths
+- Property Type: ${property.propertyType || 'House'}
+- Property Notes & Amenities: "${propNotesCombined || 'None'}"
+
+INSTRUCTIONS:
+1. Determine an AI Notes Alignment Bonus between -10 and +20 points:
+   - Award positive points (+5 to +20) if specific preferences in notes align (e.g. pool, backyard, family space, flexible location around surrounding areas, quiet street).
+   - Award negative points (-5 to -10) if notes contradict (e.g. buyer explicitly rejected apartments, or requires pet-friendly and property is not).
+   - Return 0 if notes are neutral.
+2. Write a concise 1-2 sentence "matchReason" explaining the fit to the agent.
+3. Write an ultra-natural 1-sentence "pitchHook" for an email directly speaking to the buyer referencing their specific request (e.g. "Since you mentioned wanting a swimming pool for your kids, you'll love that this property includes...").
+
+Return ONLY valid JSON matching this schema:
+{
+  "aiBonus": number,
+  "notesFit": "string (e.g. +15 pts - Matched pool request from agent notes)",
+  "matchReason": "string",
+  "pitchHook": "string"
+}
+`;
+
+        try {
+            const geminiRes = await generateWithGemini({
+                prompt,
+                systemInstruction: "You are an intelligent real estate matching AI. Always respond in valid JSON format.",
+                responseJson: true,
+                temperature: 0.2
+            });
+
+            if (geminiRes) {
+                const parsed = JSON.parse(geminiRes);
+                aiBonus = Math.max(-10, Math.min(20, Number(parsed.aiBonus) || 0));
+                notesText = String(parsed.notesFit || `+${aiBonus} pts - Evaluated by Gemini AI`);
+                matchReason = String(parsed.matchReason || matchReason);
+                pitchHook = String(parsed.pitchHook || pitchHook);
+            }
+        } catch (geminiErr: any) {
+            console.warn('[PropertyMatcher] Gemini notes analysis fallback:', geminiErr?.message || geminiErr);
+        }
+    }
+
+    const finalPercent = Math.min(100, Math.max(0, Math.round(baseScore + aiBonus)));
+
+    return {
+        score: finalPercent,
+        matchPercent: finalPercent,
+        matchReason: matchReason,
+        breakdown: {
+            budgetFit: budgetText,
+            locationFit: locationText,
+            specsFit: specsText,
+            notesFit: notesText
+        },
+        pitchHook: pitchHook
+    };
+}
+
+/**
+ * Runs property matching for a specific property against all agent leads.
+ */
 export async function runMatchingForProperty(propertyId: string) {
     try {
-        console.log(`[PropertyMatcher] Starting match run for Property ID ${propertyId}`);
-        const property = await prisma.property.findUnique({ where: { id: propertyId } });
+        console.log(`[PropertyMatcher] Running intelligent match for Property ID ${propertyId}`);
+        const property = await prisma.property.findUnique({
+            where: { id: propertyId },
+            include: { notes: true }
+        });
         if (!property) throw new Error("Property not found");
         if (property.status !== 'Available') {
-            console.log(`[PropertyMatcher] Property is not Available. Skipping match.`);
+            console.log(`[PropertyMatcher] Property is ${property.status}. Skipping match run.`);
             return;
         }
 
-        // Get active leads (e.g. not closed or unsubscribed)
-        const leads = await prisma.lead.findMany({
-            where: { isUnsubscribed: false, pipelineStage: { notIn: ['closed', 'lost'] }, assignedAgentId: property.agentId }
-        });
+        const [leads, allLocations] = await Promise.all([
+            prisma.lead.findMany({
+                where: {
+                    isUnsubscribed: false,
+                    pipelineStage: { notIn: ['closed', 'lost'] },
+                    assignedAgentId: property.agentId
+                },
+                include: { notes: true }
+            }),
+            (prisma as any).location.findMany({ include: { group: true } }).catch(() => [])
+        ]);
 
         if (leads.length === 0) return;
 
-        console.log(`[PropertyMatcher] Evaluating ${leads.length} leads against Property ${propertyId}`);
-
-        // We will just call the lead matching for each, 
-        // OR we can do the reverse logic. The easiest & most accurate is 
-        // to just rerun the lead matcher for matching leads, 
-        // but that touches old properties too. So let's just do a dedicated reverse loop:
+        const locationMap = new Map<string, any>();
+        allLocations.forEach((l: any) => locationMap.set(l.id, l));
 
         for (const lead of leads) {
-            let score = 0;
-            // Budget Match (40)
-            if (lead.budgetMax) {
-                if (property.price <= lead.budgetMax) {
-                    if (lead.budgetMin && property.price < lead.budgetMin * 0.8) score += 20; 
-                    else score += 40; 
-                } else if (property.price <= lead.budgetMax * 1.15) score += 20;
-            } else if (lead.budgetMin && property.price >= lead.budgetMin) score += 40;
+            const evalResult = await evaluateLeadPropertyMatch(lead, property, locationMap);
 
-            // Location Match (30)
-            let locationMatch = false;
-            const leadLocIds = Array.isArray(lead.preferredLocationIds) ? (lead.preferredLocationIds as string[]) : [];
-            if (leadLocIds.length > 0 && property.locationId) {
-                if (leadLocIds.includes(property.locationId)) {
-                    score += 30;
-                    locationMatch = true;
-                }
-            }
-
-            if (!locationMatch) {
-                const prefArea = (lead.preferredAreas || '').toLowerCase();
-                const propLoc = (property.location || '').toLowerCase();
-                if (prefArea && propLoc) {
-                    if (propLoc.includes(prefArea) || prefArea.includes(propLoc)) score += 30;
-                    else {
-                        const intersect = prefArea.split(/[, ]+/).filter(t => t.length > 3 && propLoc.split(/[, ]+/).includes(t));
-                        if (intersect.length > 0) score += 15;
+            if (evalResult.matchPercent >= 50) {
+                await prisma.propertyMatch.upsert({
+                    where: {
+                        leadId_propertyId: {
+                            leadId: lead.id,
+                            propertyId: property.id
+                        }
+                    },
+                    update: {
+                        score: evalResult.matchPercent,
+                        matchPercent: evalResult.matchPercent,
+                        reasoning: JSON.stringify(evalResult),
+                        matchReason: evalResult.matchReason
+                    },
+                    create: {
+                        leadId: lead.id,
+                        propertyId: property.id,
+                        score: evalResult.matchPercent,
+                        matchPercent: evalResult.matchPercent,
+                        reasoning: JSON.stringify(evalResult),
+                        matchReason: evalResult.matchReason
                     }
-                }
-            }
-
-            // Beds (20)
-            if (lead.bedroomsMin) {
-                if (property.bedrooms >= lead.bedroomsMin) score += 20;
-                else if (property.bedrooms === lead.bedroomsMin - 1) score += 10;
-            } else score += 20;
-
-            // Timeline (10)
-            const timeline = (lead.moveTimeline || '').toLowerCase();
-            if (timeline.includes('immediate') || timeline.includes('asap') || timeline.includes('1-3')) score += 10;
-            else if (timeline.includes('3-6')) score += 5;
-
-            // Only generate an LLM rationale if score >= 40
-            if (score >= 40) {
+                });
+                console.log(`[PropertyMatcher] Saved verified match for Lead ${lead.firstName} on Property ${property.title} (${evalResult.matchPercent}%)`);
+            } else {
+                // If it no longer matches, remove old stale match
                 await prisma.propertyMatch.deleteMany({
                     where: { leadId: lead.id, propertyId: property.id }
                 });
-
-                let reasoning = 'A strong deterministic match based on client criteria.';
-                const prompt = `You are a real estate AI assistant matching a Lead with a Property. Write exactly 1-2 short sentences evaluating the fit, speaking to the agent (e.g. "This fits their budget perfectly and...").
-                
-                Lead details: Budget: ${lead.budgetMin ? '$' + lead.budgetMin : 'Any'} to ${lead.budgetMax ? '$' + lead.budgetMax : 'Any'} | Areas: ${lead.preferredAreas || 'Any'} | Beds needed: ${lead.bedroomsMin || 'Any'} | Timeline: ${lead.moveTimeline || 'Unknown'}
-                Property details: Name: ${property.title} | Location: ${property.location} | Price: ${property.currency}${property.price} | Beds: ${property.bedrooms} Bed`;
-
-                try {
-                    const geminiRes = await generateWithGemini({
-                        prompt,
-                        systemInstruction: "You are an expert real estate property match analyst. Keep it concise (1-2 sentences).",
-                        temperature: 0.3
-                    });
-                    if (geminiRes) reasoning = geminiRes.trim();
-                } catch (geminiErr) {
-                    try {
-                        if (env.OPENAI_API_KEY && !env.OPENAI_API_KEY.includes('your_')) {
-                            const completion = await openai.chat.completions.create({
-                                model: 'gpt-4o-mini',
-                                messages: [{ role: 'system', content: prompt }],
-                                temperature: 0.3,
-                                max_tokens: 60
-                            });
-                            reasoning = completion.choices[0]?.message?.content?.trim() || reasoning;
-                        }
-                    } catch (openAiErr) {}
-                }
-
-                await prisma.propertyMatch.create({
-                    data: {
-                        leadId: lead.id,
-                        propertyId: property.id,
-                        score: score,
-                        reasoning: reasoning
-                    }
-                });
-                console.log(`[PropertyMatcher] Saved property match ${property.id} for lead ${lead.id} (Score: ${score})`);
             }
         }
     } catch (e: any) {
-        console.error(`[PropertyMatcher] Error running reverse matcher:`, e.message || e);
+        console.error('[PropertyMatcher] Error in runMatchingForProperty:', e.message || e);
     }
 }
 
+/**
+ * Runs property matching for a specific lead against all agent properties.
+ */
+export async function runPropertyMatchingForLead(leadId: string) {
+    try {
+        console.log(`[PropertyMatcher] Running intelligent match for Lead ID ${leadId}`);
+        const lead = await prisma.lead.findUnique({
+            where: { id: leadId },
+            include: { notes: true }
+        });
+        if (!lead) throw new Error("Lead not found");
+
+        const [properties, allLocations] = await Promise.all([
+            prisma.property.findMany({
+                where: { status: 'Available', agentId: lead.assignedAgentId || '' },
+                include: { notes: true }
+            }),
+            (prisma as any).location.findMany({ include: { group: true } }).catch(() => [])
+        ]);
+
+        if (properties.length === 0) return;
+
+        const locationMap = new Map<string, any>();
+        allLocations.forEach((l: any) => locationMap.set(l.id, l));
+
+        for (const property of properties) {
+            const evalResult = await evaluateLeadPropertyMatch(lead, property, locationMap);
+
+            if (evalResult.matchPercent >= 50) {
+                await prisma.propertyMatch.upsert({
+                    where: {
+                        leadId_propertyId: {
+                            leadId: lead.id,
+                            propertyId: property.id
+                        }
+                    },
+                    update: {
+                        score: evalResult.matchPercent,
+                        matchPercent: evalResult.matchPercent,
+                        reasoning: JSON.stringify(evalResult),
+                        matchReason: evalResult.matchReason
+                    },
+                    create: {
+                        leadId: lead.id,
+                        propertyId: property.id,
+                        score: evalResult.matchPercent,
+                        matchPercent: evalResult.matchPercent,
+                        reasoning: JSON.stringify(evalResult),
+                        matchReason: evalResult.matchReason
+                    }
+                });
+            } else {
+                await prisma.propertyMatch.deleteMany({
+                    where: { leadId: lead.id, propertyId: property.id }
+                });
+            }
+        }
+    } catch (e: any) {
+        console.error('[PropertyMatcher] Error in runPropertyMatchingForLead:', e.message || e);
+    }
+}

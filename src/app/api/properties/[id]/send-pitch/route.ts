@@ -36,26 +36,42 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         followUpDate.setDate(now.getDate() + 2); // Follow up in 2 days
 
         for (const leadId of leadIds) {
-            const lead = await prisma.lead.findFirst({ where: { id: leadId, assignedAgentId: user.id } });
+            const [lead, propertyMatch] = await Promise.all([
+                prisma.lead.findFirst({ where: { id: leadId, assignedAgentId: user.id } }),
+                prisma.propertyMatch.findUnique({
+                    where: { leadId_propertyId: { leadId, propertyId: id } }
+                })
+            ]);
             if (!lead) continue;
 
             const propertyLoc = property.locationRef?.name || property.location;
-            const propertyPriceStr = `$${property.price.toLocaleString()}`;
-            const agentNameStr = agentProfile?.name || "Your Agent";
+            const propertyPriceStr = `${property.currency || '$'}${property.price.toLocaleString()}`;
+            const agentNameStr = agentProfile?.name || agentProfile?.emailFromName || "Your Agent";
             const agencyStr = agentProfile?.company || "Formative Properties";
 
+            let customPitchHook = `I came across a property in <strong>${propertyLoc}</strong> that matches your preferences, so I wanted to share it with you:`;
+            if (propertyMatch?.reasoning) {
+                try {
+                    const parsed = JSON.parse(propertyMatch.reasoning);
+                    if (parsed.pitchHook) {
+                        customPitchHook = parsed.pitchHook;
+                    }
+                } catch {}
+            }
+
             const pitchSubject = `Property Match: ${property.title} in ${propertyLoc}`;
-            const pitchBody = `<div style="font-family: sans-serif; color: #334155; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #7c3aed;">Property Match!</h2>
+            const pitchBody = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #334155; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+                <h2 style="color: #853953; margin-bottom: 12px;">Exclusive Property Match</h2>
                 <p>Hello ${lead.firstName},</p>
-                <p>I came across a property in <strong>${propertyLoc}</strong> that matches your preferences, so I wanted to share it with you:</p>
-                <div style="background-color: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0; border: 1px solid #e2e8f0;">
-                    <h3 style="margin: 0 0 8px 0; color: #0f172a;">${property.title}</h3>
-                    <p style="margin: 0 0 4px 0; font-weight: bold; color: #7c3aed;">${propertyPriceStr}</p>
-                    <p style="margin: 0; color: #64748b; font-size: 14px;">🛏️ ${property.bedrooms} Bedrooms, 🛁 ${property.bathrooms} Bathrooms</p>
+                <p style="font-size: 15px; color: #1e293b; font-weight: 500;">${customPitchHook}</p>
+                <div style="background-color: #fdf8f9; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid #f2dbe2;">
+                    <h3 style="margin: 0 0 6px 0; color: #1e293b; font-size: 18px;">${property.title}</h3>
+                    <p style="margin: 0 0 6px 0; font-weight: 800; color: #853953; font-size: 16px;">${propertyPriceStr}</p>
+                    <p style="margin: 0 0 8px 0; color: #64748b; font-size: 13px;">📍 ${propertyLoc}</p>
+                    <p style="margin: 0; color: #475569; font-size: 14px; font-weight: 600;">🛏️ ${property.bedrooms} Beds &nbsp;|&nbsp; 🛁 ${property.bathrooms} Baths &nbsp;|&nbsp; 🏷️ ${property.propertyType || 'Residential'}</p>
                 </div>
-                <p>Please let me know if you'd like to schedule a viewing or request more details!</p>
-                <p>Best regards,<br/><strong>${agentNameStr}</strong><br/>${agencyStr}</p>
+                <p>Please let me know if you'd like to schedule a private viewing or if you'd like me to send additional details!</p>
+                <p style="margin-top: 24px;">Best regards,<br/><strong>${agentNameStr}</strong><br/><span style="color: #64748b; font-size: 13px;">${agencyStr}</span></p>
             </div>`;
 
             // Send email using agent's personal email inbox (or fallback if configured)

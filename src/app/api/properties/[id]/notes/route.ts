@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-
+import { runMatchingForProperty } from '@/modules/scoring/matching';
 
 // GET /api/properties/[id]/notes
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -60,6 +60,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
                 agentName: profile?.name || user.email || 'Agent User'
             }
         });
+
+        // Trigger intelligent AI re-matching with the new notes in background
+        runMatchingForProperty(id).catch(console.error);
 
         return NextResponse.json({ success: true, note });
     } catch (error: any) {

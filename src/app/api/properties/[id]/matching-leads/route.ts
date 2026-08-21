@@ -1,43 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-
-
-function calcLeadMatch(lead: any, property: any, locationMap: Map<string, any>) {
-    let score = 0;
-    const reasons: string[] = [];
-
-    const leadLocationIds: string[] = lead.preferredLocationIds ? JSON.parse(lead.preferredLocationIds) : [];
-    const propLocId = property.locationId;
-
-    if (leadLocationIds.length > 0 && propLocId) {
-        if (leadLocationIds.includes(propLocId)) {
-            score += 40;
-            reasons.push(`Interested in ${locationMap.get(propLocId)?.name || 'this area'}`);
-        } else {
-            const propGroupId = locationMap.get(propLocId)?.groupId;
-            if (propGroupId && leadLocationIds.some((lid: string) => locationMap.get(lid)?.groupId === propGroupId)) {
-                score += 20;
-                reasons.push('Interested in nearby area');
-            }
-        }
-    } else { score += 10; }
-
-    const max = lead.budgetMax || 0;
-    if (max > 0) {
-        if (property.price <= max) { score += 25; reasons.push('Budget matches'); }
-        else if (property.price <= max * 1.1) score += 12;
-    } else score += 12;
-
-    if (lead.bedroomsMin > 0) {
-        if (property.bedrooms >= lead.bedroomsMin) { score += 20; reasons.push('Bedrooms match'); }
-        else if (property.bedrooms >= lead.bedroomsMin - 1) score += 10;
-    } else score += 10;
-
-    const percent = Math.min(Math.round((score / 95) * 100), 100);
-    const matchReason = percent >= 70 ? reasons.slice(0, 2).join(', ') : (reasons[0] || 'Partial match');
-    return { score, percent, matchReason };
-}
+import { evaluateLeadPropertyMatch } from '@/modules/scoring/matching';
 
 // GET /api/properties/:id/matching-leads
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -47,10 +11,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        const [property, leads, allLocations] = await Promise.all([
-            prisma.property.findFirst({ where: { id, agentId: user.id } }),
-            prisma.lead.findMany({ where: { pipelineStage: { not: 'closed' }, assignedAgentId: user.id }, take: 200 }),
-            (prisma as any).location.findMany({ include: { group: true } })
+        const [property, leads, allLocations, storedMatches] = await Promise.all([
+            prisma.property.findFirst({
+                where: { id, agentId: user.id },
+                include: { notes: true }
+            }),
+            prisma.lead.findMany({
+                where: {
+                    pipelineStage: { notIn: ['closed', 'lost'] },
+                    isUnsubscribed: false,
+                    assignedAgentId: user.id
+                },
+                include: { notes: true },
+                take: 100
+            }),
+            (prisma as any).location.findMany({ include: { group: true } }).catch(() => []),
+            prisma.propertyMatch.findMany({
+                where: { propertyId: id, score: { gte: 50 } },
+                include: { lead: { include: { notes: true } } },
+                orderBy: { score: 'desc' }
+            })
         ]);
 
         if (!property) return NextResponse.json({ error: 'Property not found or unauthorized' }, { status: 404 });
@@ -58,13 +38,55 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         const locationMap = new Map<string, any>();
         allLocations.forEach((l: any) => locationMap.set(l.id, l));
 
-        const matches = leads.map((lead: any) => {
-            const { score, percent, matchReason } = calcLeadMatch(lead, property, locationMap);
-            return { lead, score, percent, matchReason };
-        }).sort((a: any, b: any) => b.score - a.score).slice(0, 8);
+        let formattedMatches: any[] = [];
 
-        return NextResponse.json({ matches });
+        if (storedMatches.length > 0) {
+            formattedMatches = storedMatches.map(sm => {
+                let parsedBreakdown = {
+                    budgetFit: 'Calculated budget compatibility',
+                    locationFit: 'Evaluated geographic criteria',
+                    specsFit: 'Analyzed bedroom/specs match',
+                    notesFit: 'Gemini AI evaluated alignment'
+                };
+                let pitchHook = '';
+
+                try {
+                    if (sm.reasoning && sm.reasoning.startsWith('{')) {
+                        const parsed = JSON.parse(sm.reasoning);
+                        if (parsed.breakdown) parsedBreakdown = parsed.breakdown;
+                        if (parsed.pitchHook) pitchHook = parsed.pitchHook;
+                    }
+                } catch {}
+
+                return {
+                    lead: sm.lead,
+                    score: sm.score,
+                    percent: sm.score,
+                    matchReason: sm.matchReason || sm.reasoning || 'Strong client fit',
+                    breakdown: parsedBreakdown,
+                    pitchHook: pitchHook
+                };
+            });
+        } else {
+            // Dynamic evaluation if no stored matches yet
+            const computed = await Promise.all(leads.map(async (lead: any) => {
+                const evalResult = await evaluateLeadPropertyMatch(lead, property, locationMap);
+                return {
+                    lead,
+                    score: evalResult.matchPercent,
+                    percent: evalResult.matchPercent,
+                    matchReason: evalResult.matchReason,
+                    breakdown: evalResult.breakdown,
+                    pitchHook: evalResult.pitchHook
+                };
+            }));
+
+            formattedMatches = computed.filter(m => m.percent >= 50).sort((a, b) => b.score - a.score);
+        }
+
+        return NextResponse.json({ matches: formattedMatches });
     } catch (e: any) {
+        console.error('[matching-leads API error]:', e);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

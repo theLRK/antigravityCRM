@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { runPropertyMatchingForLead } from '@/modules/scoring/matching';
 
 // POST /api/leads/:leadId/notes
 export async function POST(req: NextRequest, { params }: { params: Promise<{ leadId: string }> }) {
@@ -36,6 +37,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ lea
                 metadata: content.substring(0, 80)
             }
         });
+
+        // Trigger intelligent AI re-matching with the new lead notes in background
+        runPropertyMatchingForLead(leadId).catch(console.error);
 
         return NextResponse.json(note, { status: 201 });
     } catch (e: any) {
