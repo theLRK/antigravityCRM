@@ -2,28 +2,21 @@ import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import {
-    Search,
-    Bell,
-    Download,
-    BadgeDollarSign,
     Users,
     ArrowLeftRight,
     Sparkles,
-    TrendingUp,
     Calendar,
     ArrowUpRight,
     ArrowDownRight,
     BrainCircuit,
     MailOpen,
-    MousePointerClick,
-    MessageSquare,
-    Shield,
+    BarChart3,
     Activity,
-    BarChart3
+    Flame,
+    TrendingUp,
+    ShieldCheck
 } from 'lucide-react';
-import Image from 'next/image';
 import SetupChecklist from '@/components/ui/dashboard/SetupChecklist';
-import ActivityChart from '@/components/ui/dashboard/ActivityChart';
 import PipelineChart from '@/components/ui/dashboard/PipelineChart';
 import NextBestActionsClient from '@/components/ui/dashboard/NextBestActionsClient';
 import ActivityFeedClient from '@/components/ui/dashboard/ActivityFeedClient';
@@ -31,34 +24,33 @@ import NotificationDropdown from '@/components/ui/dashboard/NotificationDropdown
 import TaskBoard from '@/components/ui/dashboard/TaskBoard';
 import LocationInsightsCard from '@/components/ui/dashboard/LocationInsightsCard';
 import EmptyStatePipeline from '@/components/ui/dashboard/EmptyStatePipeline';
+import DashboardSearchFilter from '@/components/ui/dashboard/DashboardSearchFilter';
 import Link from 'next/link';
 
-
-
-// --- Sub-components to keep the file clean ---
-
-function MetricCard({ title, amount, change, trend, subtext, Icon }: {
+// --- Reusable Modern Metric Card ---
+function MetricCard({ title, amount, change, trend, subtext, Icon, badgeColor = 'bg-[#853953]/10 text-[#853953]' }: {
     title: string;
     amount: string;
     change?: string;
     trend?: 'up' | 'down' | 'neutral';
     subtext?: string;
     Icon: any;
+    badgeColor?: string;
 }) {
     const isUp = trend === 'up';
     const isDown = trend === 'down';
     return (
-        <div className="card-modern p-6 flex flex-col justify-between group transition-all duration-300 hover:scale-[1.01] hover:shadow-md bg-white border border-slate-200/80 rounded-2xl shadow-xs">
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-slate-300 shadow-2xs group">
             <div>
-                <div className="flex justify-between items-start mb-5">
-                    <div className="w-12 h-12 rounded-2xl bg-[#F3F4F4] flex items-center justify-center text-[#853953] group-hover:bg-gradient-to-br group-hover:from-[#853953] group-hover:to-[#612D53] group-hover:text-white transition-all shadow-xs">
+                <div className="flex justify-between items-start mb-4">
+                    <div className={`w-12 h-12 rounded-2xl ${badgeColor} flex items-center justify-center transition-all group-hover:scale-105`}>
                         <Icon className="w-6 h-6" />
                     </div>
                     {change && (
-                        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                            isUp ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' :
-                            isDown ? 'bg-rose-50 text-rose-700 border border-rose-200/60' :
-                            'bg-slate-50 text-slate-600 border border-slate-200/60'
+                        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black border ${
+                            isUp ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' :
+                            isDown ? 'bg-rose-50 text-rose-700 border-rose-200/60' :
+                            'bg-slate-50 text-slate-600 border-slate-200/60'
                         }`}>
                             {isUp && <ArrowUpRight className="w-3.5 h-3.5" />}
                             {isDown && <ArrowDownRight className="w-3.5 h-3.5" />}
@@ -66,11 +58,11 @@ function MetricCard({ title, amount, change, trend, subtext, Icon }: {
                         </div>
                     )}
                 </div>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1.5">{title}</p>
-                <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight">{amount}</h3>
+                <p className="text-slate-400 text-[11px] font-black uppercase tracking-wider mb-1">{title}</p>
+                <h3 className="text-3xl font-black text-slate-900 tracking-tight">{amount}</h3>
             </div>
             {subtext && (
-                <p className="text-[11px] font-medium text-slate-400 mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5">
+                <p className="text-xs font-medium text-slate-500 mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                     {subtext}
                 </p>
@@ -112,7 +104,7 @@ export default async function DashboardPage() {
         console.warn('[Dashboard] Auto-claim warning:', claimErr?.message);
     }
 
-    // ---- FETCH REAL CRM METRICS (Ultra-Optimized Parallel Batch) ----
+    // ---- FETCH REAL CRM METRICS (Optimized Parallel Batch) ----
     const now = new Date();
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -130,7 +122,6 @@ export default async function DashboardPage() {
         activeLeadsCount,
         closedLeadsCount,
         highIntentCount,
-        overdueCount,
         priorityLeads,
         sentToday,
         totalSent,
@@ -153,26 +144,19 @@ export default async function DashboardPage() {
                 scores: { some: { finalScore: { gte: 80 } } }
             }
         }),
-        prisma.lead.count({
-            where: {
-                assignedAgentId: user.id,
-                pipelineStage: { not: 'closed' },
-                followUpDate: { lt: now }
-            }
-        }),
         prisma.lead.findMany({
             where: {
                 assignedAgentId: user.id,
                 OR: [
                     { pipelineStage: 'new', scores: { some: { finalScore: { gte: 80 } } } },
-                    { pipelineStage: { not: 'closed' }, followUpDate: { lt: now } }
+                    { pipelineStage: { notIn: ['closed', 'lost'] }, followUpDate: { lt: now } }
                 ]
             },
             include: {
                 scores: { orderBy: { createdAt: 'desc' }, take: 1, include: { reasoningBreakdowns: true } }
             },
             orderBy: { createdAt: 'desc' },
-            take: 5
+            take: 4
         }),
         prisma.emailLog.count({
             where: { 
@@ -204,7 +188,7 @@ export default async function DashboardPage() {
         })
     ]);
 
-    // True Mathematical Growth Rate vs Prior 7 Days
+    // True Growth Rate vs Prior 7 Days
     const leadsThisWeekCount = recentLeads7d.length;
     let leadGrowthText = 'Baseline';
     let leadGrowthTrend: 'up' | 'down' | 'neutral' = 'neutral';
@@ -221,75 +205,49 @@ export default async function DashboardPage() {
     const openRate = totalSent > 0 ? Math.round((openedCount / totalSent) * 100) : 0;
     const clickRate = totalSent > 0 ? Math.round((clickedCount / totalSent) * 100) : 0;
 
-    const todayPriorities = priorityLeads.map(l => ({
-        ...l,
-        topScore: l.scores?.[0]?.finalScore || 0,
-        priorityType: l.pipelineStage === 'new' && (l.scores?.[0]?.finalScore || 0) >= 80 ? 'URGENT: HIGH INTENT' : 'URGENT: OVERDUE',
-        priorityLevel: 'high',
-        suggestedAction: l.scores?.[0]?.suggestedAction || 'Needs attention'
-    }));
-
     const emailConnected = !!(agentProfile?.gmailEmailAddress && (agentProfile as any)?.gmailAppPassword);
     const captureFormExists = captureFormCount > 0;
     const hasFirstLead = totalLeadsCount > 0;
     const hasTemplates = !!(agentProfile?.emailTemplateHotBody);
 
-    // In-memory 7 days aggregation (Zero additional DB round-trips)
-    const last7DaysData = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - (6 - i));
-        d.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(d);
-        dayEnd.setHours(23, 59, 59, 999);
-
-        const dayLeads = recentLeads7d.filter(l => l.createdAt >= d && l.createdAt <= dayEnd);
-        const hotLeads = dayLeads.filter(l => (l.scores?.[0]?.finalScore || 0) >= 80);
-
-        return {
-            date: d.toLocaleDateString('en-US', { weekday: 'short' }),
-            total: dayLeads.length,
-            hot: hotLeads.length
-        };
-    });
-
-    // In-memory Pipeline Distribution (Zero additional DB round-trips)
-    const pipelineStages = ['new', 'contacted', 'booked_showing', 'closed'];
-    const colors: any = { new: '#853953', contacted: '#612D53', booked_showing: '#2C2C2C', closed: '#10b981' };
-    const labels: any = { new: 'New', contacted: 'In Progress', booked_showing: 'Booked', closed: 'Closed' };
+    // In-memory Pipeline Distribution
+    const pipelineStages = ['new', 'contacted', 'showing', 'booked_showing', 'closed'];
+    const colors: any = { new: '#853953', contacted: '#612D53', showing: '#3b82f6', booked_showing: '#2C2C2C', closed: '#10b981' };
+    const labels: any = { new: 'New', contacted: 'Contacted', showing: 'Showing', booked_showing: 'Booked', closed: 'Closed' };
     const pipelineChartData = pipelineStages.map(stage => {
         const count = pipelineLeads.filter(l => l.pipelineStage === stage).length;
-        return { name: labels[stage], value: count, color: colors[stage] };
-    });
+        return { name: labels[stage] || stage, value: count, color: colors[stage] || '#64748b' };
+    }).filter(d => d.value > 0);
 
     const setupSteps = [
         {
             id: 'email',
-            title: 'Connect email → Send automated follow-ups instantly',
-            description: 'Add your Gmail so Formative can handle the initial outreach while you sleep.',
+            title: 'Connect Email Integration',
+            description: 'Add your Gmail credentials to dispatch automated follow-ups and AI pitches.',
             done: emailConnected,
             href: '/settings/email',
-            cta: 'Set Up Email'
+            cta: 'Configure Email'
         },
         {
             id: 'templates',
-            title: 'Refine advice → Sound like yourself',
-            description: 'Personalise the Hot, Warm, and Cold lead emails to match your expert voice.',
+            title: 'Refine AI Email Templates',
+            description: 'Tailor automated Hot, Warm, and Cold outreach to reflect your personal voice.',
             done: hasTemplates,
             href: '/settings/email-templates',
             cta: 'Edit Templates'
         },
         {
             id: 'form',
-            title: 'Share link → Capture qualified leads 24/7',
-            description: 'Your public form scores leads instantly and flows them into your pipeline.',
+            title: 'Share Lead Intake Wizard',
+            description: 'Publish your lead capture link to score buyer intent 24/7.',
             done: captureFormExists,
             href: '/lead-capture',
             cta: 'Get Form Link'
         },
         {
             id: 'lead',
-            title: 'First win → Watch AI handle a lead',
-            description: 'When a lead submits, Formative scores it in seconds and sends the perfect first email.',
+            title: 'Convert Your First Lead',
+            description: 'Let Formative evaluate requirements and pitch matching properties instantly.',
             done: hasFirstLead,
             href: '/leads',
             cta: 'View Leads'
@@ -297,79 +255,55 @@ export default async function DashboardPage() {
     ];
 
     return (
-        <div className="flex flex-col w-full min-h-full bg-[#F3F4F4]">
-            {/* Top Navigation Header */}
-            <header className="flex items-center justify-between h-12 mb-10">
-                <div className="relative w-96 group">
-                    <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#853953] transition-colors" />
-                    <input
-                        type="text"
-                        placeholder="Search leads, properties, or files..."
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-black/5 rounded-2xl text-sm focus:ring-2 focus:ring-[#853953]/20 outline-none shadow-sm transition-all"
-                    />
-                </div>
-                <div className="flex items-center gap-4">
+        <div className="flex flex-col w-full min-h-full bg-[#FAFAFC] pb-16">
+            {/* Top Navigation & Search Bar */}
+            <header className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 h-auto sm:h-14 mb-8">
+                <DashboardSearchFilter />
+
+                <div className="flex items-center gap-3 self-end sm:self-auto">
                     <NotificationDropdown />
-                    <Link href="/dashboard/reports" className="flex items-center gap-2 px-5 py-3 bg-white border border-black/5 rounded-xl text-sm font-black text-[#2C2C2C] hover:bg-gray-50 transition-all shadow-sm active:scale-95">
+                    <Link 
+                        href="/dashboard/reports" 
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-extrabold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs active:scale-95"
+                    >
                         <BarChart3 className="w-4 h-4 text-[#853953]" />
                         Reports
                     </Link>
-                    <Link href="/account" className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#853953] to-[#612D53] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[#853953]/20 hover:scale-105 transition-all" title="Agent Profile">
+                    <Link 
+                        href="/account" 
+                        className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#853953] to-[#612D53] flex items-center justify-center text-white font-black text-xs shadow-md shadow-[#853953]/20 hover:scale-105 transition-all" 
+                        title="Agent Account"
+                    >
                         {firstName.charAt(0).toUpperCase()}
                     </Link>
                 </div>
             </header>
 
-            {/* Main Dashboard Content */}
-            <main className="flex-1 max-w-7xl mx-auto w-full">
-                {/* Setup Onboarding Checklist */}
+            {/* Main Dashboard Body */}
+            <main className="flex-1 max-w-7xl mx-auto w-full space-y-8">
+                {/* Onboarding Checklist */}
                 <SetupChecklist steps={setupSteps} />
 
-                <div className="mb-10">
-                    <h1 className="text-4xl font-black text-[#2C2C2C] tracking-tight mb-2">
-                        Welcome back, {firstName}
-                    </h1>
-                    <p className="text-gray-500 text-lg font-medium leading-relaxed">
-                        Formative analyzed <span className="text-[#853953] font-bold">{totalLeadsCount} leads</span> and handled <span className="text-[#853953] font-bold">{totalSent} automated actions</span> for you this month.
-                    </p>
-                </div>
-
-                {/* ROI Results / Impact Strip */}
-                <div className="mb-12 p-1.5 bg-white border border-black/5 rounded-3xl shadow-sm overflow-hidden">
-                    <div className="flex flex-wrap items-center justify-between gap-8 p-6 md:p-8 bg-[#F3F4F4]/30 rounded-[22px]">
-                        <div className="flex items-center gap-5">
-                            <div className="w-14 h-14 bg-gradient-to-br from-[#853953] to-[#612D53] rounded-2xl flex items-center justify-center text-white shadow-xl shadow-[#853953]/20">
-                                <Activity className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none mb-2">System Performance</p>
-                                <p className="text-base font-bold text-[#2C2C2C]">AI Insights are optimizing your pipeline</p>
-                            </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-12 md:gap-20">
-                            <div className="text-center">
-                                <p className="text-3xl font-black text-[#2C2C2C] leading-none tracking-tight">{totalLeadsCount}</p>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Leads Scored</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-black text-[#2C2C2C] leading-none tracking-tight">{highIntentCount}</p>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">High Intent</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-black text-[#2C2C2C] leading-none tracking-tight">{totalSent}</p>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Automations</p>
-                            </div>
-                            <div className="text-center border-l border-black/5 pl-12 md:pl-20">
-                                <p className="text-3xl font-black text-[#853953] leading-none tracking-tight">{closedLeadsCount}</p>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Success Rate</p>
-                            </div>
-                        </div>
+                {/* Welcome & Context Banner */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+                            Welcome back, {firstName}
+                        </h1>
+                        <p className="text-slate-500 text-sm font-medium mt-1">
+                            Formative CRM is monitoring <span className="text-[#853953] font-bold">{activeLeadsCount} active leads</span> and verified <span className="text-[#853953] font-bold">{propertyMatchesCount} inventory matches</span>.
+                        </p>
                     </div>
+                    <Link
+                        href="/leads"
+                        className="px-5 py-2.5 rounded-2xl bg-[#853953] hover:bg-[#612D53] text-white text-xs font-extrabold shadow-md shadow-[#853953]/20 transition-all active:scale-95 flex items-center gap-2"
+                    >
+                        <Users className="w-4 h-4" /> Go to Leads
+                    </Link>
                 </div>
 
-                {/* Top Metrics Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                {/* 4 Core Scannable Primary KPIs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <MetricCard
                         title="Active Pipeline"
                         amount={activeLeadsCount.toString()}
@@ -377,155 +311,167 @@ export default async function DashboardPage() {
                         trend={leadGrowthTrend}
                         subtext="vs. prior 7 days"
                         Icon={Users}
+                        badgeColor="bg-blue-50 text-blue-700"
                     />
                     <MetricCard
-                        title="Conversion Rate"
-                        amount={`${conversionRate}%`}
-                        change={closedLeadsCount > 0 ? `${closedLeadsCount} Closed` : undefined}
-                        trend={closedLeadsCount > 0 ? 'up' : 'neutral'}
-                        subtext="Lifetime win efficiency"
-                        Icon={ArrowLeftRight}
+                        title="Hot Intent Buyers"
+                        amount={highIntentCount.toString()}
+                        change={highIntentCount > 0 ? 'Urgent Follow-Up' : undefined}
+                        trend={highIntentCount > 0 ? 'up' : 'neutral'}
+                        subtext="Scored 80+ by AI"
+                        Icon={Flame}
+                        badgeColor="bg-rose-50 text-rose-700"
                     />
                     <MetricCard
                         title="Property Matches"
                         amount={propertyMatchesCount.toString()}
-                        change={highIntentCount > 0 ? `${highIntentCount} Hot Leads` : undefined}
+                        change={propertyMatchesCount > 0 ? 'Active' : undefined}
                         trend={propertyMatchesCount > 0 ? 'up' : 'neutral'}
-                        subtext="AI verified property fits"
+                        subtext="Multi-factor inventory fits"
                         Icon={Sparkles}
+                        badgeColor="bg-[#853953]/10 text-[#853953]"
+                    />
+                    <MetricCard
+                        title="Win Conversion"
+                        amount={`${conversionRate}%`}
+                        change={closedLeadsCount > 0 ? `${closedLeadsCount} Won` : undefined}
+                        trend={closedLeadsCount > 0 ? 'up' : 'neutral'}
+                        subtext="Closed pipeline efficiency"
+                        Icon={ShieldCheck}
+                        badgeColor="bg-emerald-50 text-emerald-700"
                     />
                 </div>
 
                 {/* Dashboard Grid Map */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 pb-20">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    
+                    {/* Left Column (2 spans): Actions & Feed */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* AI Suggestions / Next Best Actions */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-black text-slate-900 flex items-center gap-2.5 tracking-tight">
+                                    <BrainCircuit className="w-5 h-5 text-[#853953]" />
+                                    AI Action Suggestions
+                                </h2>
+                                <span className="text-[11px] font-bold text-slate-400">
+                                    Real-time Next Best Actions
+                                </span>
+                            </div>
+                            <NextBestActionsClient />
+                        </div>
 
-                    {/* Left Column (2 spans): Actions Area */}
-                    <div className="lg:col-span-2 space-y-16">
-                        {/* Task Board */}
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-black text-[#2C2C2C] flex items-center gap-3 tracking-tight">
-                                <Calendar className="w-7 h-7 text-[#853953]" />
+                        {/* Task Command Board */}
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2.5 tracking-tight">
+                                <Calendar className="w-5 h-5 text-[#853953]" />
                                 Task Command
                             </h2>
                             <TaskBoard />
                         </div>
 
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-black text-[#2C2C2C] flex items-center gap-3 tracking-tight">
-                                <BrainCircuit className="w-7 h-7 text-[#853953]" />
-                                AI Recommendations
-                            </h2>
-                            <div className="flex flex-col gap-5">
-                                 <NextBestActionsClient />
+                        {/* Live Activity Stream */}
+                        <div className="bg-white border border-slate-200/80 rounded-3xl p-7 shadow-2xs">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-base font-black text-slate-900 flex items-center gap-2.5 tracking-tight">
+                                    <Activity className="w-4 h-4 text-[#853953]" /> Live Activity Feed
+                                </h3>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    Real-Time Stream
+                                </span>
                             </div>
-                        </div>
-
-
-                        {/* Recent Activity */}
-                        <div className="card-modern p-10">
-                            <h3 className="text-lg font-black text-[#2C2C2C] mb-2 tracking-tight flex items-center gap-3">
-                                <Activity className="w-5 h-5 text-[#853953]" /> Live Activity Feed
-                            </h3>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mb-8">System & Engagement Timeline</p>
                             <ActivityFeedClient />
                         </div>
                     </div>
 
-                    {/* Right Column: AI Insights */}
-                    <div className="space-y-10">
-                        <h2 className="text-2xl font-black text-[#2C2C2C] flex items-center gap-3 tracking-tight">
-                            <TrendingUp className="w-7 h-7 text-[#853953]" />
-                            Match Insights
-                        </h2>
+                    {/* Right Column (1 span): Priority Radar & Analytics */}
+                    <div className="space-y-6">
+                        {/* High Intent Radar */}
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-black text-slate-900 flex items-center gap-2.5 tracking-tight">
+                                <TrendingUp className="w-5 h-5 text-[#853953]" />
+                                Hot Leads Radar
+                            </h2>
 
-                        <div className="space-y-6">
-                            {todayPriorities.length === 0 ? (
-                                <EmptyStatePipeline />
-                            ) : (
-                                todayPriorities.slice(0, 3).map((lead: any, idx: number) => (
-                                    <div key={`${lead.id}-${idx}`} className="bg-gradient-to-br from-[#853953] to-[#612D53] rounded-3xl p-8 text-white shadow-xl shadow-[#853953]/20 relative overflow-hidden group hover:scale-[1.02] transition-all">
-                                        <div className="absolute inset-0 bg-white opacity-[0.03] rotate-45 translate-x-12 -translate-y-12" />
-                                        <div className="relative z-10">
-                                            <div className="flex items-center gap-3 mb-6">
-                                                <div className="px-2.5 py-1 bg-white/10 rounded-lg backdrop-blur-md border border-white/20 text-white font-black text-[10px]">
-                                                    PRIORITY 0{idx + 1}
+                            <div className="space-y-3.5">
+                                {priorityLeads.length === 0 ? (
+                                    <EmptyStatePipeline />
+                                ) : (
+                                    priorityLeads.slice(0, 3).map((lead: any, idx: number) => {
+                                        const score = lead.scores?.[0]?.finalScore || 0;
+                                        return (
+                                            <div 
+                                                key={lead.id || idx} 
+                                                className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-md transition-all group"
+                                            >
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                                                        Priority 0{idx + 1}
+                                                    </span>
+                                                    <span className="text-xs font-black text-[#853953]">
+                                                        {score} pts
+                                                    </span>
                                                 </div>
-                                                <span className="text-[10px] font-black tracking-widest uppercase text-white/60">Pattern Analysis</span>
+                                                <h4 className="text-sm font-black text-slate-900 group-hover:text-[#853953] transition-colors">
+                                                    {lead.firstName} {lead.lastName}
+                                                </h4>
+                                                <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                                                    {lead.scores?.[0]?.reasoningBreakdowns?.[0]?.reasoningSummary || lead.scores?.[0]?.suggestedAction || 'High intent buyer ready for personalized outreach.'}
+                                                </p>
+                                                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                                                    <span className="text-[11px] font-bold text-slate-400">
+                                                        {lead.moveTimeline || 'Standard timeline'}
+                                                    </span>
+                                                    <Link 
+                                                        href="/leads"
+                                                        className="text-xs font-extrabold text-[#853953] hover:underline flex items-center gap-1"
+                                                    >
+                                                        Open Profile →
+                                                    </Link>
+                                                </div>
                                             </div>
-                                            <h3 className="text-2xl font-black mb-4 leading-tight tracking-tight">
-                                                {lead.firstName} hit {lead.topScore} points
-                                            </h3>
-                                            <p className="text-white/80 text-sm mb-8 font-medium leading-relaxed opacity-90 line-clamp-3 italic">
-                                                &ldquo;{lead.scores?.[0]?.reasoningBreakdowns?.[0]?.reasoningSummary || 'AI analysis suggests immediate follow up.'}&rdquo;
-                                            </p>
-
-                                            <div className="bg-black/10 backdrop-blur-xl rounded-2xl p-5 border border-white/10 flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-[10px] text-white/50 font-black tracking-widest mb-1 uppercase">Timeline</p>
-                                                    <p className="text-lg font-black tracking-tight text-white">{lead.moveTimeline}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-[10px] text-white/50 font-black tracking-widest mb-1 uppercase">Prop. Match</p>
-                                                    <p className="text-xl font-black text-emerald-300">{lead.scores?.[0]?.confidenceScore || 0}%</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
+                                        );
+                                    })
+                                )}
+                            </div>
                         </div>
 
-                        {/* Email Engagement Widget */}
-                        <div className="card-modern p-8">
-                            <h3 className="text-sm font-black text-[#2C2C2C] mb-8 tracking-tight flex items-center gap-3">
+                        {/* Outreach Metrics Card */}
+                        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-2xs">
+                            <h3 className="text-sm font-black text-slate-900 mb-4 flex items-center gap-2 tracking-tight">
                                 <MailOpen className="w-4 h-4 text-[#853953]" /> Outreach Efficiency
                             </h3>
-                            <div className="grid grid-cols-3 gap-6">
-                                <div className="text-center">
-                                    <p className="text-3xl font-black text-[#2C2C2C] tracking-tight">{sentToday}</p>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Sent</p>
+                            <div className="grid grid-cols-3 gap-3 text-center">
+                                <div className="p-3 bg-slate-50 rounded-2xl">
+                                    <p className="text-xl font-black text-slate-900">{sentToday}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Today</p>
                                 </div>
-                                <div className="text-center border-l border-black/5">
-                                    <p className="text-3xl font-black text-[#2C2C2C] tracking-tight">{openRate}%</p>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Open</p>
+                                <div className="p-3 bg-slate-50 rounded-2xl">
+                                    <p className="text-xl font-black text-slate-900">{openRate}%</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Opens</p>
                                 </div>
-                                <div className="text-center border-l border-black/5">
-                                    <p className="text-3xl font-black text-[#2C2C2C] tracking-tight">{clickRate}%</p>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">Click</p>
+                                <div className="p-3 bg-slate-50 rounded-2xl">
+                                    <p className="text-xl font-black text-slate-900">{clickRate}%</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Clicks</p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Real Activity Analytics */}
-                        <div className="card-modern p-8">
-                            <h3 className="text-sm font-black text-[#2C2C2C] mb-2 tracking-tight flex items-center gap-3">
-                                <Activity className="w-4 h-4 text-[#853953]" /> Pipeline Velocity
-                            </h3>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.15em] mb-6">Last 7 Day Volume</p>
-                            <ActivityChart data={last7DaysData} />
-                        </div>
-
+                        {/* Geographic Insights */}
                         <LocationInsightsCard />
 
-                        {/* Real Pipeline Breakdown */}
-                        <div className="card-modern p-8">
-                            <h3 className="text-sm font-black text-[#2C2C2C] mb-2 tracking-tight flex items-center gap-3">
-                                <ArrowLeftRight className="w-4 h-4 text-[#853953]" /> Phase Allocation
-                            </h3>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.15em] mb-6">Current active stages</p>
-                            {pipelineChartData.length > 0 ? (
+                        {/* Pipeline Stage Distribution */}
+                        {pipelineChartData.length > 0 && (
+                            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-2xs">
+                                <h3 className="text-sm font-black text-slate-900 mb-3 flex items-center gap-2 tracking-tight">
+                                    <ArrowLeftRight className="w-4 h-4 text-[#853953]" /> Pipeline Allocation
+                                </h3>
                                 <PipelineChart data={pipelineChartData} />
-                            ) : (
-                                <div className="h-48 flex items-center justify-center text-gray-400 text-xs font-bold uppercase italic">
-                                    Awaiting Data
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-
             </main>
         </div>
     );
 }
-
