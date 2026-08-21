@@ -141,21 +141,46 @@ export async function getLeads(options: { take?: number; skip?: number; query?: 
     }
 
     // 1. Fetch only necessary leads count and data
-    const totalCount = await prisma.lead.count({ where });
-    const leads = await prisma.lead.findMany({
-        where,
-        take,
-        skip,
-        include: {
-            scores: {
-                orderBy: { createdAt: 'desc' },
-                take: 1
+    const [totalCount, leads, allLocations] = await Promise.all([
+        prisma.lead.count({ where }),
+        prisma.lead.findMany({
+            where,
+            take,
+            skip,
+            include: {
+                scores: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        }),
+        (prisma as any).location.findMany({ select: { id: true, name: true } }).catch(() => [])
+    ]);
+
+    const locMap = new Map<string, string>();
+    allLocations.forEach((l: any) => locMap.set(l.id, l.name));
+
+    const formattedLeads = leads.map((lead: any) => {
+        let cleanAreas = lead.preferredAreas;
+        if (cleanAreas && (cleanAreas.startsWith('[') || cleanAreas.includes('-'))) {
+            try {
+                const parsed = JSON.parse(cleanAreas);
+                if (Array.isArray(parsed)) {
+                    const names = parsed.map((id: string) => locMap.get(id) || (id.includes('-') ? '' : id)).filter(Boolean);
+                    cleanAreas = names.length > 0 ? names.join(', ') : lead.customLocation || 'Flexible / Broad';
+                }
+            } catch {
+                if (cleanAreas.includes('-')) cleanAreas = lead.customLocation || 'Flexible / Broad';
             }
-        },
-        orderBy: { createdAt: 'desc' }
+        }
+        return {
+            ...lead,
+            preferredAreas: cleanAreas || lead.customLocation || 'Flexible / Broad'
+        };
     });
 
-    return { leads, totalCount };
+    return { leads: formattedLeads, totalCount };
 }
 
 export async function getLeadDetails(leadId: string) {
@@ -163,33 +188,59 @@ export async function getLeadDetails(leadId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    return await prisma.lead.findFirst({
-        where: { id: leadId, assignedAgentId: user.id },
-        include: {
-            scores: {
-                orderBy: { createdAt: 'desc' },
-                take: 1,
-                include: {
-                    reasoningBreakdowns: true
+    const [lead, allLocations] = await Promise.all([
+        prisma.lead.findFirst({
+            where: { id: leadId, assignedAgentId: user.id },
+            include: {
+                scores: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                    include: {
+                        reasoningBreakdowns: true
+                    }
+                },
+                activityLogs: {
+                    orderBy: { occurredAt: 'desc' }
+                },
+                emailLogs: {
+                    orderBy: { sentAt: 'desc' }
+                },
+                propertyMatches: {
+                    where: { property: { agentId: user.id, status: 'Available' } },
+                    include: { property: true },
+                    orderBy: { score: 'desc' }
+                },
+                sequenceStates: {
+                    include: { sequence: true },
+                    orderBy: { nextRunAt: 'asc' }
                 }
-            },
-            activityLogs: {
-                orderBy: { occurredAt: 'desc' }
-            },
-            emailLogs: {
-                orderBy: { sentAt: 'desc' }
-            },
-            propertyMatches: {
-                where: { property: { agentId: user.id, status: 'Available' } },
-                include: { property: true },
-                orderBy: { score: 'desc' }
-            },
-            sequenceStates: {
-                include: { sequence: true },
-                orderBy: { nextRunAt: 'asc' }
             }
+        }),
+        (prisma as any).location.findMany({ select: { id: true, name: true } }).catch(() => [])
+    ]);
+
+    if (!lead) return null;
+
+    const locMap = new Map<string, string>();
+    allLocations.forEach((l: any) => locMap.set(l.id, l.name));
+
+    let cleanAreas = lead.preferredAreas;
+    if (cleanAreas && (cleanAreas.startsWith('[') || cleanAreas.includes('-'))) {
+        try {
+            const parsed = JSON.parse(cleanAreas);
+            if (Array.isArray(parsed)) {
+                const names = parsed.map((id: string) => locMap.get(id) || (id.includes('-') ? '' : id)).filter(Boolean);
+                cleanAreas = names.length > 0 ? names.join(', ') : lead.customLocation || 'Flexible / Broad';
+            }
+        } catch {
+            if (cleanAreas.includes('-')) cleanAreas = lead.customLocation || 'Flexible / Broad';
         }
-    });
+    }
+
+    return {
+        ...lead,
+        preferredAreas: cleanAreas || lead.customLocation || 'Flexible / Broad'
+    };
 }
 
 export async function updateLead(leadId: string, data: { pipelineStage?: string; followUpDate?: string | null; email?: string; phone?: string }) {

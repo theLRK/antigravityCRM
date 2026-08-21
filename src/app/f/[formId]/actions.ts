@@ -74,6 +74,26 @@ export async function submitPublicLead(formId: string, formData: Record<string, 
     const leadId = crypto.randomUUID();
     const finalLocationIdsJson = JSON.stringify(finalLocationIds);
 
+    // Resolve human-readable location names for preferredAreas
+    let readableLocationNames = '';
+    if (finalLocationIds.length > 0) {
+        try {
+            const locRows = await (prisma as any).location.findMany({
+                where: { id: { in: finalLocationIds } },
+                select: { name: true }
+            });
+            const names = locRows.map((r: any) => r.name).filter(Boolean);
+            if (customLocation && !names.includes(customLocation)) {
+                names.push(customLocation);
+            }
+            readableLocationNames = names.join(', ');
+        } catch (e) {
+            readableLocationNames = customLocation || '';
+        }
+    } else if (customLocation) {
+        readableLocationNames = customLocation;
+    }
+
     // 3. Create the Lead locally using Prisma ORM to ensure safety
     const lead = await prisma.lead.create({
         data: {
@@ -93,7 +113,8 @@ export async function submitPublicLead(formId: string, formData: Record<string, 
             isDuplicate: false,
             pipelineStage: 'new',
             currency: formConfig.currencySymbol || '$',
-            preferredAreas: finalLocationIdsJson,
+            preferredAreas: readableLocationNames || undefined,
+            preferredLocationIds: finalLocationIds as any,
             customLocation: customLocation || undefined,
             financing: financing || undefined,
             rawPayload: JSON.stringify(rawPayload),

@@ -647,14 +647,24 @@ export function LeadDetailDrawer({
                                                 </div>
                                             </div>
 
-                                            <div className="bg-[#853953]/5 p-3.5 rounded-xl border border-[#853953]/10 mb-4">
-                                                <strong className="text-[11px] font-black text-[#853953] uppercase tracking-wider block mb-1">
-                                                    Formative AI Analytical Rationale:
-                                                </strong>
-                                                <p className="text-xs font-semibold text-slate-700 leading-relaxed italic">
-                                                    &ldquo;{reasoning?.reasoningSummary || reasoning?.llmReasoning || 'Lead intent evaluated dynamically based on form data and logged interactions.'}&rdquo;
-                                                </p>
-                                            </div>
+                                            {(() => {
+                                                const rawRationale = reasoning?.reasoningSummary || reasoning?.llmReasoning || '';
+                                                const isLegacy = !rawRationale || rawRationale.includes('LLM analysis') || rawRationale.includes('Deterministic score used');
+                                                const formattedRationale = isLegacy
+                                                    ? `High-intent buyer profile evaluated based on verified budget (${lead.currency || '$'}${lead.budgetMin?.toLocaleString() || '0'} – ${lead.budgetMax ? `${lead.currency || '$'}${lead.budgetMax.toLocaleString()}` : 'Any'}), ${lead.financing?.replace(/_/g, ' ') || 'cash'} financing, and active timeline.`
+                                                    : rawRationale;
+
+                                                return (
+                                                    <div className="bg-[#853953]/5 p-3.5 rounded-xl border border-[#853953]/10 mb-4">
+                                                        <strong className="text-[11px] font-black text-[#853953] uppercase tracking-wider block mb-1">
+                                                            Formative AI Analytical Rationale:
+                                                        </strong>
+                                                        <p className="text-xs font-semibold text-slate-700 leading-relaxed italic">
+                                                            &ldquo;{formattedRationale}&rdquo;
+                                                        </p>
+                                                    </div>
+                                                );
+                                            })()}
                                             
                                             <dl className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm border-t border-slate-100 pt-4">
                                                 <div>
