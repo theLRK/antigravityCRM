@@ -26,7 +26,8 @@ export function Sidebar({ user, avatarUrl }: { user: any, avatarUrl?: string }) 
     
     const firstName = meta.first_name || (nameParts.length > 0 ? nameParts[0] : '') || 'Agent';
     const lastName = meta.last_name || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '') || '';
-    const displayAvatar = avatarUrl || meta.avatar_url || meta.picture || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100&h=100";
+    const displayAvatar = avatarUrl || meta.avatar_url || meta.picture || '';
+    const initials = `${firstName[0] || 'A'}${lastName[0] || ''}`.toUpperCase();
 
     const navLinks = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -100,12 +101,16 @@ export function Sidebar({ user, avatarUrl }: { user: any, avatarUrl?: string }) 
                 <div className="flex items-center justify-between gap-2">
                     <Link href="/account" title="View & Edit Agent Profile" className="flex items-center gap-3 cursor-pointer group hover:bg-white p-2 rounded-2xl transition-all border border-transparent hover:border-black/5 hover:shadow-sm flex-1 min-w-0">
                         <div className="relative shrink-0">
-                            <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-                                <img
-                                    src={displayAvatar}
-                                    alt="User avatar"
-                                    className="w-full h-full object-cover grayscale-[0.2] transition-all group-hover:grayscale-0"
-                                />
+                            <div className="w-10 h-10 rounded-full border-2 border-white shadow-md overflow-hidden bg-gradient-to-br from-[#853953] to-[#612D53] flex items-center justify-center text-white text-xs font-black">
+                                {displayAvatar ? (
+                                    <img
+                                        src={displayAvatar}
+                                        alt={`${firstName} ${lastName}`}
+                                        className="w-full h-full object-cover grayscale-[0.1] transition-all group-hover:grayscale-0"
+                                    />
+                                ) : (
+                                    <span>{initials}</span>
+                                )}
                             </div>
                             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
                         </div>
