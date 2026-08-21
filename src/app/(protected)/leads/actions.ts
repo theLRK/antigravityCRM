@@ -103,30 +103,44 @@ export async function createLead(formData: {
     return { success: true, leadId };
 }
 
-export async function getLeads(options: { take?: number; skip?: number; query?: string; stage?: string } = {}) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+// In-memory cache for location reference data with 5-minute TTL
+let cachedLocationMap: Map<string, string> | null = null;
+let cachedLocationMapExpiresAt = 0;
 
-    // Auto-claim any unassigned leads submitted via this agent's forms
+async function getCachedLocationMap(): Promise<Map<string, string>> {
+    const now = Date.now();
+    if (cachedLocationMap && now < cachedLocationMapExpiresAt) {
+        return cachedLocationMap;
+    }
+
     try {
-        await prisma.lead.updateMany({
-            where: {
-                assignedAgentId: null,
-                sourceForm: { agentId: user.id }
-            },
-            data: {
-                assignedAgentId: user.id,
-                isUnassigned: false
-            }
-        });
-    } catch (claimErr: any) {
-        console.warn('[getLeads] Auto-claim warning:', claimErr?.message);
+        const allLocations = await (prisma as any).location.findMany({ select: { id: true, name: true } }).catch(() => []);
+        const map = new Map<string, string>();
+        allLocations.forEach((l: any) => map.set(l.id, l.name));
+        cachedLocationMap = map;
+        cachedLocationMapExpiresAt = now + 5 * 60 * 1000; // 5 minutes
+        return map;
+    } catch {
+        return cachedLocationMap || new Map();
+    }
+}
+
+export async function getLeads(
+    options: { take?: number; skip?: number; query?: string; stage?: string } = {},
+    agentIdOverride?: string
+) {
+    let agentId = agentIdOverride;
+
+    if (!agentId) {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Unauthorized");
+        agentId = user.id;
     }
 
     const { take = 20, skip = 0, query, stage } = options;
 
-    const where: any = { assignedAgentId: user.id };
+    const where: any = { assignedAgentId: agentId };
     if (stage && stage !== 'All') where.pipelineStage = stage;
     if (query) {
         where.AND = [
@@ -140,8 +154,8 @@ export async function getLeads(options: { take?: number; skip?: number; query?: 
         ];
     }
 
-    // 1. Fetch only necessary leads count and data
-    const [totalCount, leads, allLocations] = await Promise.all([
+    // High-performance index-assisted parallel queries
+    const [totalCount, leads, locMap] = await Promise.all([
         prisma.lead.count({ where }),
         prisma.lead.findMany({
             where,
@@ -155,11 +169,8 @@ export async function getLeads(options: { take?: number; skip?: number; query?: 
             },
             orderBy: { createdAt: 'desc' }
         }),
-        (prisma as any).location.findMany({ select: { id: true, name: true } }).catch(() => [])
+        getCachedLocationMap()
     ]);
-
-    const locMap = new Map<string, string>();
-    allLocations.forEach((l: any) => locMap.set(l.id, l.name));
 
     const formattedLeads = leads.map((lead: any) => {
         let cleanAreas = lead.preferredAreas;
@@ -188,7 +199,7 @@ export async function getLeadDetails(leadId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    const [lead, allLocations] = await Promise.all([
+    const [lead, locMap] = await Promise.all([
         prisma.lead.findFirst({
             where: { id: leadId, assignedAgentId: user.id },
             include: {
@@ -216,13 +227,10 @@ export async function getLeadDetails(leadId: string) {
                 }
             }
         }),
-        (prisma as any).location.findMany({ select: { id: true, name: true } }).catch(() => [])
+        getCachedLocationMap()
     ]);
 
     if (!lead) return null;
-
-    const locMap = new Map<string, string>();
-    allLocations.forEach((l: any) => locMap.set(l.id, l.name));
 
     let cleanAreas = lead.preferredAreas;
     if (cleanAreas && (cleanAreas.startsWith('[') || cleanAreas.includes('-'))) {

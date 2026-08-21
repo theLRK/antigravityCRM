@@ -19,8 +19,8 @@ export default async function LeadsPage() {
         redirect('/sign-in');
     }
 
-    // Pre-fetch the initial leads to avoid client-side loading spinners on first paint
-    const initialLeads = await getLeads();
+    // Pre-fetch initial leads using the authenticated session user ID directly (0 redundant network calls)
+    const initialLeads = await getLeads({}, session.user.id);
 
     return <LeadsClient initialLeads={initialLeads} />;
 }

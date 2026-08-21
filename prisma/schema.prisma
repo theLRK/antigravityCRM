@@ -62,6 +62,9 @@ model Lead {
   scheduledEmails      ScheduledEmail[]
   Task                 Task[]
 
+  @@index([assignedAgentId, createdAt(sort: Desc)])
+  @@index([assignedAgentId, pipelineStage])
+  @@index([formId])
   @@map("leads")
 }
 
@@ -83,6 +86,7 @@ model Score {
   reasoningBreakdowns ReasoningBreakdown[]
   lead                Lead                 @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
+  @@index([leadId, createdAt(sort: Desc)])
   @@map("scores")
 }
 
@@ -98,6 +102,7 @@ model ReasoningBreakdown {
   reasoningSummary     String   @map("reasoning_summary")
   score                Score    @relation(fields: [scoreId], references: [id], onDelete: Cascade)
 
+  @@index([scoreId])
   @@map("reasoning_breakdowns")
 }
 
@@ -112,6 +117,7 @@ model ActivityLog {
   errorMessage String?  @map("error_message")
   lead         Lead?    @relation(fields: [leadId], references: [id])
 
+  @@index([leadId, occurredAt(sort: Desc)])
   @@map("activity_log")
 }
 
@@ -137,6 +143,7 @@ model EmailLog {
   clickedAt       DateTime? @map("clicked_at")
   lead            Lead      @relation(fields: [leadId], references: [id])
 
+  @@index([leadId, sentAt(sort: Desc)])
   @@map("email_log")
 }
 
@@ -185,6 +192,7 @@ model AgentProfile {
   emailTemplateColdSubject String?   @map("email_template_cold_subject")
   emailTemplateColdBody    String?   @map("email_template_cold_body")
   imageUrl                 String?   @map("image_url")
+  onboardingComplete       Boolean   @default(false) @map("onboarding_complete")
   createdAt                DateTime  @default(now()) @map("created_at")
   updatedAt                DateTime  @updatedAt @map("updated_at")
   gmailAppPassword         String?   @map("gmail_app_password")
@@ -217,6 +225,7 @@ model Property {
   matches     PropertyMatch[]
   notes       PropertyNote[]
 
+  @@index([agentId, status])
   @@map("properties")
 }
 
@@ -230,6 +239,7 @@ model PropertyNote {
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
+  @@index([propertyId, createdAt(sort: Desc)])
   @@map("property_notes")
 }
 
@@ -247,6 +257,8 @@ model PropertyMatch {
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   @@unique([leadId, propertyId])
+  @@index([leadId, score(sort: Desc)])
+  @@index([propertyId, score(sort: Desc)])
   @@map("property_matches")
 }
 
@@ -315,6 +327,7 @@ model CallLog {
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
+  @@index([leadId, createdAt(sort: Desc)])
   @@map("call_logs")
 }
 
@@ -354,6 +367,7 @@ model Note {
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
+  @@index([leadId, createdAt(sort: Desc)])
   @@map("notes")
 }
 
