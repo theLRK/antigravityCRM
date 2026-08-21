@@ -22,7 +22,12 @@ export async function computeNextBestAction(leadId: string): Promise<NextBestAct
         where: { id: leadId },
         include: {
             scores: { orderBy: { createdAt: 'desc' }, take: 1 },
-            propertyMatches: { orderBy: { score: 'desc' }, take: 3 },
+            propertyMatches: { 
+                where: { property: { status: 'Available' } },
+                include: { property: true },
+                orderBy: { score: 'desc' }, 
+                take: 3 
+            },
             emailLogs: { orderBy: { sentAt: 'desc' }, take: 1 },
             activityLogs: { orderBy: { occurredAt: 'desc' }, take: 1 },
             sequenceStates: { where: { status: 'active' } },

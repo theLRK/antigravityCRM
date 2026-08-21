@@ -27,7 +27,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             }),
             (prisma as any).location.findMany({ include: { group: true } }).catch(() => []),
             prisma.propertyMatch.findMany({
-                where: { propertyId: id, score: { gte: 50 } },
+                where: { 
+                    propertyId: id, 
+                    score: { gte: 50 },
+                    lead: { assignedAgentId: user.id }
+                },
                 include: { lead: { include: { notes: true } } },
                 orderBy: { score: 'desc' }
             })

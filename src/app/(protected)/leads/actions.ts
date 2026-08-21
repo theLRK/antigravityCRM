@@ -180,6 +180,7 @@ export async function getLeadDetails(leadId: string) {
                 orderBy: { sentAt: 'desc' }
             },
             propertyMatches: {
+                where: { property: { agentId: user.id, status: 'Available' } },
                 include: { property: true },
                 orderBy: { score: 'desc' }
             },

@@ -86,6 +86,7 @@ export default async function EngageDashboardPage({ searchParams }: { searchPara
             lead: {
                 include: {
                     propertyMatches: {
+                        where: user?.id ? { property: { agentId: user.id, status: 'Available' } } : undefined,
                         include: { property: true },
                         take: 1
                     }

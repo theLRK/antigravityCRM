@@ -387,7 +387,7 @@ export function LeadDetailDrawer({
                                 <div className="flex items-center gap-2.5">
                                     <Sparkles className="w-5 h-5 text-[#853953]" />
                                     <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-                                        Executive Lead Briefing (Gemini 2.0 AI Memory)
+                                        Executive AI Lead Briefing
                                     </h3>
                                     {briefing?.sentimentTag && (
                                         <span className="bg-[#853953]/10 text-[#853953] text-[10px] font-black uppercase px-2 py-0.5 rounded-full ml-auto mr-8">
@@ -398,7 +398,7 @@ export function LeadDetailDrawer({
 
                                 {isLoadingBriefing ? (
                                     <div className="flex items-center justify-center py-8 gap-2 text-sm text-[#853953] font-bold">
-                                        <Loader2 className="w-5 h-5 animate-spin" /> Synthesizing all call logs, notes, and preferences with Gemini AI...
+                                        <Loader2 className="w-5 h-5 animate-spin" /> Synthesizing all call logs, notes, and preferences with Executive AI...
                                     </div>
                                 ) : briefing ? (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
@@ -649,7 +649,7 @@ export function LeadDetailDrawer({
 
                                             <div className="bg-[#853953]/5 p-3.5 rounded-xl border border-[#853953]/10 mb-4">
                                                 <strong className="text-[11px] font-black text-[#853953] uppercase tracking-wider block mb-1">
-                                                    Gemini AI Analytical Rationale:
+                                                    Formative AI Analytical Rationale:
                                                 </strong>
                                                 <p className="text-xs font-semibold text-slate-700 leading-relaxed italic">
                                                     &ldquo;{reasoning?.reasoningSummary || reasoning?.llmReasoning || 'Lead intent evaluated dynamically based on form data and logged interactions.'}&rdquo;

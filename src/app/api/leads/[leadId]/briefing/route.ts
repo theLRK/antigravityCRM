@@ -18,6 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ lead
                 callLogs: { orderBy: { createdAt: 'desc' }, take: 10 },
                 activityLogs: { orderBy: { occurredAt: 'desc' }, take: 10 },
                 propertyMatches: {
+                    where: { property: { agentId: user.id, status: 'Available' } },
                     include: { property: true },
                     orderBy: { score: 'desc' },
                     take: 3
@@ -28,7 +29,40 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ lead
 
         if (!lead) return NextResponse.json({ error: 'Lead not found or unauthorized' }, { status: 404 });
 
-        // Compile context for Gemini 2.0 Flash
+        // Clean and sanitize location
+        let targetLocations = '';
+        if (lead.preferredAreas && lead.preferredAreas !== '[]' && lead.preferredAreas !== '[""]') {
+            try {
+                const parsed = JSON.parse(lead.preferredAreas);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    targetLocations = parsed.filter(Boolean).join(', ');
+                } else if (typeof parsed === 'string') {
+                    targetLocations = parsed;
+                }
+            } catch {
+                targetLocations = lead.preferredAreas.replace(/[[\]"]/g, '').trim();
+            }
+        }
+        if (!targetLocations && lead.customLocation) {
+            targetLocations = lead.customLocation.trim();
+        }
+
+        const locationDisplay = targetLocations ? `in ${targetLocations}` : '(Open / Flexible Locations)';
+
+        // Format Budget string with proper commas
+        const curr = lead.currency || '$';
+        const bMin = lead.budgetMin ? `${curr}${Number(lead.budgetMin).toLocaleString()}` : null;
+        const bMax = lead.budgetMax ? `${curr}${Number(lead.budgetMax).toLocaleString()}` : null;
+        let budgetDisplay = 'Budget: Open / Flexible';
+        if (bMin && bMax) {
+            budgetDisplay = `Budget: ${bMin} – ${bMax} ${locationDisplay}`;
+        } else if (bMax) {
+            budgetDisplay = `Budget: Up to ${bMax} ${locationDisplay}`;
+        } else if (bMin) {
+            budgetDisplay = `Budget: From ${bMin} ${locationDisplay}`;
+        }
+
+        // Compile context for Executive AI
         const notesSummary = lead.notes.map(n => n.content).join('\n') || 'None recorded yet.';
         const callsSummary = lead.callLogs.map(c => `Outcome: ${c.outcome} | Notes: ${c.notes || 'None'}`).join('\n') || 'No calls logged yet.';
         const topMatches = lead.propertyMatches.map(m => `${m.property.title} (${m.property.location}, ${m.property.currency || '$'}${m.property.price.toLocaleString()}) - Match: ${m.score}%`).join('\n') || 'None';
@@ -40,9 +74,8 @@ Generate a high-impact, 3-point "Lead Executive Briefing" so the agent can get c
 LEAD PROFILE:
 - Name: ${lead.firstName} ${lead.lastName}
 - Phone: ${lead.phone || 'Unknown'} | Email: ${lead.email}
-- Budget: ${lead.currency || '$'}${lead.budgetMin || 0} - ${lead.currency || '$'}${lead.budgetMax || 'Any'}
-- Target Areas: ${lead.preferredAreas || lead.customLocation || 'Unspecified'}
-- Bedrooms: ${lead.bedroomsMin || 'Any'} | Move Timeline: ${lead.moveTimeline || 'Standard'}
+- ${budgetDisplay}
+- Bedrooms: ${lead.bedroomsMin ? lead.bedroomsMin + '+ Beds' : 'Any'} | Move Timeline: ${lead.moveTimeline || 'Standard'}
 - Pipeline Stage: ${lead.pipelineStage} | AI Score: ${lead.scores?.[0]?.finalScore ?? 50}%
 
 CALL HISTORY & LOGGED INTERACTIONS:
@@ -54,16 +87,16 @@ ${notesSummary}
 BUYER MOTIVATION / REMARKS:
 ${lead.motivation || 'None provided.'}
 
-TOP PROPERTY MATCHES IN INVENTORY:
+TOP PROPERTY MATCHES IN INVENTORY (Strictly Agent-Owned):
 ${topMatches}
 
 INSTRUCTIONS:
-Synthesize all data into crisp, actionable bullet points. Be specific (mention exact prices, locations, amenities, family details from notes).
+Synthesize all data into crisp, actionable bullet points. Format all currency numbers cleanly with commas. Never include raw brackets like '[]'.
 
 Return ONLY valid JSON matching this schema:
 {
   "sentimentTag": "Hot Buyer" | "Active & Engaged" | "Needs Follow-up" | "On Hold / Inactive" | "New Lead",
-  "keyPriorities": ["bullet 1: core budget, locations, and specific preferences/amenities like pool/garden"],
+  "keyPriorities": ["bullet 1: ${budgetDisplay}", "bullet 2: property type/specs and timeline"],
   "lastInteractionHighlights": ["bullet 1: summary of most recent call/note and buyer sentiment"],
   "recommendedNextStep": "One direct, high-leverage action the agent should take immediately"
 }
@@ -72,7 +105,7 @@ Return ONLY valid JSON matching this schema:
         let briefing = {
             sentimentTag: (lead.scores?.[0]?.finalScore ?? 50) >= 80 ? 'Hot Buyer' : 'Active & Engaged',
             keyPriorities: [
-                `Budget: ${lead.currency || '$'}${lead.budgetMin || 0} - ${lead.currency || '$'}${lead.budgetMax || 'Any'} in ${lead.preferredAreas || 'preferred areas'}.`,
+                budgetDisplay,
                 `Looking for ${lead.bedroomsMin ? lead.bedroomsMin + '+ Beds' : 'residential property'} with ${lead.moveTimeline || 'standard'} timeline.`
             ],
             lastInteractionHighlights: [
@@ -103,7 +136,7 @@ Return ONLY valid JSON matching this schema:
                 };
             }
         } catch (geminiErr: any) {
-            console.warn('[LeadBriefing] Gemini fallback notice:', geminiErr?.message || geminiErr);
+            console.warn('[LeadBriefing] Executive AI fallback notice:', geminiErr?.message || geminiErr);
         }
 
         return NextResponse.json({ briefing });

@@ -89,7 +89,7 @@ export default function MatchingLeadsSection({ property }: { property: any }) {
                     <Sparkles className="w-5 h-5 animate-spin" />
                 </div>
                 <p className="font-semibold text-slate-700">Analyzing Lead Notes & Multi-Factor Compatibility...</p>
-                <p className="text-xs text-slate-400">Powered by Google Gemini 2.0 Flash</p>
+                <p className="text-xs text-slate-400">Powered by Formative AI Engine</p>
             </div>
         );
     }
@@ -120,7 +120,7 @@ export default function MatchingLeadsSection({ property }: { property: any }) {
                         </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
-                        Ranked by budget fit, geographic proximity, bedroom specs, and Gemini AI notes alignment.
+                        Ranked by budget fit, geographic proximity, bedroom specs, and AI notes alignment.
                     </p>
                 </div>
                 {selectedLeads.length > 0 && (
@@ -246,12 +246,12 @@ export default function MatchingLeadsSection({ property }: { property: any }) {
                             {/* Expandable Reasons for this scoring Accordion */}
                             {isExpanded && (
                                 <div className="border-t border-slate-100 bg-slate-50/80 p-5 space-y-4 animate-fade-in">
-                                    {/* Gemini AI Match Analysis Banner */}
+                                    {/* AI Match Analysis Banner */}
                                     <div className="p-4 rounded-xl bg-gradient-to-r from-[#853953]/10 via-[#612D53]/5 to-transparent border border-[#853953]/20">
                                         <div className="flex items-center gap-2 mb-1.5">
                                             <Sparkles className="w-4 h-4 text-[#853953]" />
                                             <span className="text-xs font-black text-[#853953] uppercase tracking-wider">
-                                                Gemini AI Match Rationale
+                                                Formative AI Match Rationale
                                             </span>
                                         </div>
                                         <p className="text-xs font-semibold text-slate-800 leading-relaxed">

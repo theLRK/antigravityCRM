@@ -312,11 +312,22 @@ export async function runPropertyMatchingForLead(leadId: string) {
             where: { id: leadId },
             include: { notes: true }
         });
-        if (!lead) throw new Error("Lead not found");
+        if (!lead || !lead.assignedAgentId) throw new Error("Lead not found or unassigned");
+
+        // Clean up ANY stale matches where the property is NOT owned by the lead's agent
+        await prisma.propertyMatch.deleteMany({
+            where: {
+                leadId: lead.id,
+                OR: [
+                    { property: { agentId: { not: lead.assignedAgentId } } },
+                    { property: { status: { not: 'Available' } } }
+                ]
+            }
+        });
 
         const [properties, allLocations] = await Promise.all([
             prisma.property.findMany({
-                where: { status: 'Available', agentId: lead.assignedAgentId || '' },
+                where: { status: 'Available', agentId: lead.assignedAgentId },
                 include: { notes: true }
             }),
             (prisma as any).location.findMany({ include: { group: true } }).catch(() => [])

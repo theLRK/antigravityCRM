@@ -193,7 +193,10 @@ export default async function DashboardPage() {
             where: { assignedAgentId: user.id, createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo } }
         }),
         prisma.propertyMatch.count({
-            where: { lead: { assignedAgentId: user.id } }
+            where: { 
+                lead: { assignedAgentId: user.id },
+                property: { agentId: user.id, status: 'Available' }
+            }
         }),
         prisma.lead.findMany({
             where: { assignedAgentId: user.id },
