@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Search, Plus, MapPin, Bed, Bath, Trash2, Home, X, Filter, Edit, Edit2, BedDouble, MoreVertical, FileText, Globe, CheckCircle, Share, ChevronRight } from 'lucide-react';
+import { Search, Plus, MapPin, Bed, Bath, Trash2, Home, X, Filter, Edit, Edit2, BedDouble, MoreVertical, FileText, Globe, CheckCircle, Share, ChevronRight, MessageSquare, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { StyledInput } from '@/components/ui/StyledInput';
 import { ImageUploadBox } from '@/components/ui/ImageUploadBox';
@@ -10,13 +10,273 @@ import { createProperty, updateProperty, deleteProperty } from './actions';
 import MatchingLeadsSection from '@/components/ui/properties/MatchingLeadsSection';
 import { GLOBAL_COUNTRIES } from '@/lib/constants/locations';
 
-export default function PropertiesClient({ initialProperties, locationGroups }: { initialProperties: any[], locationGroups?: any[] }) {
+async function generatePropertyFlyerImage(property: any, agentInfo: any, formattedPrice: string): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas 2D context not supported'));
+
+        canvas.width = 1080;
+        canvas.height = 1350;
+
+        // Background dark luxury gradient
+        const bgGrad = ctx.createLinearGradient(0, 0, 1080, 1350);
+        bgGrad.addColorStop(0, '#0F0913');
+        bgGrad.addColorStop(0.5, '#1A0B1A');
+        bgGrad.addColorStop(1, '#0A050D');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, 1080, 1350);
+
+        const renderDetails = (imgLoaded: boolean, imgObj?: HTMLImageElement) => {
+            // Draw image card container with rounded corners
+            const imgX = 60;
+            const imgY = 60;
+            const imgW = 960;
+            const imgH = 680;
+            const radius = 32;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(imgX + radius, imgY);
+            ctx.lineTo(imgX + imgW - radius, imgY);
+            ctx.quadraticCurveTo(imgX + imgW, imgY, imgX + imgW, imgY + radius);
+            ctx.lineTo(imgX + imgW, imgY + imgH - radius);
+            ctx.quadraticCurveTo(imgX + imgW, imgY + imgH, imgX + imgW - radius, imgY + imgH);
+            ctx.lineTo(imgX + radius, imgY + imgH);
+            ctx.quadraticCurveTo(imgX, imgY + imgH, imgX, imgY + imgH - radius);
+            ctx.lineTo(imgX, imgY + radius);
+            ctx.quadraticCurveTo(imgX, imgY, imgX + radius, imgY);
+            ctx.closePath();
+            ctx.clip();
+
+            if (imgLoaded && imgObj) {
+                const imgRatio = imgObj.width / imgObj.height;
+                const cardRatio = imgW / imgH;
+                let sW = imgObj.width;
+                let sH = imgObj.height;
+                let sx = 0;
+                let sy = 0;
+                if (imgRatio > cardRatio) {
+                    sW = imgObj.height * cardRatio;
+                    sx = (imgObj.width - sW) / 2;
+                } else {
+                    sH = imgObj.width / cardRatio;
+                    sy = (imgObj.height - sH) / 2;
+                }
+                ctx.drawImage(imgObj, sx, sy, sW, sH, imgX, imgY, imgW, imgH);
+            } else {
+                const placeholderGrad = ctx.createLinearGradient(imgX, imgY, imgX + imgW, imgY + imgH);
+                placeholderGrad.addColorStop(0, '#2D1B28');
+                placeholderGrad.addColorStop(1, '#4A1D36');
+                ctx.fillStyle = placeholderGrad;
+                ctx.fillRect(imgX, imgY, imgW, imgH);
+            }
+
+            // Bottom gradient overlay on image
+            const imgOverlay = ctx.createLinearGradient(imgX, imgY + imgH - 200, imgX, imgY + imgH);
+            imgOverlay.addColorStop(0, 'rgba(0,0,0,0)');
+            imgOverlay.addColorStop(1, 'rgba(0,0,0,0.7)');
+            ctx.fillStyle = imgOverlay;
+            ctx.fillRect(imgX, imgY, imgW, imgH);
+            ctx.restore();
+
+            // Status Badge on Image
+            const statusText = (property.status || 'Available').toUpperCase();
+            ctx.font = 'bold 22px sans-serif';
+            const statusWidth = ctx.measureText(statusText).width + 44;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            roundRect(ctx, 90, 90, statusWidth, 48, 24, true);
+            ctx.fillStyle = property.status === 'Sold' ? '#F43F5E' : '#10B981';
+            ctx.beginPath();
+            ctx.arc(114, 114, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(statusText, 130, 122);
+
+            // Floating Price Badge (Bottom Right of Image)
+            ctx.font = 'bold 44px sans-serif';
+            const priceText = formattedPrice;
+            const priceWidth = ctx.measureText(priceText).width + 50;
+            const priceX = 1080 - 90 - priceWidth;
+            const priceY = 660;
+
+            const pillGrad = ctx.createLinearGradient(priceX, priceY, priceX + priceWidth, priceY + 70);
+            pillGrad.addColorStop(0, '#853953');
+            pillGrad.addColorStop(1, '#612D53');
+            ctx.fillStyle = pillGrad;
+            roundRect(ctx, priceX, priceY, priceWidth, 70, 20, true);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(priceText, priceX + 25, priceY + 50);
+
+            // Property Title (Wrapped up to 2 lines)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 46px sans-serif';
+            const title = property.title || 'Exclusive Property Listing';
+            wrapText(ctx, title, 60, 800, 960, 56, 2);
+
+            // Location with pin
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '500 28px sans-serif';
+            const locText = `📍 ${property.location || 'Prime Location'}`;
+            ctx.fillText(locText, 60, 930);
+
+            // Property Specs Chips (Beds, Baths, Type)
+            const chips = [
+                `🛏️ ${property.bedrooms || 0} Beds`,
+                `🛁 ${property.bathrooms || 0} Baths`,
+                `🏷️ ${property.propertyType || 'Residential'}`
+            ];
+
+            let chipX = 60;
+            const chipY = 970;
+            chips.forEach(chip => {
+                ctx.font = 'bold 24px sans-serif';
+                const chipW = ctx.measureText(chip).width + 36;
+                ctx.fillStyle = '#1E1424';
+                roundRect(ctx, chipX, chipY, chipW, 54, 16, true, '#3B2034', 1.5);
+                ctx.fillStyle = '#E2E8F0';
+                ctx.fillText(chip, chipX + 18, chipY + 36);
+                chipX += chipW + 16;
+            });
+
+            // Divider line
+            ctx.strokeStyle = '#2D1B2D';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(60, 1070);
+            ctx.lineTo(1020, 1070);
+            ctx.stroke();
+
+            // Agent Branding Footer Card
+            const footerX = 60;
+            const footerY = 1110;
+            const footerW = 960;
+            const footerH = 170;
+
+            const footerGrad = ctx.createLinearGradient(footerX, footerY, footerX + footerW, footerY + footerH);
+            footerGrad.addColorStop(0, '#190E1E');
+            footerGrad.addColorStop(1, '#271125');
+            ctx.fillStyle = footerGrad;
+            roundRect(ctx, footerX, footerY, footerW, footerH, 24, true, '#4A2341', 2);
+
+            const agentName = agentInfo?.name || 'Licensed Agent';
+            const initials = agentName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'AG';
+
+            const avatarX = footerX + 40;
+            const avatarY = footerY + 45;
+            const avatarGrad = ctx.createLinearGradient(avatarX, avatarY, avatarX + 80, avatarY + 80);
+            avatarGrad.addColorStop(0, '#853953');
+            avatarGrad.addColorStop(1, '#612D53');
+            ctx.fillStyle = avatarGrad;
+            ctx.beginPath();
+            ctx.arc(avatarX + 40, avatarY + 40, 40, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 30px sans-serif';
+            const initW = ctx.measureText(initials).width;
+            ctx.fillText(initials, avatarX + 40 - initW / 2, avatarY + 50);
+
+            // Agent Name & Company
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 34px sans-serif';
+            ctx.fillText(agentName, footerX + 150, footerY + 75);
+
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '500 24px sans-serif';
+            ctx.fillText(agentInfo?.company || 'Formative Real Estate', footerX + 150, footerY + 115);
+
+            // WhatsApp / Phone pill on right
+            const phone = agentInfo?.phone || '';
+            const phoneText = phone ? `💬 ${phone}` : '💬 Share on WhatsApp';
+            ctx.font = 'bold 24px sans-serif';
+            const phoneW = ctx.measureText(phoneText).width + 36;
+            const phoneX = footerX + footerW - 30 - phoneW;
+            const phoneY = footerY + 58;
+
+            ctx.fillStyle = '#25D366';
+            roundRect(ctx, phoneX, phoneY, phoneW, 54, 27, true);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(phoneText, phoneX + 18, phoneY + 36);
+
+            canvas.toBlob(blob => {
+                if (blob) resolve(blob);
+                else reject(new Error('Canvas export failed'));
+            }, 'image/png');
+        };
+
+        function roundRect(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, fill = true, strokeColor?: string, strokeW = 1) {
+            c.save();
+            c.beginPath();
+            c.moveTo(x + r, y);
+            c.lineTo(x + w - r, y);
+            c.quadraticCurveTo(x + w, y, x + w, y + r);
+            c.lineTo(x + w, y + h - r);
+            c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            c.lineTo(x + r, y + h);
+            c.quadraticCurveTo(x, y + h, x, y + h - r);
+            c.lineTo(x, y + r);
+            c.quadraticCurveTo(x, y, x + r, y);
+            c.closePath();
+            if (fill) c.fill();
+            if (strokeColor) {
+                c.strokeStyle = strokeColor;
+                c.lineWidth = strokeW;
+                c.stroke();
+            }
+            c.restore();
+        }
+
+        function wrapText(c: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lineH: number, maxLines: number) {
+            const words = text.split(' ');
+            let line = '';
+            let linesDrawn = 0;
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n] + ' ';
+                const metrics = c.measureText(testLine);
+                if (metrics.width > maxW && n > 0) {
+                    c.fillText(line.trim(), x, y);
+                    line = words[n] + ' ';
+                    y += lineH;
+                    linesDrawn++;
+                    if (linesDrawn >= maxLines - 1 && n < words.length - 1) {
+                        const rest = words.slice(n).join(' ');
+                        let truncated = rest;
+                        while (c.measureText(truncated + '...').width > maxW && truncated.length > 0) {
+                            truncated = truncated.slice(0, -1);
+                        }
+                        c.fillText(truncated + '...', x, y);
+                        return;
+                    }
+                } else {
+                    line = testLine;
+                }
+            }
+            c.fillText(line.trim(), x, y);
+        }
+
+        const images = property.images ? (typeof property.images === 'string' ? JSON.parse(property.images) : property.images) : [];
+        const heroUrl = images.length > 0 ? images[0] : null;
+
+        if (heroUrl) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => renderDetails(true, img);
+            img.onerror = () => renderDetails(false);
+            img.src = heroUrl;
+        } else {
+            renderDetails(false);
+        }
+    });
+}
+
+export default function PropertiesClient({ initialProperties, locationGroups, agentInfo }: { initialProperties: any[], locationGroups?: any[], agentInfo?: any }) {
     const [properties, setProperties] = useState(initialProperties);
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
     const [viewingMatchesOf, setViewingMatchesOf] = useState<any | null>(null);
     const [viewingNotesOf, setViewingNotesOf] = useState<any | null>(null);
+    const [isSharingId, setIsSharingId] = useState<string | null>(null);
     
     // Global Currency
     const [currency, setCurrency] = useState('USD');
@@ -64,6 +324,56 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
         if (matchCount >= 6) return { label: 'High Demand', color: 'bg-emerald-500', text: 'text-white' };
         if (matchCount >= 3) return { label: 'Medium Demand', color: 'bg-amber-500', text: 'text-white' };
         return { label: 'Low Demand', color: 'bg-slate-400', text: 'text-white' };
+    };
+
+    const handleShareWhatsApp = async (p: any) => {
+        setIsSharingId(p.id);
+        const formattedPrice = convertPrice(p.price);
+
+        const caption = [
+            `🏡 *${p.title}*`,
+            `📍 Location: ${p.location}`,
+            `💰 Price: ${formattedPrice}`,
+            `🛏️ ${p.bedrooms} Beds | 🛁 ${p.bathrooms} Baths | 🏷️ ${p.propertyType}`,
+            ``,
+            `📞 Contact: ${agentInfo?.name || 'Agent'}${agentInfo?.phone ? ' (' + agentInfo.phone + ')' : ''}`
+        ].join('\n');
+
+        try {
+            const blob = await generatePropertyFlyerImage(p, agentInfo, formattedPrice);
+            const fileName = `${(p.title || 'property').replace(/[^a-zA-Z0-9]/g, '_')}_flyer.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            // 1. Try native Web Share API with image file attachment
+            if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: p.title,
+                    text: caption,
+                    files: [file]
+                });
+            } else {
+                // 2. Direct client-side auto-download + open WhatsApp web/app intent
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(caption)}`;
+                window.open(waUrl, '_blank');
+            }
+        } catch (err: any) {
+            if (err.name !== 'AbortError') {
+                console.error('WhatsApp share notice:', err);
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(caption)}`;
+                window.open(waUrl, '_blank');
+            }
+        } finally {
+            setIsSharingId(null);
+        }
     };
 
     const filteredProps = properties.filter(p => {
@@ -410,6 +720,14 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
                                                 <button onClick={() => { openEdit(p); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium">
                                                     <Edit2 className="w-4 h-4 text-slate-400" /> Edit Listing
                                                 </button>
+                                                <button 
+                                                    onClick={() => { handleShareWhatsApp(p); setActiveMenuId(null); }} 
+                                                    disabled={isSharingId === p.id}
+                                                    className="w-full text-left px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 font-medium transition-colors"
+                                                >
+                                                    {isSharingId === p.id ? <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" /> : <MessageSquare className="w-4 h-4 text-emerald-600" />}
+                                                    {isSharingId === p.id ? 'Generating flyer...' : 'Share on WhatsApp'}
+                                                </button>
                                                 <button onClick={() => { setViewingMatchesOf(p); setActiveMenuId(null); }} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium">
                                                     <Share className="w-4 h-4 text-slate-400" /> Send To Leads
                                                 </button>
@@ -503,9 +821,19 @@ export default function PropertiesClient({ initialProperties, locationGroups }: 
                                 <h2 className="text-xl font-extrabold text-slate-900 line-clamp-1 pr-4">{viewingMatchesOf.title}</h2>
                                 <p className="text-xs font-bold text-[#853953] uppercase tracking-widest mt-1">Lead Matching Pipeline</p>
                             </div>
-                            <button onClick={() => setViewingMatchesOf(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors shrink-0">
-                                <X className="w-6 h-6" />
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    onClick={() => handleShareWhatsApp(viewingMatchesOf)}
+                                    disabled={isSharingId === viewingMatchesOf.id}
+                                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                                >
+                                    {isSharingId === viewingMatchesOf.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquare className="w-4 h-4" />}
+                                    {isSharingId === viewingMatchesOf.id ? 'Generating...' : 'Share on WhatsApp'}
+                                </button>
+                                <button onClick={() => setViewingMatchesOf(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors shrink-0">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
                         </div>
                         <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50">
                             <MatchingLeadsSection property={viewingMatchesOf} />
