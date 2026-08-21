@@ -54,6 +54,7 @@ export default function OnboardingWizard({
     userAvatar?: string;
 }) {
     const router = useRouter();
+    const [isOpen, setIsOpen] = useState(true);
     const [step, setStep] = useState(0);
     const [direction, setDirection] = useState(1);
     const [saving, setSaving] = useState(false);
@@ -68,6 +69,19 @@ export default function OnboardingWizard({
     });
 
     const totalSteps = 5;
+
+    const handleDismiss = async () => {
+        setIsOpen(false);
+        try {
+            await fetch('/api/onboarding/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...data, avatarUrl: userAvatar || '' }),
+            });
+        } catch (e) {
+            console.error('Failed to dismiss onboarding:', e);
+        }
+    };
 
     const goNext = () => {
         setDirection(1);
@@ -104,6 +118,7 @@ export default function OnboardingWizard({
             console.error('Onboarding save network error:', e);
         }
         setSaving(false);
+        setIsOpen(false);
         window.location.href = '/dashboard';
     };
 
@@ -123,8 +138,11 @@ export default function OnboardingWizard({
             console.error('Onboarding save network error:', e);
         }
         setSaving(false);
+        setIsOpen(false);
         window.location.href = '/settings/email';
     };
+
+    if (!isOpen) return null;
 
     const steps = [
         // Step 0: Welcome
@@ -441,9 +459,18 @@ export default function OnboardingWizard({
                                 />
                             ))}
                         </div>
-                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
-                            {step + 1} / {totalSteps}
-                        </span>
+                        <div className="flex items-center gap-3">
+                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                                {step + 1} / {totalSteps}
+                            </span>
+                            <button
+                                onClick={handleDismiss}
+                                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                                title="Close and skip onboarding"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                     {/* Full-width progress bar */}
                     <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">

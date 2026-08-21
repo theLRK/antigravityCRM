@@ -25,16 +25,13 @@ export async function POST(request: NextRequest) {
 
         const fullName = [firstName, lastName].filter(Boolean).join(' ');
 
-        await (prisma.agentProfile as any).upsert({
+        await prisma.agentProfile.upsert({
             where: { agentId: user.id },
             create: {
                 agentId: user.id,
                 name: fullName || null,
                 phone: phone || null,
                 company: brokerage || null,
-                marketArea: marketArea || null,
-                propertyTypes: propertyTypes?.length ? JSON.stringify(propertyTypes) : null,
-                avgDealSize: avgDealSize || null,
                 imageUrl: avatarUrl || null,
                 onboardingComplete: true,
             },
@@ -42,9 +39,6 @@ export async function POST(request: NextRequest) {
                 name: fullName || undefined,
                 phone: phone || undefined,
                 company: brokerage || undefined,
-                marketArea: marketArea || undefined,
-                propertyTypes: propertyTypes?.length ? JSON.stringify(propertyTypes) : undefined,
-                avgDealSize: avgDealSize || undefined,
                 imageUrl: avatarUrl || undefined,
                 onboardingComplete: true,
             },

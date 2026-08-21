@@ -26,19 +26,39 @@ export default async function DashboardLayout({
     let dbAvatarUrl = '';
     
     try {
-        const agentProfile = await (prisma.agentProfile as any).findUnique({
+        const agentProfile = await prisma.agentProfile.findUnique({
             where: { agentId: user!.id },
             select: { onboardingComplete: true, imageUrl: true }
         });
+
         if (agentProfile) {
-            if (meta.onboarding_complete !== true) {
-                isNewUser = !agentProfile.onboardingComplete;
+            if (meta.onboarding_complete !== true && !agentProfile.onboardingComplete) {
+                isNewUser = true;
             }
             if (agentProfile.imageUrl) {
                 dbAvatarUrl = agentProfile.imageUrl;
             }
         } else {
-            isNewUser = true;
+            // Check if user already has an existing account (e.g. leads, forms, or properties)
+            const [leadsCount, formsCount, propertiesCount] = await Promise.all([
+                prisma.lead.count({ where: { assignedAgentId: user!.id } }).catch(() => 0),
+                prisma.leadCaptureForm.count({ where: { agentId: user!.id } }).catch(() => 0),
+                prisma.property.count({ where: { agentId: user!.id } }).catch(() => 0),
+            ]);
+
+            if (leadsCount > 0 || formsCount > 0 || propertiesCount > 0 || meta.onboarding_complete === true) {
+                isNewUser = false;
+                // Auto-create their completed profile in background
+                prisma.agentProfile.create({
+                    data: {
+                        agentId: user!.id,
+                        name: meta.full_name || meta.name || 'Agent',
+                        onboardingComplete: true,
+                    }
+                }).catch(() => {});
+            } else {
+                isNewUser = true;
+            }
         }
     } catch (err) {
         console.error('[Layout] DB check failed, defaulting to false for stability:', err);
