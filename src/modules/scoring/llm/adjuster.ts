@@ -11,6 +11,7 @@ interface LeadInput {
     financing_status?: string;
     budget_range?: string;
     motivation?: string;
+    notes?: string;
     source?: string;
 }
 
@@ -23,20 +24,26 @@ export async function runLLMScoring(lead: LeadInput): Promise<LLMScoreResult> {
     console.log(`[LeadPipeline] Running LLM scoring with Google Gemini...`);
 
     const prompt = `
-You are an expert real estate AI evaluating buyer intent.
-Based on the lead data, determine an adjustment score between -5 and +5 and a short 1-sentence analytical reason.
+You are an expert real estate AI evaluating lead quality, intent, and buying readiness.
+Based on the full lead profile and any private agent notes or buyer motivation, determine an adjustment score between -15 and +15 and a concise 1-sentence analytical reason.
 
-Lead data:
+Scoring Guidance:
+- Award positive points (+5 to +15) for high urgency, cash buyer, relocation deadline, clear requirements, or strong intent expressed in notes.
+- Award negative points (-5 to -15) for vague browsing, unverified financing, timeline far in the future (6+ months), or hesitations in notes.
+- Return 0 if the profile is standard/neutral.
+
+Lead Data:
 - Timeline: ${lead.timeline ?? "Unknown"}
 - Financing: ${lead.financing_status ?? "Unknown"}
 - Budget: ${lead.budget_range ?? "Unknown"}
 - Motivation: ${lead.motivation ?? "None"}
+- Agent Notes: ${lead.notes ?? "None"}
 - Source: ${lead.source ?? "Unknown"}
 
-Return ONLY valid JSON in this format:
+Return ONLY valid JSON in this exact format:
 {
   "adjustment": number,
-  "reason": "short explanation"
+  "reason": "1-sentence concise explanation of why this adjustment was applied"
 }
 `;
 
@@ -44,7 +51,7 @@ Return ONLY valid JSON in this format:
     try {
         const geminiRes = await generateWithGemini({
             prompt,
-            systemInstruction: "You analyze buyer readiness. Always respond with valid JSON only.",
+            systemInstruction: "You are an expert real estate lead scoring analyst. Always respond with valid JSON only.",
             responseJson: true,
             temperature: 0.2
         });
@@ -52,8 +59,8 @@ Return ONLY valid JSON in this format:
         if (geminiRes) {
             const parsed = JSON.parse(geminiRes);
             const result = {
-                adjustment: Math.max(-5, Math.min(5, Number(parsed.adjustment) || 0)),
-                reason: String(parsed.reason || "High buyer readiness evaluated by Gemini AI.")
+                adjustment: Math.max(-15, Math.min(15, Number(parsed.adjustment) || 0)),
+                reason: String(parsed.reason || "Evaluated by Google Gemini AI.")
             };
             console.log(`[LeadPipeline] Gemini scoring completed. Adjustment: ${result.adjustment}. Reason: ${result.reason}`);
             return result;
